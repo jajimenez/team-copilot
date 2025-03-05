@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_CONNECTION=postgresql://team_copilot:team_copilot@db:5432/team_copilot
+    volumes:
+      - ..:/home/vscode/team-copilot
+    stdin_open: true
+    tty: true
+
+  db:
+    image: postgres:17.4
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=team_copilot
+      - POSTGRES_PASSWORD=team_copilot
+      - POSTGRES_DB=team_copilot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  db-ui:
+    image: adminer:4.17.1
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

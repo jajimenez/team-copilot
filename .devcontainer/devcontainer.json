@@ -1,0 +1,7 @@
+{
+    "name": "Team Copilot and PosgreSQL",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/home/vscode/team-copilot"
+    // "postCreateCommand": ""
+}
