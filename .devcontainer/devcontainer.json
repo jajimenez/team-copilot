@@ -2,6 +2,6 @@
     "name": "Team Copilot and PosgreSQL",
     "dockerComposeFile": "docker-compose.yml",
     "service": "app",
-    "workspaceFolder": "/home/vscode/team-copilot"
-    // "postCreateCommand": ""
+    "workspaceFolder": "/home/vscode/team-copilot",
+    "postCreateCommand": "poetry install --with dev"
 }
