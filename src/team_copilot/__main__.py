@@ -2,18 +2,16 @@
 
 from argparse import ArgumentParser, Namespace
 
-from uvicorn import run
-
-from team_copilot import app
+from team_copilot.api import run
 
 
-HOST_DEFAULT = "127.0.0.1"
-PORT_DEFAULT = 8000
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 8000
 
 PROG_USAGE = "python -m team_copilot"
 PROG_DESC = "Run the Team Copilot API."
-HOST_HELP = f"Host (default: {HOST_DEFAULT})."
-PORT_HELP = f"Port (default: {PORT_DEFAULT})."
+HOST_HELP = f"Host (default: {DEFAULT_HOST})."
+PORT_HELP = f"Port (default: {DEFAULT_PORT})."
 
 
 def get_args() -> Namespace:
@@ -27,14 +25,14 @@ def get_args() -> Namespace:
     parser.add_argument(
         "--host",
         type=str,
-        default=HOST_DEFAULT,
+        default=DEFAULT_HOST,
         help=HOST_HELP,
     )
 
     parser.add_argument(
         "--port",
         type=int,
-        default=PORT_DEFAULT,
+        default=DEFAULT_PORT,
         help=PORT_HELP,
     )
 
@@ -42,7 +40,6 @@ def get_args() -> Namespace:
 
 
 def main():
-    """Run the API."""
     # Get command line arguments
     args = get_args()
 
@@ -50,7 +47,7 @@ def main():
     port = args.port
 
     # Run the API
-    run(app, host=host, port=port)
+    run(host, port)
 
 
 if __name__ == "__main__":
