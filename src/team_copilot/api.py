@@ -2,7 +2,7 @@
 
 from os import getenv
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import uvicorn
 
@@ -10,7 +10,8 @@ from team_copilot import __version__ as version
 from team_copilot.db import check_status
 
 
-HTTP_SERVICE_UNAVAILABLE_STATUS_CODE = 503
+HTTP_ISE_STATUS_CODE = 500  # Internal Server Error
+HTTP_SU_STATUS_CODE = 503  # Service Unavailable
 
 OK_STATUS_ID = "ok"
 ERROR_STATUS_ID = "error"
@@ -18,12 +19,30 @@ ERROR_STATUS_ID = "error"
 API_NAME = "Team Copilot"
 API_WELCOME_MESSAGE = f"Welcome to {API_NAME}!"
 API_OK_STATUS_MESSAGE = "The API is running."
+API_ISE_MESSAGE = "Internal Server Error."
 DB_OK_STATUS_MESSAGE = "The database is available."
 DB_ERROR_STATUS_MESSAGE = "The database is not available."
 
 DEBUG = getenv("TEAM_COPILOT_DEBUG", "false").lower() == "true"
 
 app = FastAPI(debug=DEBUG, title=API_NAME, version=version)
+
+
+@app.exception_handler(Exception)
+async def handle_error(request: Request, exc: Exception):
+    """Handle exceptions.
+
+    Args:
+        request (Request): Request.
+        exc (Exception): Exception.
+
+    Returns:
+        JSONResponse: JSON response.
+    """
+    return JSONResponse(
+        {"status": ERROR_STATUS_ID, "message": API_ISE_MESSAGE},
+        HTTP_ISE_STATUS_CODE,
+    )
 
 
 @app.get("/")
@@ -45,7 +64,7 @@ def db_health():
     else:
         return JSONResponse(
             {"status": ERROR_STATUS_ID, "message": DB_ERROR_STATUS_MESSAGE},
-            HTTP_SERVICE_UNAVAILABLE_STATUS_CODE,
+            HTTP_SU_STATUS_CODE,
         )
 
 
