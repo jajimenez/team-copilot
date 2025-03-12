@@ -17,11 +17,12 @@ PORT_HELP = f"Port (default: {DEFAULT_PORT})."
 def get_args() -> Namespace:
     """Get command line arguments.
 
-    :return: Command line arguments ("--host" and "--port").
-    :rtype: Namespace
+    Returns:
+        :return (Namespace): Command line arguments ("--host" and "--port").
     """
     parser = ArgumentParser(PROG_USAGE, description=PROG_DESC)
 
+    # Host
     parser.add_argument(
         "--host",
         type=str,
@@ -29,6 +30,7 @@ def get_args() -> Namespace:
         help=HOST_HELP,
     )
 
+    # Port
     parser.add_argument(
         "--port",
         type=int,
@@ -40,6 +42,8 @@ def get_args() -> Namespace:
 
 
 def main():
+    """Run the API."""
+
     # Get command line arguments
     args = get_args()
 
