@@ -32,13 +32,13 @@ def index():
 
 
 @app.get("/health")
-def check_status():
+def health():
     """Check the status of the API."""
     return {"status": OK_STATUS_ID, "message": API_OK_STATUS_MESSAGE}
 
 
 @app.get("/health/db")
-def check_db_status():
+def db_health():
     """Check the status of the database."""
     if check_status():
         return {"status": OK_STATUS_ID, "message": DB_OK_STATUS_MESSAGE}
