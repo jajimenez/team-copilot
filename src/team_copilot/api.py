@@ -10,18 +10,19 @@ from team_copilot import __version__ as version
 from team_copilot.db import check_status
 
 
-HTTP_ISE_STATUS_CODE = 500  # Internal Server Error
-HTTP_SU_STATUS_CODE = 503  # Service Unavailable
-
 OK_STATUS_ID = "ok"
 ERROR_STATUS_ID = "error"
 
+HTTP_ISE_STATUS_CODE = 500  # Internal Server Error
+HTTP_SU_STATUS_CODE = 503  # Service Unavailable
+
 API_NAME = "Team Copilot"
 API_WELCOME_MESSAGE = f"Welcome to {API_NAME}!"
-API_OK_STATUS_MESSAGE = "The API is running."
+API_OK_MESSAGE = "The API is running."
 API_ISE_MESSAGE = "Internal Server Error."
-DB_OK_STATUS_MESSAGE = "The database is available."
-DB_ERROR_STATUS_MESSAGE = "The database is not available."
+
+DB_OK_MESSAGE = "The database is available."
+DB_ERROR_MESSAGE = "The database is not available."
 
 DEBUG = getenv("TEAM_COPILOT_DEBUG", "false").lower() == "true"
 
@@ -53,17 +54,17 @@ def index():
 @app.get("/health")
 def health():
     """Check the status of the API."""
-    return {"status": OK_STATUS_ID, "message": API_OK_STATUS_MESSAGE}
+    return {"status": OK_STATUS_ID, "message": API_OK_MESSAGE}
 
 
 @app.get("/health/db")
 def db_health():
     """Check the status of the database."""
     if check_status():
-        return {"status": OK_STATUS_ID, "message": DB_OK_STATUS_MESSAGE}
+        return {"status": OK_STATUS_ID, "message": DB_OK_MESSAGE}
     else:
         return JSONResponse(
-            {"status": ERROR_STATUS_ID, "message": DB_ERROR_STATUS_MESSAGE},
+            {"status": ERROR_STATUS_ID, "message": DB_ERROR_MESSAGE},
             HTTP_SU_STATUS_CODE,
         )
 
