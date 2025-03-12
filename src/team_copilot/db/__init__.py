@@ -3,13 +3,14 @@
 from os import getenv
 
 from sqlalchemy import create_engine, text, Engine
+from sqlalchemy.engine.base import Connection
 
 
-def _check_extension(con) -> bool:
+def _check_extension(con: Connection) -> bool:
     """Check the Pgvector extension.
 
     Args:
-        con (Engine): Database connection.
+        con (Connection): Database connection.
 
     Returns:
         bool: Whether the extension is installed.
@@ -21,11 +22,11 @@ def _check_extension(con) -> bool:
     return bool(res.scalar())
 
 
-def _check_vector_operations(con) -> bool:
+def _check_vector_operations(con: Connection) -> bool:
     """Check the vector operations.
     
     Args:
-        con (Engine): Database connection.
+        con (Connection): Database connection.
     
     Returns:
         bool: Whether the vector operations work.
@@ -37,11 +38,11 @@ def _check_vector_operations(con) -> bool:
     return res.scalar() is not None
 
 
-def _check_tables(con) -> bool:
+def _check_tables(con: Connection) -> bool:
     """Check the tables.
 
     Args:
-        con (Engine): Database connection.
+        con (Connection): Database connection.
 
     Returns:
         bool: Whether the tables exist.
@@ -69,7 +70,7 @@ def check_status() -> bool:
 
     try:
         # Connect to the database
-        eng = create_engine(con_str)
+        eng: Engine = create_engine(con_str)
 
         with eng.connect() as con:
             # Check the extension, vector operations and tables
