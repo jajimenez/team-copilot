@@ -8,6 +8,7 @@
             "module": "team_copilot",
             "cwd": "${workspaceFolder}/src",
             "args": [
+                "run",
                 "--host",
                 "0.0.0.0",
                 "--port",
