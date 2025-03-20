@@ -3,5 +3,16 @@
     "dockerComposeFile": "docker-compose.yml",
     "service": "app",
     "workspaceFolder": "/home/vscode/team-copilot",
-    "postCreateCommand": "poetry config virtualenvs.in-project true && poetry install --with dev"
+    "postCreateCommand": "poetry config virtualenvs.in-project true && poetry install --with dev",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.debugpy",
+                "github.copilot",
+                "github.copilot-chat"
+            ]
+        }
+    }
 }
