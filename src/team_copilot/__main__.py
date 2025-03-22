@@ -1,10 +1,11 @@
-"""Team Copilot - Main."""
+"""Team Copilot - Main Script."""
 
 from argparse import ArgumentParser, Namespace
+import uvicorn
 
-from team_copilot.app import run
-from team_copilot.core.db import setup_db
-from team_copilot.config import settings
+from team_copilot.main import app
+from team_copilot.db.setup import setup
+from team_copilot.core.config import settings
 
 
 PROG_USAGE = "python -m team_copilot"
@@ -46,10 +47,10 @@ def main():
 
     if args.operation == "run":
         # Run the API
-        run(settings.app_host, settings.app_port)
+        uvicorn.run(app, host=settings.app_host, port=settings.app_port)
     elif args.operation == "setup-db":
         # Set up the database
-        setup_db(settings.db_url)
+        setup(settings.db_url)
 
 
 if __name__ == "__main__":

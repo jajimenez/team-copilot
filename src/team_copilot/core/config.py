@@ -1,4 +1,4 @@
-"""Team Copilot - Configuration."""
+"""Team Copilot - Core - Configuration."""
 
 from functools import lru_cache
 from pydantic_settings import BaseSettings
@@ -16,7 +16,6 @@ class Settings(BaseSettings):
     app_port: int = 8000
     db_url: str
     llm_api_key: str
-    
 
     class Config:
         env_file = ".env"

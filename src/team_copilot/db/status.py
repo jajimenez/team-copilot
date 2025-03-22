@@ -1,38 +1,9 @@
-"""Team Copilot - Core - Database."""
+"""Team Copilot - Database - Status."""
 
-from sqlalchemy import create_engine, text
+from sqlmodel import create_engine
+from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from sqlalchemy.engine.base import Connection
-
-from team_copilot.core.models import Base
-
-
-def setup_db(db_url: str):
-    """Setup the database.
-
-    Args:
-        db_url (str): Database URL ("postgresql://user:password@localhost/db").
-    """
-    # Create engine
-    engine: Engine = create_engine(db_url)
-
-    # Create the UUID and vector extensions
-    with engine.begin() as con:
-        con.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'))
-        con.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-
-    # Create the tables
-    Base.metadata.create_all(engine)
-
-    # Create the vector column ("embedding") index for similarity search
-    with engine.begin() as con:
-        con.execute(
-            text(
-                "CREATE INDEX IF NOT EXISTS document_chunks_embedding_index "
-                "ON document_chunks "
-                "USING hnsw(embedding vector_cosine_ops);"
-            )
-        )
 
 
 def _check_vector_ext(con: Connection) -> bool:
@@ -87,18 +58,17 @@ def _check_tables(con: Connection) -> bool:
     return "documents" in tables and "document_chunks" in tables
 
 
-def check_db_status(con_str: str) -> bool:
+def check_status(db_url: str) -> bool:
     """Check the status of the database.
 
     Args:
-        con_str (str): Database connection string.
+        db_url (str): Database URL ("postgresql://user:password@localhost/db").
 
     Returns:
         bool: Whether the database is available.
     """
     try:
-        # Connect to the database
-        eng: Engine = create_engine(con_str)
+        eng: Engine = create_engine(db_url)
 
         with eng.connect() as con:
             # Check the extension, vector operations and tables
