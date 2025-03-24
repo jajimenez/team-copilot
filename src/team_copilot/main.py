@@ -214,13 +214,21 @@ async def handle_error(request: Request, exc: Exception):
 
 @app.get("/")
 def index() -> Message:
-    """Get a welcome message."""
+    """Get a welcome message.
+
+    Returns:
+        Message: Welcome message.
+    """
     return Message(detail=APP_WELCOME)
 
 
 @app.get("/health")
 def get_status() -> Message:
-    """Check the status of the application."""
+    """Check the status of the application.
+
+    Returns:
+        Message: Status message.
+    """
     return Message(detail=APP_OK)
 
 
@@ -229,7 +237,10 @@ def get_db_status(settings: Annotated[Settings, Depends(get_settings)]) -> Messa
     """Check the status of the database.
 
     Args:
-        settings (Settings): Settings.
+        settings (Settings): Application settings.
+
+    Returns:
+        Message: Status message.
     """
     if check_status(settings.db_url):
         return Message(detail=DB_OK)
@@ -242,7 +253,14 @@ def get_db_status(settings: Annotated[Settings, Depends(get_settings)]) -> Messa
 
 @app.post("/login")
 def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
-    """Get an authentication token."""
+    """Get an authentication token.
+
+    Args:
+        form_data (OAuth2PasswordRequestForm): Form data.
+
+    Returns:
+        Token: Token.
+    """
     user = authenticate_user(form_data.username, form_data.password)
 
     if not user:
@@ -261,6 +279,15 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
 
 
 @app.get("/me")
-def me(current_user: Annotated[User, Depends(get_current_act_user)]) -> User:
-    """Test."""
+def get_current_user(
+    current_user: Annotated[User, Depends(get_current_act_user)],
+) -> User:
+    """Get the current user.
+
+    Args:
+        current_user (User): Current user.
+
+    Returns:
+        User: Current user.
+    """
     return current_user
