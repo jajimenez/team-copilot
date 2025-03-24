@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     app_version: str = version
     app_host: str = "127.0.0.1"
     app_port: int = 8000
+    app_secret_key: str
+    app_hash_algorithm: str = "HS256"
+    app_acc_token_exp_min: int = 60
     db_url: str
     llm_api_key: str
 

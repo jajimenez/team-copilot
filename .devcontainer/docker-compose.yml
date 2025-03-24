@@ -11,6 +11,7 @@ services:
       - TEAM_COPILOT_DEBUG=false
       - TEAM_COPILOT_APP_HOST=0.0.0.0
       - TEAM_COPILOT_APP_PORT=8000
+      - TEAM_COPILOT_APP_SECRET_KEY=${TEAM_COPILOT_APP_SECRET_KEY}
       - TEAM_COPILOT_DB_URL=postgresql://team_copilot:team_copilot@db:5432/team_copilot
       - TEAM_COPILOT_LLM_API_KEY=${TEAM_COPILOT_LLM_API_KEY}
     volumes:
