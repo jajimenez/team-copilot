@@ -8,6 +8,9 @@ from sqlalchemy.engine import Engine
 # "SQLModel.metadata.create_all" function wouldn't create the tables in the database.
 from team_copilot.models.models import *
 
+from team_copilot.core.config import settings
+from team_copilot.core.security import create_user
+
 
 def setup(db_url: str):
     """Setup the database.
@@ -17,6 +20,8 @@ def setup(db_url: str):
       1. Create the UUID and vector extensions.
       2. Create the tables.
       3. Create the vector column ("embedding") index for similarity search.
+      4. Create an administrator user if the "TEAM_COPILOT_APP_ADMIN_USER" and
+         "TEAM_COPILOT_APP_ADMIN_PASSWORD" environment variables are set.
 
     Args:
         db_url (str): Database URL ("postgresql://user:password@localhost/db").
@@ -40,4 +45,16 @@ def setup(db_url: str):
                 "ON document_chunks "
                 "USING hnsw(embedding vector_cosine_ops);"
             )
+        )
+
+    # Create an administrator user if the "TEAM_COPILOT_APP_ADMIN_USER" and
+    # "TEAM_COPILOT_APP_ADMIN_PASSWORD" environment variables are set.
+    if settings.app_admin_user is not None and settings.app_admin_password is not None:
+        create_user(
+            settings.app_admin_user,
+            settings.app_admin_password,
+            name="Administrator",
+            staff=True,
+            admin=True,
+            enabled=True,
         )

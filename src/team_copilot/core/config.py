@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     app_secret_key: str
     app_hash_algorithm: str = "HS256"
     app_acc_token_exp_min: int = 60
+    app_admin_user: str | None = None
+    app_admin_password: str | None = None
     db_url: str
     llm_api_key: str
 

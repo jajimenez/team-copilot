@@ -17,7 +17,9 @@ from team_copilot.models.models import Message, Token, User
 from team_copilot.core.config import Settings, get_settings, settings
 
 from team_copilot.core.security import (
-    authenticate_user, create_access_token, get_current_act_user
+    authenticate_user,
+    create_access_token,
+    get_current_act_user,
 )
 
 
@@ -54,8 +56,6 @@ app = FastAPI(
     version=settings.app_version,
     lifespan=lifespan,
 )
-
-
 
 
 @app.exception_handler(Exception)
