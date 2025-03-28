@@ -1,25 +1,20 @@
 """Team Copilot - Core - Security."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-
 from sqlmodel import select
-
 import jwt
-from jwt.exceptions import InvalidTokenError
 
 from passlib.context import CryptContext
 
 from team_copilot.db.session import open_session
-from team_copilot.models.models import TokenData, User, DbUser
+from team_copilot.models.models import User, DbUser
 from team_copilot.core.config import settings
 
 
 # Authentication
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -49,7 +44,7 @@ def get_password_hash(password: str) -> str:
 
 
 def get_user(username: str) -> DbUser | None:
-    """Get a user by its username.
+    """Get a user (including its password hash) by its username.
 
     Args:
         username (str): Username.
@@ -106,7 +101,7 @@ def create_user(
         return user
 
 
-def authenticate_user(username: str, password: str) -> DbUser | None:
+def authenticate_user(username: str, password: str) -> User | None:
     """Authenticate a user by its username and password.
 
     Args:
@@ -114,9 +109,10 @@ def authenticate_user(username: str, password: str) -> DbUser | None:
         password (str): Password.
 
     Returns:
-        DbUser | None: User if authenticated, None otherwise.
+        User | None: User (without its password hash) if authentication is successful or
+            None otherwise.
     """
-    user = get_user(username)
+    user: DbUser | None = get_user(username)
 
     # Check if the user exists, is enabled, and the password is correct.
     if (
@@ -126,7 +122,8 @@ def authenticate_user(username: str, password: str) -> DbUser | None:
     ):
         return None
 
-    return user
+    # Convert the DbUser instance to a User instance to remove the password hash
+    return user.to_user()
 
 
 def create_access_token(data: dict, exp_delta: timedelta | None = None) -> str:
@@ -154,48 +151,3 @@ def create_access_token(data: dict, exp_delta: timedelta | None = None) -> str:
     return jwt.encode(
         data, settings.app_secret_key, algorithm=settings.app_hash_algorithm
     )
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    """Get current user."""
-    cred_exc = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        data = jwt.decode(
-            token,
-            settings.app_secret_key,
-            algorithms=[settings.app_hash_algorithm],
-        )
-
-        username: str = data.get("sub")
-
-        if username is None:
-            raise cred_exc
-
-        token_data = TokenData(username=username)
-    except InvalidTokenError:
-        raise cred_exc
-
-    user = get_user(username=token_data.username)
-
-    if user is None:
-        raise cred_exc
-
-    return user
-
-
-async def get_current_act_user(
-    current_user: Annotated[User, Depends(get_current_user)],
-):
-    """Get current active user."""
-    if not current_user.enabled:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-        )
-
-    return current_user

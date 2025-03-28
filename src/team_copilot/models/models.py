@@ -119,6 +119,24 @@ class DbUser(User, table=True):
     __tablename__ = "users"
     password_hash: str
 
+    def to_user(self) -> User:
+        """Convert the instance to a User instance.
+
+        Returns:
+            User: User instance.
+        """
+        return User(
+            id=self.id,
+            username=self.username,
+            name=self.name,
+            email=self.email,
+            staff=self.staff,
+            admin=self.admin,
+            enabled=self.enabled,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )
+
 
 class Document(SQLModel, table=True):
     """Document model."""

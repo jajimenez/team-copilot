@@ -9,7 +9,7 @@ from sqlalchemy.engine import Engine
 from team_copilot.models.models import *
 
 from team_copilot.core.config import settings
-from team_copilot.core.security import get_user, create_user
+from team_copilot.core.auth import get_user, create_user
 
 
 def setup(db_url: str):
