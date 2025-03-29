@@ -12,6 +12,7 @@ services:
       - TEAM_COPILOT_APP_HOST=0.0.0.0
       - TEAM_COPILOT_APP_PORT=8000
       - TEAM_COPILOT_APP_SECRET_KEY=${TEAM_COPILOT_APP_SECRET_KEY}
+      - TEAM_COPILOT_APP_DOCS_DIR=/team-copilot-docs
       - TEAM_COPILOT_APP_ADMIN_USER=admin
       - TEAM_COPILOT_APP_ADMIN_PASSWORD=admin
       - TEAM_COPILOT_DB_URL=postgresql://team_copilot:team_copilot@db:5432/team_copilot

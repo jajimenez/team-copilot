@@ -12,11 +12,15 @@ from team_copilot.core.auth import oauth2_scheme, get_user
 from team_copilot.core.config import settings
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    """Get current user."""
+# Messages
+INV_CRED = "Invalid credentials"
+
+
+async def get_auth_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    """Get the authenticated user."""
     cred_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid credentials",
+        detail=INV_CRED,
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -45,14 +49,23 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     return user.to_user()
 
 
-async def get_current_act_user(
-    current_user: Annotated[User, Depends(get_current_user)],
-):
-    """Get current active user."""
-    if not current_user.enabled:
+async def get_enabled_user(user: Annotated[User, Depends(get_auth_user)]):
+    """Get the authenticated and enabled user."""
+    if not user.enabled:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
+            detail=INV_CRED,
         )
 
-    return current_user
+    return user
+
+
+async def get_staff_user(user: Annotated[User, Depends(get_enabled_user)]):
+    """Get the authenticated, enabled and staff user."""
+    if not user.staff:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=INV_CRED,
+        )
+
+    return user

@@ -1,5 +1,6 @@
 """Team Copilot - Models - Models."""
 
+from enum import Enum
 from uuid import UUID
 from datetime import datetime
 
@@ -12,6 +13,7 @@ from sqlalchemy import (
     Text,
     Boolean,
     DateTime,
+    Enum as SaEnum,
     ForeignKey,
     text,
     func,
@@ -21,7 +23,7 @@ from team_copilot.models.types import VectorType
 
 
 class Message(SQLModel, table=False):
-    """Message model."""
+    """Message response model."""
 
     detail: str
 
@@ -138,6 +140,16 @@ class DbUser(User, table=True):
         )
 
 
+class DocumentStatus(str, Enum):
+    """Document status enumeration."""
+
+    PENDING = "pending"
+    UPLOADING = "uploading"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class Document(SQLModel, table=True):
     """Document model."""
 
@@ -157,6 +169,14 @@ class Document(SQLModel, table=True):
 
     name: str
     path: str
+
+    status: DocumentStatus = Field(
+        sa_column=Column(
+            SaEnum(DocumentStatus, name="document_status"),
+            nullable=False,
+        ),
+        default=DocumentStatus.PENDING,
+    )
 
     created_at: datetime | None = Field(
         sa_column=Column(
@@ -229,3 +249,11 @@ class DocumentChunk(SQLModel, table=True):
             name="unique_document_chunk",
         ),
     )
+
+
+class DocumentStatusResponse(SQLModel, table=False):
+    """Document status response model."""
+
+    document_id: UUID
+    document_name: str
+    status: DocumentStatus

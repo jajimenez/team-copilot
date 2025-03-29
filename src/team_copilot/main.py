@@ -1,16 +1,17 @@
 """Team Copilot - Main."""
 
 from contextlib import asynccontextmanager
-from typing import Annotated
+# from typing import Annotated
 
-from fastapi import FastAPI, Depends, Request, status
+# from fastapi import FastAPI, Depends, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from sqlmodel import Session
+# from sqlmodel import Session
 
 from team_copilot.db.setup import setup
-from team_copilot.routers import health, auth, users
-from team_copilot.db.session import get_session
+from team_copilot.routers import health, auth, users, documents
+# from team_copilot.db.session import get_session
 from team_copilot.models.models import Message
 from team_copilot.core.config import settings
 
@@ -25,7 +26,7 @@ DB_OK = "The database is available."
 DB_ERROR_MESSAGE = "The database is not available."
 
 # Dependencies
-SessionDep = Annotated[Session, Depends(get_session)]
+# SessionDep = Annotated[Session, Depends(get_session)]
 
 
 @asynccontextmanager
@@ -53,6 +54,7 @@ app = FastAPI(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(documents.router)
 
 
 @app.exception_handler(Exception)
@@ -69,7 +71,7 @@ async def handle_error(request: Request, exc: Exception):
     )
 
 
-@app.get("/")
+@app.get("/", response_model=Message)
 def index() -> Message:
     """Get a welcome message.
 
