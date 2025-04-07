@@ -2,7 +2,6 @@
 
 from os import makedirs, remove
 from os.path import join, exists
-from uuid import uuid4
 from typing import Annotated
 
 from fastapi import (
@@ -11,12 +10,11 @@ from fastapi import (
     File,
     UploadFile,
     BackgroundTasks,
-    Response,
     status,
     HTTPException,
 )
 
-from team_copilot.models.models import DocumentStatusResponse, DocumentStatus
+from team_copilot.models.models import Document, DocumentStatus
 from team_copilot.dependencies import get_staff_user
 from team_copilot.services.documents import process_doc
 from team_copilot.core.config import Settings, get_settings, settings
@@ -51,16 +49,18 @@ router = APIRouter(
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"description": UNSUPPORTED_FILE_TYPE},
         status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"description": FILE_TOO_LARGE},
     },
-    response_model=DocumentStatusResponse,
+    response_model=DocumentStatus,
 )
 async def upload_document(
+    title: str,
     file: Annotated[UploadFile, File(description="PDF file to upload")],
     bg_tasks: BackgroundTasks,
     settings: Annotated[Settings, Depends(get_settings)],
-) -> DocumentStatusResponse:
+) -> DocumentStatus:
     """Upload a PDF file.
 
     Args:
+        title (str): Document title.
         file (UploadFile): PDF file to upload.
         bg_tasks (BackgroundTasks): Background tasks.
         settings (Settings): Application settings.
@@ -70,7 +70,7 @@ async def upload_document(
         HTTPException: If the file type is not supported or the file name is missing.
 
     Returns:
-        DocumentStatusResponse: Document status.
+        DocumentStatus: Document status.
     """
     # Check that the file has a name
     if not file.filename:
@@ -89,9 +89,9 @@ async def upload_document(
     # Create the documents directory if it doesn't exist
     makedirs(settings.app_docs_dir, exist_ok=True)
 
-    # Generate a unique document ID and the file path
-    doc_id = uuid4()
-    file_path = join(settings.app_docs_dir, f"{doc_id}_{file.filename}")
+    # Create the document object
+    file_path = join(settings.app_docs_dir, file.filename)
+    doc = Document(title=title, path=file_path)
 
     # Save the file to the documents directory
     try:
@@ -117,11 +117,7 @@ async def upload_document(
         raise
 
     # Process the document in the background
-    bg_tasks.add_task(process_doc, doc_id, file.filename, file_path)
+    bg_tasks.add_task(process_doc, doc)
 
-    # Return the document status response
-    return DocumentStatusResponse(
-        document_id=doc_id,
-        document_name=file.filename,
-        status = DocumentStatus.PENDING,
-    )
+    # Return the document status (Pending)
+    return doc.status

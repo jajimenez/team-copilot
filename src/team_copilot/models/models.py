@@ -167,8 +167,8 @@ class Document(SQLModel, table=True):
         default=None,
     )
 
-    name: str
-    path: str
+    title: str = Field(unique=True)
+    path: str = Field(unique=True)
 
     status: DocumentStatus = Field(
         sa_column=Column(
@@ -249,11 +249,3 @@ class DocumentChunk(SQLModel, table=True):
             name="unique_document_chunk",
         ),
     )
-
-
-class DocumentStatusResponse(SQLModel, table=False):
-    """Document status response model."""
-
-    document_id: UUID
-    document_name: str
-    status: DocumentStatus

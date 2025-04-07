@@ -1,13 +1,27 @@
 """Team Copilot - Services - Documents."""
 
-from uuid import UUID
-
 import fitz
 from PIL import Image
 import pytesseract
 
+from team_copilot.db.session import open_session
+from team_copilot.models.models import Document, DocumentChunk, DocumentStatus
+from team_copilot.core.config import settings
 
-def get_text(file_path: str, chunk_size: int = 1000, overlap: int = 100) -> list[str]:
+
+def _save_doc(doc: Document):
+    """Save a document to the database.
+
+    Args:
+        doc (Document): Document object.
+    """
+    with open_session(settings.app_db_url) as session:
+        session.add(doc)
+        session.commit()
+        session.refresh(doc)
+
+
+def _get_text(file_path: str, chunk_size: int = 1000, overlap: int = 100) -> list[str]:
     """Extract text from a PDF file.
 
     Args:
@@ -46,7 +60,7 @@ def get_text(file_path: str, chunk_size: int = 1000, overlap: int = 100) -> list
             else:
                 continue
 
-        # Split the text into smaller, overlapping chunks if needed
+        # Split the text into smaller (overlapping) chunks if needed
         if text_len > chunk_size:
             for i in range(0, text_len, chunk_size - overlap):
                 chunk = text[i : i + chunk_size]
@@ -60,13 +74,55 @@ def get_text(file_path: str, chunk_size: int = 1000, overlap: int = 100) -> list
     return chunks
 
 
-def process_doc(doc_id: UUID, file_name: str, file_path: str):
+def _get_embedding(text: str) -> list[float]:
+    """Get the embedding for a given text.
+
+    Args:
+        text (str): Text.
+
+    Returns:
+        list[float]: Text embedding (vector).
+    """
+    # TODO: Implement embedding creation.
+    pass
+
+
+def process_doc(doc: Document):
     """Process a document that has been uploaded.
 
     Args:
-        doc_id (UUID): Document ID.
-        file_name (str): Original file name.
-        file_path (str): File path.
+        doc (Document): Document object.
     """
-    # TODO: Implement the document processing logic
-    pass
+    try:
+        # Set the document status
+        doc.status = DocumentStatus.PROCESSING
+
+        # Save the document to the database
+        _save_doc(doc)
+
+        # Extract the text chunks from the document
+        chunks: list[str] = _get_text(doc.path)
+
+        # Get the embedding for each chunk and set the document chunks
+        doc.chunks = [
+            DocumentChunk(
+                text=chunk,
+                chunk_number=i,
+                embedding=_get_embedding(chunk),
+            )
+            for i, chunk in enumerate(chunks)
+        ]
+
+        # Set the document status
+        doc.status = DocumentStatus.COMPLETED
+
+        # Save the document to the database
+        _save_doc(doc)
+
+    except Exception:
+        # Update the document status to Failed
+        doc.status = DocumentStatus.FAILED
+        _save_doc(doc)
+
+        # Re-raise the exception
+        raise
