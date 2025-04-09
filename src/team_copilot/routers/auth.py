@@ -16,7 +16,7 @@ from team_copilot.core.config import settings
 
 
 # Messages
-ACCESS_TOKEN = f"Access token (valid for {settings.app_acc_token_exp_min} minutes)" 
+ACCESS_TOKEN = f"Access token (valid for {settings.app_acc_token_exp_min} minutes)"
 
 # Router
 router = APIRouter(prefix="/auth", tags=["auth"])

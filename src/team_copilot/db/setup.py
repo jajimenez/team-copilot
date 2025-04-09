@@ -48,7 +48,7 @@ def setup(db_url: str):
         )
 
     # Create an administrator user if the "TEAM_COPILOT_APP_ADMIN_USER" and
-    # "TEAM_COPILOT_APP_ADMIN_PASSWORD" environment variables are set and the user does 
+    # "TEAM_COPILOT_APP_ADMIN_PASSWORD" environment variables are set and the user does
     # not already exist.
     if settings.app_admin_user is not None and settings.app_admin_password is not None:
         if not get_user(settings.app_admin_user):

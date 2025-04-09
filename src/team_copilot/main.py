@@ -1,6 +1,7 @@
 """Team Copilot - Main."""
 
 from contextlib import asynccontextmanager
+
 # from typing import Annotated
 
 # from fastapi import FastAPI, Depends, Request, status
@@ -11,6 +12,7 @@ from fastapi.responses import JSONResponse
 
 from team_copilot.db.setup import setup
 from team_copilot.routers import health, auth, users, documents
+
 # from team_copilot.db.session import get_session
 from team_copilot.models.models import Message
 from team_copilot.core.config import settings

@@ -22,7 +22,7 @@ router = APIRouter(prefix="/health", tags=["health"])
 @router.get(
     "/app",
     responses={status.HTTP_200_OK: {"description": APP_RUNNING}},
-    response_model=Message
+    response_model=Message,
 )
 def get_app_status() -> Message:
     """Check the status of the application.
@@ -37,7 +37,7 @@ def get_app_status() -> Message:
     "/db",
     responses={
         status.HTTP_200_OK: {"description": DB_AVAILABLE},
-        status.HTTP_503_SERVICE_UNAVAILABLE: {"description": DB_NOT_AVAILABLE}
+        status.HTTP_503_SERVICE_UNAVAILABLE: {"description": DB_NOT_AVAILABLE},
     },
     response_model=Message,
 )
