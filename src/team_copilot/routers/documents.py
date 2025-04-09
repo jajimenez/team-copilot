@@ -16,9 +16,9 @@ from fastapi import (
 
 from team_copilot.models.models import Document, DocumentStatusMessage
 from team_copilot.dependencies import get_staff_user
-from team_copilot.services.documents import process_doc
+from team_copilot.services.documents import doc_exists, process_doc
 from team_copilot.core.config import Settings, get_settings, settings
-from team_copilot.routers import UNAUTHORIZED, DOCUMENT_ACCEPTED
+from team_copilot.routers import UNAUTHORIZED
 
 
 # Files
@@ -27,9 +27,10 @@ DOC_MIME_TYPE = "application/pdf"
 # Messages
 max_size_mb = settings.app_docs_max_size_bytes // (1024 * 1024)
 
-DOC_STATUS = "Document status: {}."
-FILE_NAME_REQUIRED = "The file name is required"
+DOC_ACCEPTED = "Document accepted"
+NO_FILE_NAME = "The file does not have a name."
 UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)"
+DOC_EXISTS = "A document with the same title or file name already exists."
 FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)"
 
 # Router
@@ -45,8 +46,8 @@ router = APIRouter(
     "/upload",
     status_code=status.HTTP_202_ACCEPTED,
     responses={
-        status.HTTP_202_ACCEPTED: {"description": DOCUMENT_ACCEPTED},
-        status.HTTP_400_BAD_REQUEST: {"description": FILE_NAME_REQUIRED},
+        status.HTTP_202_ACCEPTED: {"description": DOC_ACCEPTED},
+        status.HTTP_409_CONFLICT: {"description": DOC_EXISTS},
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"description": UNSUPPORTED_FILE_TYPE},
         status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"description": FILE_TOO_LARGE},
     },
@@ -76,8 +77,8 @@ async def upload_document(
     # Check that the file has a name
     if not file.filename:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=FILE_NAME_REQUIRED,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=NO_FILE_NAME,
         )
 
     # Validate file type
@@ -93,6 +94,10 @@ async def upload_document(
     # Create the document object
     file_path = join(settings.app_docs_dir, file.filename)
     doc = Document(title=title, path=file_path)
+
+    # Check if the document already exists based on its title or its file path
+    if doc_exists(doc):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=DOC_EXISTS)
 
     # Save the file to the documents directory
     try:

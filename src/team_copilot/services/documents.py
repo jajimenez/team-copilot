@@ -2,6 +2,8 @@
 
 import logging
 
+from sqlmodel import select
+
 from team_copilot.db.session import open_session
 from team_copilot.models.models import Document, DocumentChunk, DocumentStatus
 from team_copilot.core.config import settings
@@ -14,7 +16,28 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Messages
+PROC_DOC = "Processing document: {}..."
+PROC_DOC_SUCCESS = "Document processed successfully: {}"
 ERROR_PROC_DOC = 'Error processing document: "{}".'
+
+
+def doc_exists(doc: Document) -> bool:
+    """Return whether a document already exists in the database based on its title or
+    its file path.
+
+    Args:
+        doc (Document): Document.
+
+    Returns:
+        bool: Wether the document exists.
+    """
+    with open_session(settings.db_url) as session:
+        s = select(Document).where(
+            (Document.title == doc.title) |
+            (Document.path == doc.path)
+        )
+
+        return session.exec(s).first() is not None
 
 
 def process_doc(doc: Document):
@@ -23,6 +46,8 @@ def process_doc(doc: Document):
     Args:
         doc (Document): Document object.
     """
+    logger.info(PROC_DOC.format(doc.title))
+
     with open_session(settings.db_url) as session:
         try:
             # Add document to the session
@@ -53,6 +78,7 @@ def process_doc(doc: Document):
             # Commit the changes to the database
             session.commit()
 
+            logger.info(PROC_DOC_SUCCESS.format(doc.title))
         except Exception as e:
             logger.error(ERROR_PROC_DOC.format(e))
 
