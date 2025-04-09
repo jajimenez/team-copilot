@@ -22,12 +22,6 @@ from sqlalchemy import (
 from team_copilot.models.types import VectorType
 
 
-class Message(SQLModel, table=False):
-    """Message response model."""
-
-    detail: str
-
-
 class Token(SQLModel, table=False):
     """Token model."""
 
@@ -249,3 +243,15 @@ class DocumentChunk(SQLModel, table=True):
             name="unique_document_chunk",
         ),
     )
+
+
+class Message(SQLModel, table=False):
+    """Message model."""
+
+    detail: str
+
+
+class DocumentStatusMessage(SQLModel, table=False):
+    """Document status message model."""
+
+    document_status: DocumentStatus

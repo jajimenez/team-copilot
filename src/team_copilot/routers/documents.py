@@ -14,7 +14,7 @@ from fastapi import (
     HTTPException,
 )
 
-from team_copilot.models.models import Document, DocumentStatus
+from team_copilot.models.models import Document, DocumentStatusMessage
 from team_copilot.dependencies import get_staff_user
 from team_copilot.services.documents import process_doc
 from team_copilot.core.config import Settings, get_settings, settings
@@ -27,6 +27,7 @@ DOC_MIME_TYPE = "application/pdf"
 # Messages
 max_size_mb = settings.app_docs_max_size_bytes // (1024 * 1024)
 
+DOC_STATUS = "Document status: {}."
 FILE_NAME_REQUIRED = "The file name is required"
 UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)"
 FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)"
@@ -49,14 +50,14 @@ router = APIRouter(
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"description": UNSUPPORTED_FILE_TYPE},
         status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"description": FILE_TOO_LARGE},
     },
-    response_model=DocumentStatus,
+    response_model=DocumentStatusMessage,
 )
 async def upload_document(
     title: str,
     file: Annotated[UploadFile, File(description="PDF file to upload")],
     bg_tasks: BackgroundTasks,
     settings: Annotated[Settings, Depends(get_settings)],
-) -> DocumentStatus:
+) -> DocumentStatusMessage:
     """Upload a PDF file.
 
     Args:
@@ -120,4 +121,4 @@ async def upload_document(
     bg_tasks.add_task(process_doc, doc)
 
     # Return the document status (Pending)
-    return doc.status
+    return DocumentStatusMessage(document_status=doc.status)

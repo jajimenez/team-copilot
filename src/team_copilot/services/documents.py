@@ -17,56 +17,50 @@ logger = logging.getLogger(__name__)
 ERROR_PROC_DOC = 'Error processing document: "{}".'
 
 
-def _save_doc(doc: Document):
-    """Save a document to the database.
-
-    Args:
-        doc (Document): Document object.
-    """
-    with open_session(settings.app_db_url) as session:
-        session.add(doc)
-        session.commit()
-        session.refresh(doc)
-
-
 def process_doc(doc: Document):
     """Process a document that has been uploaded.
 
     Args:
         doc (Document): Document object.
     """
-    try:
-        # Set the document status
-        doc.status = DocumentStatus.PROCESSING
+    with open_session(settings.db_url) as session:
+        try:
+            # Add document to the session
+            session.add(doc)
 
-        # Save the document to the database
-        _save_doc(doc)
+            # Set the document status
+            doc.status = DocumentStatus.PROCESSING
 
-        # Extract the text chunks from the document
-        chunks: list[str] = get_text(doc.path)
+            # Commit the changes to the database
+            session.commit()
 
-        # Get the embedding for each chunk and set the document chunks
-        doc.chunks = [
-            DocumentChunk(
-                chunk_text=chunk,
-                chunk_index=i,
-                embedding=get_embedding(chunk),
-            )
-            for i, chunk in enumerate(chunks)
-        ]
+            # Extract the text chunks from the document
+            chunks: list[str] = get_text(doc.path)
 
-        # Set the document status
-        doc.status = DocumentStatus.COMPLETED
+            # Get the embedding for each chunk and set the document chunks
+            doc.chunks = [
+                DocumentChunk(
+                    chunk_text=chunk,
+                    chunk_index=i,
+                    embedding=get_embedding(chunk),
+                )
+                for i, chunk in enumerate(chunks)
+            ]
 
-        # Save the document to the database
-        _save_doc(doc)
+            # Set the document status
+            doc.status = DocumentStatus.COMPLETED
 
-    except Exception as e:
-        logger.error(ERROR_PROC_DOC.format(e))
+            # Commit the changes to the database
+            session.commit()
 
-        # Update the document status to Failed
-        doc.status = DocumentStatus.FAILED
-        _save_doc(doc)
+        except Exception as e:
+            logger.error(ERROR_PROC_DOC.format(e))
 
-        # Re-raise the exception
-        raise
+            # Update the document status to Failed
+            doc.status = DocumentStatus.FAILED
+
+            # Commit the changes to the database
+            session.commit()
+
+            # Re-raise the exception
+            raise
