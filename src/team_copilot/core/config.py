@@ -22,7 +22,9 @@ class Settings(BaseSettings):
     app_admin_user: str | None = None
     app_admin_password: str | None = None
     db_url: str
-    llm_api_key: str
+    ollama_url: str  # E.g. http://localhost:8000
+    emb_model: str
+    llm_model: str
 
     class Config:
         env_file = ".env"
@@ -34,7 +36,7 @@ def get_settings() -> Settings:
     """Get settings.
 
     Returns:
-        :return (Settings): Settings.
+        Settings: Settings object.
     """
     return Settings()
 

@@ -7,6 +7,7 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - llm
     environment:
       - TEAM_COPILOT_DEBUG=false
       - TEAM_COPILOT_APP_HOST=0.0.0.0
@@ -16,7 +17,9 @@ services:
       - TEAM_COPILOT_APP_ADMIN_USER=admin
       - TEAM_COPILOT_APP_ADMIN_PASSWORD=admin
       - TEAM_COPILOT_DB_URL=postgresql://team_copilot:team_copilot@db:5432/team_copilot
-      - TEAM_COPILOT_LLM_API_KEY=${TEAM_COPILOT_LLM_API_KEY}
+      - TEAM_COPILOT_OLLAMA_URL=http://llm:11434
+      - TEAM_COPILOT_EMB_MODEL=nomic-embed-text
+      - TEAM_COPILOT_LLM_MODEL=llama3:8b
     volumes:
       - ..:/home/vscode/team-copilot
     stdin_open: true
@@ -24,8 +27,7 @@ services:
 
   db:
     build:
-      context: ..
-      dockerfile: .devcontainer/Dockerfile-db
+      dockerfile: Dockerfile-db
     ports:
       - "5432:5432"
     environment:
@@ -43,5 +45,18 @@ services:
     depends_on:
       - db
 
+  llm:
+    build:
+      dockerfile: Dockerfile-llm
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - EMB_MODEL=nomic-embed-text
+      - LLM_MODEL=llama3:8b
+    volumes:
+      - ollama_models:/root/.ollama
+
 volumes:
   postgres_data:
+  ollama_models:

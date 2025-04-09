@@ -1,12 +1,28 @@
 """Team Copilot - Services - Documents."""
 
+import time
+import logging
+
 import fitz
 from PIL import Image
 import pytesseract
 
+import requests
+from requests import RequestException
+
 from team_copilot.db.session import open_session
 from team_copilot.models.models import Document, DocumentChunk, DocumentStatus
 from team_copilot.core.config import settings
+
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Messages
+ERROR_GET_EMB = 'Error getting the embedding (attempt {}): "{}".'
+NO_EMB_FOUND = "No embedding found."
+ERROR_PROC_DOC = 'Error processing document: "{}".'
 
 
 def _save_doc(doc: Document):
@@ -74,17 +90,52 @@ def _get_text(file_path: str, chunk_size: int = 1000, overlap: int = 100) -> lis
     return chunks
 
 
-def _get_embedding(text: str) -> list[float]:
+def _get_embedding(text: str, max_attempts: int = 3) -> list[float]:
     """Get the embedding for a given text.
 
     Args:
         text (str): Text.
+        max_attempts (int): Maximum number of attempts to get the embedding (default: 3).
 
     Returns:
         list[float]: Text embedding (vector).
     """
-    # TODO: Implement embedding creation.
-    pass
+    # Ollama embeddings endpoint
+    url = f"{settings.ollama_url}/api/embeddings"
+
+    # Request data
+    data = {
+        "model": settings.emb_model,
+        "prompt": text,
+    }
+
+    attempt = 0
+
+    while attempt < max_attempts:
+        try:
+            # Make the request
+            res = requests.post(url, json=data)
+
+            # Raise an exception if the request failed
+            res.raise_for_status()
+
+            # Get the embedding
+            emb = res.json().get("embedding")
+
+            if not emb:
+                raise ValueError(NO_EMB_FOUND)
+
+            return emb
+        except (RequestException, ValueError) as e:
+            logger.error(ERROR_GET_EMB.format(attempt + 1, e))
+            attempt += 1
+
+            # Re-raise the exception if the maximum number of attempts is reached
+            if attempt >= max_attempts:
+                raise
+
+            # Wait for 1 second
+            time.sleep(1)
 
 
 def process_doc(doc: Document):
@@ -106,8 +157,8 @@ def process_doc(doc: Document):
         # Get the embedding for each chunk and set the document chunks
         doc.chunks = [
             DocumentChunk(
-                text=chunk,
-                chunk_number=i,
+                chunk_text=chunk,
+                chunk_index=i,
                 embedding=_get_embedding(chunk),
             )
             for i, chunk in enumerate(chunks)
@@ -119,7 +170,9 @@ def process_doc(doc: Document):
         # Save the document to the database
         _save_doc(doc)
 
-    except Exception:
+    except Exception as e:
+        logger.error(ERROR_PROC_DOC.format(e))
+
         # Update the document status to Failed
         doc.status = DocumentStatus.FAILED
         _save_doc(doc)

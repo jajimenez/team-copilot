@@ -1,0 +1,15 @@
+# Base image
+FROM ollama/ollama:latest
+
+# Install Curl
+RUN apt-get update && \
+    apt-get install -y curl
+
+# Copy the script
+COPY start.sh /start.sh
+
+# Add execution permission to the setup script
+RUN chmod +x /start.sh
+
+# Set the entrypoint
+ENTRYPOINT ["/start.sh"]

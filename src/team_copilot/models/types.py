@@ -6,11 +6,11 @@ from sqlalchemy.types import UserDefinedType
 class VectorType(UserDefinedType):
     """PostgreSQL vector type."""
 
-    def __init__(self, precision=1024):
+    def __init__(self, precision=768):
         """Initialize the vector type.
 
         Args:
-            precision (int): Precision.
+            precision (int): Precision (default: 768).
         """
         self.precision = precision
 

@@ -1,3 +1,4 @@
+# Base image
 FROM postgres:17.4
 
 ENV PGVECTOR_DIR=/pgvector
