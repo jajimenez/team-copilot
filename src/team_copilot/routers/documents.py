@@ -50,7 +50,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/upload",
+    "/",
     status_code=status.HTTP_202_ACCEPTED,
     responses={
         status.HTTP_202_ACCEPTED: {"description": DOC_ACCEPTED},
@@ -60,17 +60,17 @@ router = APIRouter(
     },
     response_model=DocumentStatusMessage,
 )
-async def upload_document(
+async def create_document(
     title: str,
     file: Annotated[UploadFile, File(description="PDF file to upload")],
     bg_tasks: BackgroundTasks,
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> DocumentStatusMessage:
-    """Upload a PDF file.
+    """Create a document.
 
     Args:
         title (str): Document title.
-        file (UploadFile): PDF file to upload.
+        file (UploadFile): PDF file.
         bg_tasks (BackgroundTasks): Background tasks.
         settings (Settings): Application settings.
         response (Response): Response.
@@ -150,7 +150,7 @@ async def upload_document(
 
 
 @router.delete(
-    "/delete/{id}",
+    "/{id}",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {"description": DOC_DELETED_1},
@@ -158,15 +158,11 @@ async def upload_document(
     },
     response_model=Message,
 )
-async def delete_document(
-    id: str,
-    settings: Annotated[Settings, Depends(get_settings)],
-) -> Message:
+async def delete_document(id: str) -> Message:
     """Delete a document.
 
     Args:
         id (str): Document ID.
-        settings (Settings): Application settings.
 
     Raises:
         HTTPException: If the document is not found.
