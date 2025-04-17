@@ -1,6 +1,7 @@
 """Team Copilot - Services - Documents."""
 
 from os import remove
+from datetime import datetime, timezone
 import logging
 
 from sqlmodel import select
@@ -24,6 +25,35 @@ ERROR_PROC_DOC = 'Error processing document "{}" ("{}"): "{}".'
 DOC_DELETED = 'Document "{}" ("{}") deleted.'
 DOC_NOT_FOUND = 'Document "{}" not found.'
 ERROR_DEL_DOC = 'Error deleting document "{}": "{}".'
+
+
+def save_doc(doc: Document):
+    """Save a document to the database.
+    
+    If the document is new, the ID in the database object is set to the ID generated
+    automatically by the database server. If the document already exists, its
+    "updated_at" field is updated to the current time.
+
+    Args:
+        doc (Document): Document to save.
+    """
+    with open_session(settings.db_url) as session:
+        # Add document to the session
+        session.add(doc)
+
+        # Set the status to Pending
+        doc.status = DocumentStatus.PENDING
+
+        # Check if the document already exists (it exists if the ID in the document
+        # object is set). If it exists, update the "updated_at" field.
+        if doc.id:
+            doc.updated_at = datetime.now(timezone.utc)
+
+        # Commit the changes to the database
+        session.commit()
+
+        # Refresh the document to get the ID
+        session.refresh(doc)
 
 
 def get_doc(
@@ -50,16 +80,26 @@ def get_doc(
         return session.exec(s).first()
 
 
-def process_doc(doc: Document):
-    """Process a document that has been uploaded.
+def process_doc(id: str):
+    """Process a document.
 
     Args:
-        doc (Document): New or existing document.
-    """
-    logger.info(PROC_DOC.format(doc.id, doc.title))
+        id (str): Document ID.
 
+    Raises:
+        ValueError: If the document is not found.
+    """
     with open_session(settings.db_url) as session:
         try:
+            # Get the document
+            doc = session.get(Document, id)
+
+            # Check that the document exists
+            if not doc:
+                raise ValueError(DOC_NOT_FOUND.format(id))
+
+            logger.info(PROC_DOC.format(doc.id, doc.title))
+
             # Add document to the session
             session.add(doc)
 
@@ -70,17 +110,26 @@ def process_doc(doc: Document):
             session.commit()
 
             # Extract the text chunks from the document
-            chunks: list[str] = get_text(doc.path)
+            text_chunks: list[str] = get_text(doc.path)
 
-            # Get the embedding for each chunk and set the document chunks
-            doc.chunks = [
-                DocumentChunk(
-                    chunk_text=chunk,
+            # Delete the existing chunks from the database if any
+            if doc.chunks:
+                for c in doc.chunks:
+                    session.delete(c)
+
+                # Commit the changes to the database
+                session.commit()
+
+            # Get the embedding for each chunk and create the document chunks
+            for i, tc in enumerate(text_chunks):
+                c = DocumentChunk(
+                    document_id=doc.id,
+                    chunk_text=tc,
                     chunk_index=i,
-                    embedding=get_embedding(chunk),
+                    embedding=get_embedding(tc),
                 )
-                for i, chunk in enumerate(chunks)
-            ]
+
+                session.add(c)
 
             # Set the document status
             doc.status = DocumentStatus.COMPLETED
