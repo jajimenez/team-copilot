@@ -14,7 +14,12 @@ from fastapi import (
     HTTPException,
 )
 
-from team_copilot.models.models import Document, Message, DocumentStatusMessage
+from team_copilot.models.models import (
+    Document,
+    DocumentResponse,
+    MessageResponse,
+    DocumentStatusResponse,
+)
 from team_copilot.dependencies import get_staff_user
 from team_copilot.services.documents import save_doc, get_doc, process_doc, delete_doc
 from team_copilot.core.config import Settings, get_settings, settings
@@ -27,6 +32,7 @@ DOC_MIME_TYPE = "application/pdf"
 # Messages
 max_size_mb = settings.app_docs_max_size_bytes // (1024 * 1024)
 
+DOC_DATA = "Document data."
 DOC_ACCEPTED = "Document accepted."
 NO_FILE_NAME = "The file does not have a name."
 UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)."
@@ -113,6 +119,39 @@ async def upload_file(file: UploadFile, path: str):
         )
 
 
+@router.get(
+    "/{id}",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {"description": DOC_DATA},
+        status.HTTP_404_NOT_FOUND: {"description": DOC_NOT_FOUND_1},
+    },
+    response_model=DocumentResponse,
+)
+async def get_document(id: str) -> DocumentResponse:
+    """Get a document.
+
+    Args:
+        id (str): Document ID.
+
+    Raises:
+        HTTPException: If the document is not found.
+
+    Returns:
+        DocumentResponse: Document response.
+    """
+    # Get the document from the database
+    doc = get_doc(id=id)
+
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=DOC_NOT_FOUND_2.format(id),
+        )
+
+    return DocumentResponse.from_document(doc)
+
+
 @router.post(
     "/",
     status_code=status.HTTP_202_ACCEPTED,
@@ -122,14 +161,14 @@ async def upload_file(file: UploadFile, path: str):
         status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"description": FILE_TOO_LARGE},
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"description": UNSUPPORTED_FILE_TYPE},
     },
-    response_model=DocumentStatusMessage,
+    response_model=DocumentStatusResponse,
 )
 async def create_document(
     title: str,
     file: Annotated[UploadFile, File(description="PDF file to upload")],
     bg_tasks: BackgroundTasks,
     settings: Annotated[Settings, Depends(get_settings)],
-) -> DocumentStatusMessage:
+) -> DocumentStatusResponse:
     """Create a document.
 
     Args:
@@ -172,7 +211,7 @@ async def create_document(
     bg_tasks.add_task(process_doc, str(doc.id))
 
     # Return the document status
-    return DocumentStatusMessage(document_status=doc.status)
+    return DocumentStatusResponse(document_status=doc.status)
 
 
 @router.put(
@@ -185,7 +224,7 @@ async def create_document(
         status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"description": FILE_TOO_LARGE},
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"description": UNSUPPORTED_FILE_TYPE},
     },
-    response_model=DocumentStatusMessage,
+    response_model=DocumentStatusResponse,
 )
 async def update_document(
     id: str,
@@ -193,7 +232,7 @@ async def update_document(
     file: Annotated[UploadFile, File(description="PDF file to upload")],
     bg_tasks: BackgroundTasks,
     settings: Annotated[Settings, Depends(get_settings)],
-) -> DocumentStatusMessage:
+) -> DocumentStatusResponse:
     """Update a document.
 
     Args:
@@ -250,7 +289,7 @@ async def update_document(
     bg_tasks.add_task(process_doc, doc.id)
 
     # Return the document status
-    return DocumentStatusMessage(document_status=doc.status)
+    return DocumentStatusResponse(document_status=doc.status)
 
 
 @router.delete(
@@ -260,9 +299,9 @@ async def update_document(
         status.HTTP_200_OK: {"description": DOC_DELETED_1},
         status.HTTP_404_NOT_FOUND: {"description": DOC_NOT_FOUND_1},
     },
-    response_model=Message,
+    response_model=MessageResponse,
 )
-async def delete_document(id: str) -> Message:
+async def delete_document(id: str) -> MessageResponse:
     """Delete a document.
 
     Args:
@@ -272,7 +311,7 @@ async def delete_document(id: str) -> Message:
         HTTPException: If the document is not found.
 
     Returns:
-        Message: Success message.
+        MessageResponse: Success message.
     """
     try:
         # Delete the document
@@ -290,4 +329,4 @@ async def delete_document(id: str) -> Message:
             detail=ERROR_DEL_DOC.format(id),
         )
 
-    return Message(detail=DOC_DELETED_2.format(id))
+    return MessageResponse(detail=DOC_DELETED_2.format(id))

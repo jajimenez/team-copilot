@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, status
 import jwt
 from jwt.exceptions import InvalidTokenError
 
-from team_copilot.models.models import TokenData, User, DbUser
+from team_copilot.models.models import User, TokenData
 from team_copilot.core.auth import oauth2_scheme, get_user
 from team_copilot.core.config import settings
 
@@ -16,7 +16,7 @@ from team_copilot.core.config import settings
 INV_CRED = "Invalid credentials"
 
 
-async def get_auth_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_auth_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
     """Get the authenticated user."""
     cred_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -40,16 +40,15 @@ async def get_auth_user(token: Annotated[str, Depends(oauth2_scheme)]):
     except InvalidTokenError:
         raise cred_exc
 
-    user: DbUser | None = get_user(username=token_data.username)
+    user = get_user(username=token_data.username)
 
     if user is None:
         raise cred_exc
 
-    # Convert the DbUser instance to a User instance to remove the password hash
-    return user.to_user()
+    return user
 
 
-async def get_enabled_user(user: Annotated[User, Depends(get_auth_user)]):
+async def get_enabled_user(user: Annotated[User, Depends(get_auth_user)]) -> User:
     """Get the authenticated and enabled user."""
     if not user.enabled:
         raise HTTPException(
@@ -60,7 +59,7 @@ async def get_enabled_user(user: Annotated[User, Depends(get_auth_user)]):
     return user
 
 
-async def get_staff_user(user: Annotated[User, Depends(get_enabled_user)]):
+async def get_staff_user(user: Annotated[User, Depends(get_enabled_user)]) -> User:
     """Get the authenticated, enabled and staff user."""
     if not user.staff:
         raise HTTPException(

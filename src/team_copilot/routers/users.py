@@ -2,10 +2,9 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
 from fastapi import APIRouter, Depends, status
 
-from team_copilot.models.models import User
+from team_copilot.models.models import User, UserResponse
 from team_copilot.dependencies import get_enabled_user
 from team_copilot.routers import UNAUTHORIZED
 
@@ -25,9 +24,9 @@ router = APIRouter(
 @router.get(
     "/me",
     responses={status.HTTP_200_OK: {"description": CURRENT_USER}},
-    response_model=User,
+    response_model=UserResponse,
 )
-def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> User:
+def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> UserResponse:
     """Get the current authenticated user.
 
     The user must be authenticated and its account must be enabled.
@@ -36,6 +35,6 @@ def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> User:
         user (User): Current user.
 
     Returns:
-        User: Current user.
+        UserResponse: Current user response.
     """
-    return user
+    return UserResponse.from_user(user)

@@ -9,7 +9,7 @@ import jwt
 from passlib.context import CryptContext
 
 from team_copilot.db.session import open_session
-from team_copilot.models.models import User, DbUser
+from team_copilot.models.models import User
 from team_copilot.core.config import settings
 
 
@@ -43,7 +43,7 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def get_user(username: str) -> DbUser | None:
+def get_user(username: str) -> User | None:
     """Get a user (including its password hash) by its username.
 
     Args:
@@ -54,7 +54,7 @@ def get_user(username: str) -> DbUser | None:
     """
     with open_session(settings.db_url) as session:
         # Create the statement
-        s = select(DbUser).where(DbUser.username == username)
+        s = select(User).where(User.username == username)
 
         # Execute the statement and return the first element
         return session.exec(s).first()
@@ -68,7 +68,7 @@ def create_user(
     staff: bool = False,
     admin: bool = False,
     enabled: bool = False,
-):
+) -> User:
     """Create a user.
 
     Args:
@@ -79,9 +79,12 @@ def create_user(
         staff (bool): Staff.
         admin (bool): Admin.
         enabled (bool): Enabled.
+
+    Returns:
+        User: User object.
     """
     with open_session(settings.db_url) as session:
-        user = DbUser(
+        user = User(
             username=username,
             password_hash=get_password_hash(password),
             name=name,
@@ -109,10 +112,9 @@ def authenticate_user(username: str, password: str) -> User | None:
         password (str): Password.
 
     Returns:
-        User | None: User (without its password hash) if authentication is successful or
-            None otherwise.
+        User | None: User if authentication is successful or None otherwise.
     """
-    user: DbUser | None = get_user(username)
+    user = get_user(username)
 
     # Check if the user exists, is enabled, and the password is correct.
     if (
@@ -122,8 +124,7 @@ def authenticate_user(username: str, password: str) -> User | None:
     ):
         return None
 
-    # Convert the DbUser instance to a User instance to remove the password hash
-    return user.to_user()
+    return user
 
 
 def create_access_token(data: dict, exp_delta: timedelta | None = None) -> str:

@@ -14,7 +14,7 @@ from team_copilot.db.setup import setup
 from team_copilot.routers import health, auth, users, documents
 
 # from team_copilot.db.session import get_session
-from team_copilot.models.models import Message
+from team_copilot.models.models import MessageResponse
 from team_copilot.core.config import settings
 
 
@@ -73,11 +73,11 @@ async def handle_error(request: Request, exc: Exception):
     )
 
 
-@app.get("/", response_model=Message)
-def index() -> Message:
+@app.get("/", response_model=MessageResponse)
+def index() -> MessageResponse:
     """Get a welcome message.
 
     Returns:
-        Message: Welcome message.
+        MessageResponse: Welcome message.
     """
-    return Message(detail=APP_WELCOME)
+    return MessageResponse(detail=APP_WELCOME)

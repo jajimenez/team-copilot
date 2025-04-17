@@ -1,5 +1,6 @@
 """Team Copilot - Models - Models."""
 
+from os.path import basename
 from enum import Enum
 from uuid import UUID
 from datetime import datetime
@@ -22,21 +23,10 @@ from sqlalchemy import (
 from team_copilot.models.types import VectorType
 
 
-class Token(SQLModel, table=False):
-    """Token model."""
-
-    access_token: str
-    token_type: str
-
-
-class TokenData(SQLModel, table=False):
-    """Token data model."""
-
-    username: str | None = None
-
-
-class User(SQLModel, table=False):
+class User(SQLModel, table=True):
     """User model."""
+
+    __tablename__ = "users"
 
     # All the fields except "username" and "name" have a default value generated at the
     # server, so they require an explicit Column definition with "sa_column".
@@ -51,6 +41,7 @@ class User(SQLModel, table=False):
     )
 
     username: str = Field(unique=True)
+    password_hash: str
     name: str | None = None
 
     email: str | None = Field(
@@ -107,31 +98,6 @@ class User(SQLModel, table=False):
         ),
         default=None,
     )
-
-
-class DbUser(User, table=True):
-    """Database user model."""
-
-    __tablename__ = "users"
-    password_hash: str
-
-    def to_user(self) -> User:
-        """Convert the instance to a User instance.
-
-        Returns:
-            User: User instance.
-        """
-        return User(
-            id=self.id,
-            username=self.username,
-            name=self.name,
-            email=self.email,
-            staff=self.staff,
-            admin=self.admin,
-            enabled=self.enabled,
-            created_at=self.created_at,
-            updated_at=self.updated_at,
-        )
 
 
 class DocumentStatus(str, Enum):
@@ -245,13 +211,111 @@ class DocumentChunk(SQLModel, table=True):
     )
 
 
-class Message(SQLModel, table=False):
-    """Message model."""
+class AppStatus(str, Enum):
+    """Application status enumeration."""
+
+    AVAILABLE = "available"
+
+
+class DbStatus(str, Enum):
+    """Database status enumeration."""
+
+    AVAILABLE = "available"
+    UNAVAILABLE = "unavailable"
+
+
+class TokenData(SQLModel, table=False):
+    """Token data model."""
+
+    username: str | None = None
+
+
+class MessageResponse(SQLModel, table=False):
+    """Message response model."""
 
     detail: str
 
 
-class DocumentStatusMessage(SQLModel, table=False):
-    """Document status message model."""
+class AppStatusResponse(SQLModel, table=False):
+    """Application status response model."""
 
-    document_status: DocumentStatus
+    status: AppStatus = AppStatus.AVAILABLE
+
+
+class DbStatusResponse(SQLModel, table=False):
+    """Database status response model."""
+
+    status: DbStatus
+
+
+class DocumentStatusResponse(SQLModel, table=False):
+    """Document status response model."""
+
+    status: DocumentStatus
+
+
+class TokenResponse(SQLModel, table=False):
+    """Token model."""
+
+    access_token: str
+    token_type: str
+
+
+class UserResponse(SQLModel, table=False):
+    """User Response model."""
+
+    id: UUID | None
+    username: str
+    name: str | None
+    email: str | None
+    staff: bool
+    admin: bool
+    enabled: bool
+    created_at: datetime | None
+    updated_at: datetime | None
+
+    @classmethod
+    def from_user(cls, user: User) -> "UserResponse":
+        """Convert the instance to a UserResponse instance.
+
+        Returns:
+            UserResponse: UserResponse instance.
+        """
+        return cls(
+            id=user.id,
+            username=user.username,
+            name=user.name,
+            email=user.email,
+            staff=user.staff,
+            admin=user.admin,
+            enabled=user.enabled,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+        )
+
+
+class DocumentResponse(SQLModel, table=False):
+    """Document Response model."""
+
+    id: UUID | None
+    title: str = Field(unique=True)
+    file_name: str = Field(unique=True)
+    status: DocumentStatus
+    created_at: datetime | None
+    updated_at: datetime | None
+
+    @classmethod
+    def from_document(cls, document: Document) -> "DocumentResponse":
+        """Convert the instance to a DocumentResponse instance.
+
+        Returns:
+            DocumentResponse: DocumentResponse instance.
+        """
+        return cls(
+            id=document.id,
+            title=document.title,
+            file_name=basename(document.path),
+            status=document.status,
+            created_at=document.created_at,
+            updated_at=document.updated_at,
+        )
