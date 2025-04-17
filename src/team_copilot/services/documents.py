@@ -29,7 +29,7 @@ ERROR_DEL_DOC = 'Error deleting document "{}": "{}".'
 
 def save_doc(doc: Document):
     """Save a document to the database.
-    
+
     If the document is new, the ID in the database object is set to the ID generated
     automatically by the database server. If the document already exists, its
     "updated_at" field is updated to the current time.

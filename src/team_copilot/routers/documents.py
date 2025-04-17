@@ -224,7 +224,7 @@ async def update_document(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=DOC_NOT_FOUND_2.format(id),
         )
-    
+
     # Check if another document with the same title or file path already exists
     other_doc = get_doc(title=title, path=path)
 
