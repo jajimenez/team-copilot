@@ -4,7 +4,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from team_copilot.models.models import User, UserResponse
+from team_copilot.models.data import User
+from team_copilot.models.response import UserResponse
 from team_copilot.dependencies import get_enabled_user
 from team_copilot.routers import UNAUTHORIZED
 

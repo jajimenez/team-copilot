@@ -25,11 +25,7 @@ def get_args() -> Namespace:
     parser = ArgumentParser(PROG_USAGE, description=PROG_DESC)
 
     # Operation subparsers
-    subparsers = parser.add_subparsers(
-        dest=OP_TITLE,
-        help=OP_DESC,
-        required=True,
-    )
+    subparsers = parser.add_subparsers(dest=OP_TITLE, help=OP_DESC, required=True)
 
     # "Run" operation
     subparsers.add_parser("run", help=RUN_DESC)

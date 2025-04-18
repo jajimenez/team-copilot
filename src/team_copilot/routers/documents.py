@@ -2,6 +2,7 @@
 
 from os import makedirs, remove
 from os.path import join, exists
+from uuid import UUID
 from typing import Annotated
 
 from fastapi import (
@@ -14,16 +15,19 @@ from fastapi import (
     HTTPException,
 )
 
-from team_copilot.models.models import (
-    Document,
+from team_copilot.models.request import DocumentRequest
+from team_copilot.models.data import Document
+
+from team_copilot.models.response import (
     DocumentResponse,
     MessageResponse,
     DocumentStatusResponse,
 )
+
 from team_copilot.dependencies import get_staff_user
 from team_copilot.services.documents import save_doc, get_doc, process_doc, delete_doc
 from team_copilot.core.config import Settings, get_settings, settings
-from team_copilot.routers import UNAUTHORIZED
+from team_copilot.routers import UNAUTHORIZED, get_value_error_str
 
 
 # Files
@@ -34,8 +38,10 @@ max_size_mb = settings.app_docs_max_size_bytes // (1024 * 1024)
 
 DOC_DATA = "Document data."
 DOC_ACCEPTED = "Document accepted."
+INV_TITLE = "Invalid title."
 NO_FILE_NAME = "The file does not have a name."
 UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)."
+INV_IN_DATA = "Invalid title or file."
 DOC_EXISTS = "A document with the same title or file name already exists."
 FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
 ERROR_UPL_FILE = 'Error uploading file "{}".'
@@ -55,8 +61,23 @@ router = APIRouter(
 )
 
 
-def check_file(file: UploadFile):
-    """Check if the file to upload is valid.
+def validate_title(title: str):
+    """Return whether a document title is valid.
+
+    Raises:
+        HTTPException: If the title is invalid.
+    """
+    try:
+        DocumentRequest(title=title)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=get_value_error_str(e),
+        )
+
+
+def validate_file(file: UploadFile):
+    """Return whether a document file is valid.
 
     Raises:
         HTTPException: If the file type is not supported or the file name is missing.
@@ -160,6 +181,7 @@ async def get_document(id: str) -> DocumentResponse:
         status.HTTP_409_CONFLICT: {"description": DOC_EXISTS},
         status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"description": FILE_TOO_LARGE},
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"description": UNSUPPORTED_FILE_TYPE},
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {"description": INV_IN_DATA},
     },
     response_model=DocumentStatusResponse,
 )
@@ -173,7 +195,7 @@ async def create_document(
 
     Args:
         title (str): Document title.
-        file (UploadFile): PDF file.
+        file (UploadFile): Document PDF file.
         bg_tasks (BackgroundTasks): Background tasks.
         settings (Settings): Application settings.
         response (Response): Response.
@@ -184,8 +206,11 @@ async def create_document(
     Returns:
         DocumentStatus: Document status.
     """
-    # Check if the file to upload is valid
-    check_file(file)
+    # Check that the title is valid
+    validate_title(title)
+
+    # Check that the file to upload is valid
+    validate_file(file)
 
     # Get file path
     path = join(settings.app_docs_dir, file.filename)
@@ -208,10 +233,10 @@ async def create_document(
     await upload_file(file, path)
 
     # Process the document in the background
-    bg_tasks.add_task(process_doc, str(doc.id))
+    bg_tasks.add_task(process_doc, doc.id)
 
     # Return the document status
-    return DocumentStatusResponse(document_status=doc.status)
+    return DocumentStatusResponse(document_id=doc.id, document_status=doc.status)
 
 
 @router.put(
@@ -227,7 +252,7 @@ async def create_document(
     response_model=DocumentStatusResponse,
 )
 async def update_document(
-    id: str,
+    id: UUID,
     title: str,
     file: Annotated[UploadFile, File(description="PDF file to upload")],
     bg_tasks: BackgroundTasks,
@@ -236,9 +261,9 @@ async def update_document(
     """Update a document.
 
     Args:
-        id (str): Document ID.
+        id (UUID): Document ID.
         title (str): New document title.
-        file (UploadFile): New PDF file.
+        file (UploadFile): New document PDF file.
         bg_tasks (BackgroundTasks): Background tasks.
         settings (Settings): Application settings.
 
@@ -249,8 +274,11 @@ async def update_document(
     Returns:
         DocumentStatus: Document status.
     """
-    # Check if the file to upload is valid
-    check_file(file)
+    # Check that the title is valid
+    validate_title(title)
+
+    # Check that the file to upload is valid
+    validate_file(file)
 
     # Get file path
     path = join(settings.app_docs_dir, file.filename)
@@ -289,7 +317,7 @@ async def update_document(
     bg_tasks.add_task(process_doc, doc.id)
 
     # Return the document status
-    return DocumentStatusResponse(document_status=doc.status)
+    return DocumentStatusResponse(document_id=doc.id, document_status=doc.status)
 
 
 @router.delete(
@@ -301,11 +329,11 @@ async def update_document(
     },
     response_model=MessageResponse,
 )
-async def delete_document(id: str) -> MessageResponse:
+async def delete_document(id: UUID) -> MessageResponse:
     """Delete a document.
 
     Args:
-        id (str): Document ID.
+        id (UUID): Document ID.
 
     Raises:
         HTTPException: If the document is not found.

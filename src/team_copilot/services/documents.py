@@ -2,12 +2,13 @@
 
 from os import remove
 from datetime import datetime, timezone
+from uuid import UUID
 import logging
 
 from sqlmodel import select
 
 from team_copilot.db.session import open_session
-from team_copilot.models.models import Document, DocumentChunk, DocumentStatus
+from team_copilot.models.data import Document, DocumentStatus, DocumentChunk
 from team_copilot.core.config import settings
 from team_copilot.services.extraction import get_text
 from team_copilot.services.embedding import get_embedding
@@ -57,14 +58,16 @@ def save_doc(doc: Document):
 
 
 def get_doc(
-    id: str | None = None,
+    id: UUID | None = None,
     title: str | None = None,
     path: str | None = None,
 ) -> Document | None:
     """Get a document by its ID, title or file path.
 
     Args:
-        doc (Document): Document.
+        id (UUID | None): Document ID.
+        title (str | None): Document title.
+        path (str | None): Document file path.
 
     Returns:
         bool: Wether the document exists.
@@ -80,11 +83,11 @@ def get_doc(
         return session.exec(s).first()
 
 
-def process_doc(id: str):
+def process_doc(id: UUID):
     """Process a document.
 
     Args:
-        id (str): Document ID.
+        id (UUID): Document ID.
 
     Raises:
         ValueError: If the document is not found.
@@ -151,11 +154,11 @@ def process_doc(id: str):
             raise
 
 
-def delete_doc(id: str):
+def delete_doc(id: UUID):
     """Delete a document from the database.
 
     Args:
-        id (str): Document ID.
+        id (UUID): Document ID.
 
     Raises:
         ValueError: If the document is not found.

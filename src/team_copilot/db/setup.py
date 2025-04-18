@@ -4,9 +4,10 @@ from sqlmodel import create_engine, SQLModel
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
-# Import all models to ensure that they are registered with SQLModel. Otherwise, the
-# "SQLModel.metadata.create_all" function wouldn't create the tables in the database.
-from team_copilot.models.models import *
+# Import all data models to ensure that they are registered with SQLModel. Otherwise,
+# the "SQLModel.metadata.create_all" function wouldn't create the tables in the
+# database.
+from team_copilot.models.data import *
 
 from team_copilot.core.config import settings
 from team_copilot.core.auth import get_user, create_user

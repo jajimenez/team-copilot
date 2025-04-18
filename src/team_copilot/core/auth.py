@@ -9,7 +9,7 @@ import jwt
 from passlib.context import CryptContext
 
 from team_copilot.db.session import open_session
-from team_copilot.models.models import User
+from team_copilot.models.data import User
 from team_copilot.core.config import settings
 
 

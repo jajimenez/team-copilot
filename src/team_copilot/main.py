@@ -14,7 +14,7 @@ from team_copilot.db.setup import setup
 from team_copilot.routers import health, auth, users, documents
 
 # from team_copilot.db.session import get_session
-from team_copilot.models.models import MessageResponse
+from team_copilot.models.response import MessageResponse
 from team_copilot.core.config import settings
 
 

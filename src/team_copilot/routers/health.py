@@ -5,7 +5,8 @@ from typing import Annotated
 from fastapi import APIRouter, Response, Depends, status
 
 from team_copilot.db.status import check_status
-from team_copilot.models.models import AppStatusResponse, DbStatus, DbStatusResponse
+from team_copilot.models.data import DbStatus
+from team_copilot.models.response import AppStatusResponse, DbStatusResponse
 from team_copilot.core.config import Settings, get_settings
 
 

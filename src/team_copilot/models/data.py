@@ -1,6 +1,5 @@
-"""Team Copilot - Models - Models."""
+"""Team Copilot - Models - Data Models."""
 
-from os.path import basename
 from enum import Enum
 from uuid import UUID
 from datetime import datetime
@@ -10,9 +9,7 @@ from sqlmodel import SQLModel, Field, Relationship, UniqueConstraint
 from sqlalchemy import (
     Column,
     UUID as SA_UUID,
-    String,
     Text,
-    Boolean,
     DateTime,
     Enum as SaEnum,
     ForeignKey,
@@ -28,9 +25,8 @@ class User(SQLModel, table=True):
 
     __tablename__ = "users"
 
-    # All the fields except "username" and "name" have a default value generated at the
-    # server, so they require an explicit Column definition with "sa_column".
-
+    # "id" is a primary key and has a default value generated at the database server, so
+    # it requires an explicit Column definition with "sa_column".
     id: UUID | None = Field(
         sa_column=Column(
             SA_UUID(as_uuid=True),
@@ -40,46 +36,16 @@ class User(SQLModel, table=True):
         default=None,
     )
 
-    username: str = Field(unique=True)
+    username: str = Field(unique=True, min_length=3, max_length=100)
     password_hash: str
-    name: str | None = None
+    name: str | None = Field(min_length=1, max_length=100, default=None)
+    email: str | None = Field(unique=True, min_length=3, max_length=100, default=None)
+    staff: bool | None = False
+    admin: bool = False
+    enabled: bool = False
 
-    email: str | None = Field(
-        sa_column=Column(
-            String,
-            unique=True,
-            nullable=True,
-        ),
-        default=None,
-    )
-
-    staff: bool = Field(
-        sa_column=Column(
-            Boolean,
-            nullable=False,
-            server_default="false",
-        ),
-        default=False,
-    )
-
-    admin: bool = Field(
-        sa_column=Column(
-            Boolean,
-            nullable=False,
-            server_default="false",
-        ),
-        default=False,
-    )
-
-    enabled: bool = Field(
-        sa_column=Column(
-            Boolean,
-            nullable=False,
-            server_default="false",
-        ),
-        default=False,
-    )
-
+    # "created_at" and "updated_at" fields have a default value generated at the
+    # database server, so they require an explicit Column definition with "sa_column".
     created_at: datetime | None = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -115,9 +81,8 @@ class Document(SQLModel, table=True):
 
     __tablename__ = "documents"
 
-    # "id", "created_at" and "updated_at" are fields with a default value generated at
-    # the server, so they require an explicit Column definition with "sa_column".
-
+    # "id" is a primary key and has a default value generated at the database server, so
+    # it requires an explicit Column definition with "sa_column".
     id: UUID | None = Field(
         sa_column=Column(
             SA_UUID(as_uuid=True),
@@ -127,9 +92,10 @@ class Document(SQLModel, table=True):
         default=None,
     )
 
-    title: str = Field(unique=True)
-    path: str = Field(unique=True)
+    title: str = Field(unique=True, min_length=1, max_length=100)
+    path: str = Field(unique=True, min_length=1, max_length=300)
 
+    # "status" is a custom type, so it requires an explicit Column definition.
     status: DocumentStatus = Field(
         sa_column=Column(
             SaEnum(DocumentStatus, name="document_status"),
@@ -138,6 +104,8 @@ class Document(SQLModel, table=True):
         default=DocumentStatus.PENDING,
     )
 
+    # "created_at" and "updated_at" fields have a default value generated at the
+    # database server, so they require an explicit Column definition with "sa_column".
     created_at: datetime | None = Field(
         sa_column=Column(
             DateTime(timezone=True),
@@ -168,9 +136,8 @@ class DocumentChunk(SQLModel, table=True):
 
     __tablename__ = "document_chunks"
 
-    # "id" and "document_id" are fields with a default value generated at the server, so
-    # they require an explicit Column definition with "sa_column".
-
+    # "id" is a primary key and has a default value generated at the database server, so
+    # it requires an explicit Column definition with "sa_column".
     id: UUID | None = Field(
         sa_column=Column(
             SA_UUID(as_uuid=True),
@@ -180,6 +147,8 @@ class DocumentChunk(SQLModel, table=True):
         default=None,
     )
 
+    # "document_id" is a foreign key, so it requires an explicit Column definition with
+    # "sa_column".
     document_id: UUID = Field(
         sa_column=Column(
             SA_UUID(as_uuid=True),
@@ -228,94 +197,3 @@ class TokenData(SQLModel, table=False):
     """Token data model."""
 
     username: str | None = None
-
-
-class MessageResponse(SQLModel, table=False):
-    """Message response model."""
-
-    detail: str
-
-
-class AppStatusResponse(SQLModel, table=False):
-    """Application status response model."""
-
-    status: AppStatus = AppStatus.AVAILABLE
-
-
-class DbStatusResponse(SQLModel, table=False):
-    """Database status response model."""
-
-    status: DbStatus
-
-
-class DocumentStatusResponse(SQLModel, table=False):
-    """Document status response model."""
-
-    status: DocumentStatus
-
-
-class TokenResponse(SQLModel, table=False):
-    """Token model."""
-
-    access_token: str
-    token_type: str
-
-
-class UserResponse(SQLModel, table=False):
-    """User Response model."""
-
-    id: UUID | None
-    username: str
-    name: str | None
-    email: str | None
-    staff: bool
-    admin: bool
-    enabled: bool
-    created_at: datetime | None
-    updated_at: datetime | None
-
-    @classmethod
-    def from_user(cls, user: User) -> "UserResponse":
-        """Convert the instance to a UserResponse instance.
-
-        Returns:
-            UserResponse: UserResponse instance.
-        """
-        return cls(
-            id=user.id,
-            username=user.username,
-            name=user.name,
-            email=user.email,
-            staff=user.staff,
-            admin=user.admin,
-            enabled=user.enabled,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-        )
-
-
-class DocumentResponse(SQLModel, table=False):
-    """Document Response model."""
-
-    id: UUID | None
-    title: str = Field(unique=True)
-    file_name: str = Field(unique=True)
-    status: DocumentStatus
-    created_at: datetime | None
-    updated_at: datetime | None
-
-    @classmethod
-    def from_document(cls, document: Document) -> "DocumentResponse":
-        """Convert the instance to a DocumentResponse instance.
-
-        Returns:
-            DocumentResponse: DocumentResponse instance.
-        """
-        return cls(
-            id=document.id,
-            title=document.title,
-            file_name=basename(document.path),
-            status=document.status,
-            created_at=document.created_at,
-            updated_at=document.updated_at,
-        )

@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, status
 import jwt
 from jwt.exceptions import InvalidTokenError
 
-from team_copilot.models.models import User, TokenData
+from team_copilot.models.data import TokenData, User
 from team_copilot.core.auth import oauth2_scheme, get_user
 from team_copilot.core.config import settings
 

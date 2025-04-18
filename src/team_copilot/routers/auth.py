@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from team_copilot.models.models import TokenResponse
+from team_copilot.models.response import TokenResponse
 from team_copilot.core.config import Settings, get_settings
 from team_copilot.core.auth import authenticate_user, create_access_token
 from team_copilot.routers import INVALID_CREDENTIALS
