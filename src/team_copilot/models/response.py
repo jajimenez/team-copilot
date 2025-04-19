@@ -12,7 +12,13 @@ from team_copilot.models.data import AppStatus, DbStatus, DocumentStatus, User, 
 class MessageResponse(SQLModel, table=False):
     """Message response model."""
 
-    detail: str
+    message: str
+
+
+class ErrorResponse(SQLModel, table=False):
+    """Error response model."""
+
+    error: str
 
 
 class AppStatusResponse(SQLModel, table=False):
@@ -27,16 +33,9 @@ class DbStatusResponse(SQLModel, table=False):
     status: DbStatus
 
 
-class DocumentStatusResponse(SQLModel, table=False):
-    """Document status response model."""
-
-    document_id: UUID
-    document_status: DocumentStatus
-
-
 class TokenResponse(SQLModel, table=False):
     """Token model."""
-
+    
     access_token: str
     token_type: str
 
@@ -99,3 +98,10 @@ class DocumentResponse(SQLModel, table=False):
             created_at=document.created_at,
             updated_at=document.updated_at,
         )
+
+
+class DocumentStatusResponse(SQLModel, table=False):
+    """Document status response model."""
+
+    document_id: UUID
+    document_status: DocumentStatus

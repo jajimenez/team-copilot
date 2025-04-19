@@ -7,22 +7,18 @@ from fastapi import Depends, HTTPException, status
 import jwt
 from jwt.exceptions import InvalidTokenError
 
-from team_copilot.models.data import TokenData, User
+from team_copilot.models.data import User
 from team_copilot.core.auth import oauth2_scheme, get_user
 from team_copilot.core.config import settings
 
 
 # Messages
-INV_CRED = "Invalid credentials"
+INV_CRED = "Invalid credentials."
 
 
 async def get_auth_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
     """Get the authenticated user."""
-    cred_exc = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=INV_CRED,
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    cred_exc = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=INV_CRED)
 
     try:
         data = jwt.decode(
@@ -35,12 +31,10 @@ async def get_auth_user(token: Annotated[str, Depends(oauth2_scheme)]) -> User:
 
         if username is None:
             raise cred_exc
-
-        token_data = TokenData(username=username)
     except InvalidTokenError:
         raise cred_exc
 
-    user = get_user(username=token_data.username)
+    user = get_user(username=username)
 
     if user is None:
         raise cred_exc

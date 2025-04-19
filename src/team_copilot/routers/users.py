@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 
 from team_copilot.models.data import User
-from team_copilot.models.response import UserResponse
+from team_copilot.models.response import UserResponse, MessageResponse
 from team_copilot.dependencies import get_enabled_user
 from team_copilot.routers import UNAUTHORIZED
 
@@ -13,17 +13,26 @@ from team_copilot.routers import UNAUTHORIZED
 # Messages
 CURRENT_USER = "Current user"
 
+# API documentation
+GET_CUR_USER_DESC = "Get the current authenticated user."
+
 # Router
 router = APIRouter(
     prefix="/users",
     tags=["users"],
     dependencies=[Depends(get_enabled_user)],
-    responses={status.HTTP_401_UNAUTHORIZED: {"description": UNAUTHORIZED}},
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "description": UNAUTHORIZED,
+            "model": MessageResponse,
+        },
+    },
 )
 
 
 @router.get(
     "/me",
+    description=GET_CUR_USER_DESC,
     responses={status.HTTP_200_OK: {"description": CURRENT_USER}},
     response_model=UserResponse,
 )

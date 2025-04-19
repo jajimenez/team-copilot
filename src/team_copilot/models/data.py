@@ -20,6 +20,19 @@ from sqlalchemy import (
 from team_copilot.models.types import VectorType
 
 
+class AppStatus(str, Enum):
+    """Application status enumeration."""
+
+    AVAILABLE = "available"
+
+
+class DbStatus(str, Enum):
+    """Database status enumeration."""
+
+    AVAILABLE = "available"
+    UNAVAILABLE = "unavailable"
+
+
 class User(SQLModel, table=True):
     """User model."""
 
@@ -178,22 +191,3 @@ class DocumentChunk(SQLModel, table=True):
             name="unique_document_chunk",
         ),
     )
-
-
-class AppStatus(str, Enum):
-    """Application status enumeration."""
-
-    AVAILABLE = "available"
-
-
-class DbStatus(str, Enum):
-    """Database status enumeration."""
-
-    AVAILABLE = "available"
-    UNAVAILABLE = "unavailable"
-
-
-class TokenData(SQLModel, table=False):
-    """Token data model."""
-
-    username: str | None = None

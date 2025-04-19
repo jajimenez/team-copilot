@@ -12,36 +12,32 @@ from fastapi import (
     UploadFile,
     BackgroundTasks,
     status,
-    HTTPException,
 )
 
-from team_copilot.models.request import DocumentRequest
+from fastapi.exceptions import RequestValidationError, HTTPException
+
+from team_copilot.core.config import Settings, get_settings, settings
 from team_copilot.models.data import Document
+from team_copilot.models.request import DocumentRequest
 
 from team_copilot.models.response import (
-    DocumentResponse,
     MessageResponse,
+    DocumentResponse,
     DocumentStatusResponse,
 )
 
 from team_copilot.dependencies import get_staff_user
 from team_copilot.services.documents import save_doc, get_doc, process_doc, delete_doc
-from team_copilot.core.config import Settings, get_settings, settings
-from team_copilot.routers import UNAUTHORIZED, get_value_error_str
+from team_copilot.routers import VALIDATION_ERROR, UNAUTHORIZED
 
-
-# Files
-DOC_MIME_TYPE = "application/pdf"
 
 # Messages
 max_size_mb = settings.app_docs_max_size_bytes // (1024 * 1024)
 
 DOC_DATA = "Document data."
 DOC_ACCEPTED = "Document accepted."
-INV_TITLE = "Invalid title."
 NO_FILE_NAME = "The file does not have a name."
 UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)."
-INV_IN_DATA = "Invalid title or file."
 DOC_EXISTS = "A document with the same title or file name already exists."
 FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
 ERROR_UPL_FILE = 'Error uploading file "{}".'
@@ -51,50 +47,71 @@ DOC_NOT_FOUND_1 = "Document not found."
 DOC_NOT_FOUND_2 = 'Document "{}" not found.'
 ERROR_DEL_DOC = 'Error deleting document "{}".'
 
+# API documentation
+GET_DOC_DESC = "Get a document."
+CREATE_DOC_DESC = "Create a document."
+UPDATE_DOC_DESC = "Update a document."
+DELETE_DOC_DESC = "Delete a document."
+
+# Files
+DOC_MIME_TYPE = "application/pdf"
 
 # Router
 router = APIRouter(
     prefix="/documents",
     tags=["documents"],
     dependencies=[Depends(get_staff_user)],
-    responses={status.HTTP_401_UNAUTHORIZED: {"description": UNAUTHORIZED}},
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "description": UNAUTHORIZED,
+            "model": MessageResponse,
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "description": VALIDATION_ERROR,
+            "model": MessageResponse,
+        },
+    },
 )
 
 
 def validate_title(title: str):
-    """Return whether a document title is valid.
+    """Validate a document title.
+
+    Args:
+        title (str): Document title.
 
     Raises:
-        HTTPException: If the title is invalid.
+        RequestValidationError: If the title is invalid.
     """
     try:
+        # If the title is invalid, creating a document will raise a ValueError
         DocumentRequest(title=title)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=get_value_error_str(e),
-        )
+        # Re-raise the exception as a RequestValidationError exception, which will be
+        # caught by an exception handler in the "team_copilot.main" module.
+        raise RequestValidationError(e.errors())
 
 
 def validate_file(file: UploadFile):
-    """Return whether a document file is valid.
+    """Validate a document PDF file.
+
+    Args:
+        file (UploadFile): Document PDF file.
 
     Raises:
-        HTTPException: If the file type is not supported or the file name is missing.
+        RequestValidationError: If the file type is not supported or the file name is
+            missing.
     """
-    # Check that the file has a name
+    # Any RequestValidationError raised will be caught by an exception handler in the
+    # "team_copilot.main" module.
+
+    # Validate that the file has a name
     if not file.filename:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=NO_FILE_NAME,
-        )
+        raise RequestValidationError(NO_FILE_NAME)
 
     # Validate file type
     if file.content_type != DOC_MIME_TYPE:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=UNSUPPORTED_FILE_TYPE,
-        )
+        raise RequestValidationError(UNSUPPORTED_FILE_TYPE)
 
 
 async def upload_file(file: UploadFile, path: str):
@@ -121,39 +138,34 @@ async def upload_file(file: UploadFile, path: str):
                     )
 
                 f.write(chunk)
-    except HTTPException:
+    except Exception:
         # Delete the file if it exists
         if exists(path):
             remove(path)
 
         # Re-raise exception
         raise
-    except Exception:
-        # Delete the file if it exists
-        if exists(path):
-            remove(path)
-
-        # Re-raise exception as HTTPException
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=ERROR_UPL_FILE.format(file.name),
-        )
 
 
 @router.get(
     "/{id}",
-    status_code=status.HTTP_200_OK,
+    description=GET_DOC_DESC,
     responses={
-        status.HTTP_200_OK: {"description": DOC_DATA},
-        status.HTTP_404_NOT_FOUND: {"description": DOC_NOT_FOUND_1},
+        status.HTTP_200_OK: {
+            "description": DOC_DATA,
+            "model": DocumentResponse,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "description": DOC_NOT_FOUND_1,
+            "model": MessageResponse,
+        },
     },
-    response_model=DocumentResponse,
 )
-async def get_document(id: str) -> DocumentResponse:
+async def get_document(id: UUID) -> DocumentResponse:
     """Get a document.
 
     Args:
-        id (str): Document ID.
+        id (UUID): Document ID.
 
     Raises:
         HTTPException: If the document is not found.
@@ -175,15 +187,26 @@ async def get_document(id: str) -> DocumentResponse:
 
 @router.post(
     "/",
+    description=CREATE_DOC_DESC,
     status_code=status.HTTP_202_ACCEPTED,
     responses={
-        status.HTTP_202_ACCEPTED: {"description": DOC_ACCEPTED},
-        status.HTTP_409_CONFLICT: {"description": DOC_EXISTS},
-        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"description": FILE_TOO_LARGE},
-        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"description": UNSUPPORTED_FILE_TYPE},
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {"description": INV_IN_DATA},
+        status.HTTP_202_ACCEPTED: {
+            "description": DOC_ACCEPTED,
+            "model": DocumentStatusResponse,
+        },
+        status.HTTP_409_CONFLICT: {
+            "description": DOC_EXISTS,
+            "model": MessageResponse,
+        },
+        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {
+            "description": FILE_TOO_LARGE,
+            "model": MessageResponse,
+        },
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
+            "description": UNSUPPORTED_FILE_TYPE,
+            "model": MessageResponse,
+        },
     },
-    response_model=DocumentStatusResponse,
 )
 async def create_document(
     title: str,
@@ -241,15 +264,30 @@ async def create_document(
 
 @router.put(
     "/{id}",
-    status_code=status.HTTP_200_OK,
+    description=UPDATE_DOC_DESC,
+    status_code=status.HTTP_202_ACCEPTED,
     responses={
-        status.HTTP_200_OK: {"description": DOC_ACCEPTED},
-        status.HTTP_404_NOT_FOUND: {"description": DOC_NOT_FOUND_1},
-        status.HTTP_409_CONFLICT: {"description": DOC_EXISTS},
-        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {"description": FILE_TOO_LARGE},
-        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {"description": UNSUPPORTED_FILE_TYPE},
+        status.HTTP_202_ACCEPTED: {
+            "description": DOC_ACCEPTED,
+            "model": DocumentStatusResponse,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "description": DOC_NOT_FOUND_1,
+            "model": MessageResponse,
+        },
+        status.HTTP_409_CONFLICT: {
+            "description": DOC_EXISTS,
+            "model": MessageResponse,
+        },
+        status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {
+            "description": FILE_TOO_LARGE,
+            "model": MessageResponse,
+        },
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
+            "description": UNSUPPORTED_FILE_TYPE,
+            "model": MessageResponse,
+        },
     },
-    response_model=DocumentStatusResponse,
 )
 async def update_document(
     id: UUID,
@@ -322,12 +360,17 @@ async def update_document(
 
 @router.delete(
     "/{id}",
-    status_code=status.HTTP_200_OK,
+    description=DELETE_DOC_DESC,
     responses={
-        status.HTTP_200_OK: {"description": DOC_DELETED_1},
-        status.HTTP_404_NOT_FOUND: {"description": DOC_NOT_FOUND_1},
+        status.HTTP_200_OK: {
+            "description": DOC_DELETED_1,
+            "model": MessageResponse,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "description": DOC_NOT_FOUND_1,
+            "model": MessageResponse,
+        },
     },
-    response_model=MessageResponse,
 )
 async def delete_document(id: UUID) -> MessageResponse:
     """Delete a document.
@@ -350,11 +393,5 @@ async def delete_document(id: UUID) -> MessageResponse:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=DOC_NOT_FOUND_2.format(id),
         )
-    except Exception:
-        # Re-raise exception as HTTPException
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=ERROR_DEL_DOC.format(id),
-        )
 
-    return MessageResponse(detail=DOC_DELETED_2.format(id))
+    return MessageResponse(message=DOC_DELETED_2.format(id))
