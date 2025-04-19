@@ -11,7 +11,8 @@ def get_text(file_path: str, chunk_size: int = 1000, overlap: int = 100) -> list
     Args:
         file_path (str): PDF file path.
         chunk_size (int): Target size of each text chunk.
-        overlap (int): Overlap size between consecutive chunks in characters (default: 100).
+        overlap (int): Overlap size between consecutive chunks in characters
+            (default: 100).
 
     Returns:
         list[str]: Extracted text chunks.

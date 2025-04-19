@@ -35,7 +35,7 @@ class DbStatusResponse(SQLModel, table=False):
 
 class TokenResponse(SQLModel, table=False):
     """Token model."""
-    
+
     access_token: str
     token_type: str
 

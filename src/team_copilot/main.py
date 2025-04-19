@@ -61,7 +61,7 @@ app = FastAPI(
             "description": INTERNAL_SERVER_ERROR,
             "model": MessageResponse,
         },
-    }
+    },
 )
 
 # Routers
@@ -81,7 +81,7 @@ async def handle_reqval_error(
     Args:
         request (Request): Request.
         exc (RequestValidationError): Exception.
-    
+
     Returns:
         JSONResponse: Error message.
     """
