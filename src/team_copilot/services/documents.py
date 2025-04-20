@@ -129,7 +129,7 @@ def process_doc(id: UUID):
                     document_id=doc.id,
                     chunk_text=tc,
                     chunk_index=i,
-                    embedding=get_embedding(tc),
+                    embedding=get_embedding(tc, "document"),
                 )
 
                 session.add(c)

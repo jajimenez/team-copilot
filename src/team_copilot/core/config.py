@@ -22,9 +22,15 @@ class Settings(BaseSettings):
     app_admin_user: str | None = None
     app_admin_password: str | None = None
     db_url: str
-    ollama_url: str  # E.g. http://localhost:8000
-    emb_model: str
+    llm_api_key: str
     llm_model: str
+    llm_max_retries: int = 2
+    llm_timeout_sec: int = 60
+    emb_api_key: str
+    emb_model: str
+    emb_dim: int
+    emb_max_retries: int = 2
+    emb_timeout_sec: int = 60
 
     class Config:
         env_file = ".env"

@@ -1,67 +1,52 @@
 """Team Copilot - Services - Documents."""
 
-import time
-import logging
-
-import requests
-from requests import RequestException
+from voyageai import Client
 
 from team_copilot.core.config import settings
 
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 # Messages
-ERROR_GET_EMB = 'Error getting the embedding (attempt {}): "{}".'
-NO_EMB_FOUND = "No embedding found."
+NO_EMB_FOUND = 'No embedding found in the API response.'
 
 
-def get_embedding(text: str, max_attempts: int = 3) -> list[float]:
+def get_embedding(text: str, input_type: str) -> list[float]:
     """Get the embedding for a given text.
+
+    This function uses the Voyage AI API to get the embedding.
 
     Args:
         text (str): Text.
-        max_attempts (int): Maximum number of attempts to get the embedding
-            (default: 3).
+        input_type (str): Input type ("document" or "query").
+    
+    Raises:
+        ValueError: If the input type is invalid or if no embedding is found in the API
+            response. 
 
     Returns:
         list[float]: Text embedding (vector).
     """
-    # Ollama embeddings endpoint
-    url = f"{settings.ollama_url}/api/embeddings"
+    # Check the input type
+    if input_type not in ["document", "query"]:
+        raise ValueError(f'Invalid input type: "{input_type}".')
 
-    # Request data
-    data = {
-        "model": settings.emb_model,
-        "prompt": text,
-    }
+    # Voyage AI API client
+    client = Client(
+        api_key=settings.emb_api_key,
+        max_retries=settings.emb_max_retries,
+        timeout=settings.emb_timeout_sec,
+    )
 
-    attempt = 0
+    # Make the request to the Voyage AI API
+    res = client.embed(
+        model=settings.emb_model,
+        input_type=input_type,
+        texts=[text],
+    )
 
-    while attempt < max_attempts:
-        try:
-            # Make the request
-            res = requests.post(url, json=data)
+    # Get the embedding from the API response
+    emb = res.embeddings[0]
 
-            # Raise an exception if the request failed
-            res.raise_for_status()
+    if not emb:
+        raise ValueError(NO_EMB_FOUND)
 
-            # Get the embedding
-            emb = res.json().get("embedding")
-
-            if not emb:
-                raise ValueError(NO_EMB_FOUND)
-
-            return emb
-        except (RequestException, ValueError) as e:
-            logger.error(ERROR_GET_EMB.format(attempt + 1, e))
-            attempt += 1
-
-            # Re-raise the exception if the maximum number of attempts is reached
-            if attempt >= max_attempts:
-                raise
-
-            # Wait for 1 second
-            time.sleep(1)
+    return emb

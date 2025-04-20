@@ -2,15 +2,17 @@
 
 from sqlalchemy.types import UserDefinedType
 
+from team_copilot.core.config import settings
+
 
 class VectorType(UserDefinedType):
     """PostgreSQL vector type."""
 
-    def __init__(self, precision=768):
+    def __init__(self, precision=settings.emb_dim):
         """Initialize the vector type.
 
         Args:
-            precision (int): Precision (default: 768).
+            precision (int): The dimension of the vector (default: "settings.emb_dim").
         """
         self.precision = precision
 
