@@ -1,1 +1,0 @@
-"""Team Copilot - Artificial Intelligence."""
