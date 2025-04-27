@@ -14,12 +14,6 @@ from team_copilot.routers import VAL_ERROR, UNAUTH
 
 
 # Descriptions and messages
-QUERY_AGENT_SUM = "Query the agent"
-
-QUERY_AGENT_DESC = (
-    "Ask the agent a question about the documents and get a streaming response."
-)
-
 AGENT_RES_CHUNK = dedent(
     """Agent response chunk. Each chunk is a string containing "data: " followed by the
     actual data in JSON format ({"index": string, "last": boolean, "text": string}) and
@@ -27,9 +21,15 @@ AGENT_RES_CHUNK = dedent(
     to true and "text" set to an empty string."""
 )
 
+QUERY_AGENT_DESC = (
+    "Ask the agent a question about the documents and get a streaming response."
+)
+
+QUERY_AGENT_SUM = "Query the agent"
+
 # Responses
-TEXT_EVENT_STREAM = "text/event-stream"
 AGENT_RES_EVENT = "data: {}\n\n"
+TEXT_EVENT_STREAM = "text/event-stream"
 
 # Examples
 chunk_ex = AgentResponseChunk(index=0, last=False, text="Text chunk")

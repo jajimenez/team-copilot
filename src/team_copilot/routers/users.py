@@ -11,9 +11,9 @@ from team_copilot.routers import UNAUTH
 
 
 # Descriptions and messages
-GET_CUR_USER_SUM = "Get the current authenticated user"
-GET_CUR_USER_DESC = f"{GET_CUR_USER_SUM}."
 CURRENT_USER = "Current user"
+GET_CUR_USER_DESC = "Get the current authenticated user."
+GET_CUR_USER_SUM = "Get the current authenticated user"
 
 # Router
 router = APIRouter(

@@ -11,13 +11,13 @@ from team_copilot.models.response import AppStatusResponse, DbStatusResponse
 
 
 # Descriptions and messages
-GET_APP_STATUS_SUM = "Get the application status"
-GET_APP_STATUS_DESC = f"{GET_APP_STATUS_SUM}."
-GET_DB_STATUS_SUM = "Get the database status"
-GET_DB_STATUS_DESC = f"{GET_DB_STATUS_SUM}."
 APP_AVAILABLE = "Application is available."
 DB_AVAILABLE = "Database is available."
 DB_UNAVAILABLE = "Database is unavailable."
+GET_APP_STATUS_DESC = "Get the application status."
+GET_APP_STATUS_SUM = "Get the application status"
+GET_DB_STATUS_DESC = "Get the database status."
+GET_DB_STATUS_SUM = "Get the database status"
 
 # Examples
 DB_AVAILABLE_EX = DbStatusResponse(status=DbStatus.AVAILABLE).model_dump()

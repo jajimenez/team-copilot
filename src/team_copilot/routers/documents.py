@@ -36,29 +36,29 @@ from team_copilot.routers import VAL_ERROR, UNAUTH
 # Descriptions and messages
 max_size_mb = settings.app_docs_max_size_bytes // (1024 * 1024)
 
-GET_DOC_SUM = "Get a document"
-GET_DOC_DESC = f"{GET_DOC_SUM}."
-DOC_ID = "Document ID."
-DOC_DATA = "Document data."
+CREATE_DOC_DESC = "Create a document."
 CREATE_DOC_SUM = "Create a document"
-CREATE_DOC_DESC = f"{CREATE_DOC_SUM}."
-DOC_TITLE = "Document title."
-DOC_FILE = "Document PDF file."
-DOC_ACCEPTED = "Document accepted."
-NO_FILE_NAME = "The file does not have a name."
-UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)."
-DOC_EXISTS = "A document with the same title or file name already exists."
-FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
-ERROR_UPL_FILE = 'Error uploading file "{}".'
-UPDATE_DOC_SUM = "Update a document"
-UPDATE_DOC_DESC = f"{UPDATE_DOC_SUM}."
+DELETE_DOC_DESC = "Delete a document."
 DELETE_DOC_SUM = "Delete a document"
-DELETE_DOC_DESC = f"{DELETE_DOC_SUM}."
+DOC_ACCEPTED = "Document accepted."
+DOC_DATA = "Document data."
 DOC_DELETED_1 = "Document deleted."
 DOC_DELETED_2 = 'Document "{}" deleted.'
+DOC_EXISTS = "A document with the same title or file name already exists."
+DOC_FILE = "Document PDF file."
+DOC_ID = "Document ID."
 DOC_NOT_FOUND_1 = "Document not found."
 DOC_NOT_FOUND_2 = 'Document "{}" not found.'
+DOC_TITLE = "Document title."
 ERROR_DEL_DOC = 'Error deleting document "{}".'
+ERROR_UPL_FILE = 'Error uploading file "{}".'
+FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
+GET_DOC_DESC = "Get a document."
+GET_DOC_SUM = "Get a document"
+NO_FILE_NAME = "The file does not have a name."
+UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)."
+UPDATE_DOC_DESC = "Update a document."
+UPDATE_DOC_SUM = "Update a document"
 
 # In the "create_document" and "update_document" endpoints, we can't set a SQLModel as
 # the input schema holding both the document title and the document file because

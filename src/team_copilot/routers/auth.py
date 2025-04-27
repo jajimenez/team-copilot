@@ -15,9 +15,9 @@ from team_copilot.routers import VAL_ERROR, INV_CRED
 
 
 # Descriptions and messages
-LOGIN_SUM = "Login"
 LOGIN_DESC = "Get an authentication token given a username and a password."
 LOGIN_OUT_DESC = f"Access token (valid for {settings.app_acc_token_exp_min} minutes)"
+LOGIN_SUM = "Login"
 TOKEN_RET = "Token retrieved successfully."
 
 # By not using a SQLModel model as the input schema of the "login" endpoint, the FastAPI
