@@ -105,3 +105,11 @@ class DocumentStatusResponse(SQLModel, table=False):
 
     document_id: UUID
     document_status: DocumentStatus
+
+
+class AgentResponseChunk(SQLModel, table=False):
+    """Agent response chunk model."""
+
+    index: int
+    last: bool = False
+    text: str

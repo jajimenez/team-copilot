@@ -6,7 +6,7 @@ from team_copilot.core.config import settings
 
 
 # Messages
-NO_EMB_FOUND = 'No embedding found in the API response.'
+NO_EMB_FOUND = "No embedding found in the API response."
 
 
 def get_embedding(text: str, input_type: str) -> list[float]:
@@ -17,10 +17,10 @@ def get_embedding(text: str, input_type: str) -> list[float]:
     Args:
         text (str): Text.
         input_type (str): Input type ("document" or "query").
-    
+
     Raises:
         ValueError: If the input type is invalid or if no embedding is found in the API
-            response. 
+            response.
 
     Returns:
         list[float]: Text embedding (vector).

@@ -8,6 +8,8 @@ from typing import Annotated
 from fastapi import (
     APIRouter,
     Depends,
+    Path,
+    Form,
     File,
     UploadFile,
     BackgroundTasks,
@@ -28,32 +30,58 @@ from team_copilot.models.response import (
 
 from team_copilot.dependencies import get_staff_user
 from team_copilot.services.documents import save_doc, get_doc, process_doc, delete_doc
-from team_copilot.routers import VALIDATION_ERROR, UNAUTHORIZED
+from team_copilot.routers import VAL_ERROR, UNAUTH
 
 
-# Messages
+# Descriptions and messages
 max_size_mb = settings.app_docs_max_size_bytes // (1024 * 1024)
 
+GET_DOC_SUM = "Get a document"
+GET_DOC_DESC = f"{GET_DOC_SUM}."
+DOC_ID = "Document ID."
 DOC_DATA = "Document data."
+CREATE_DOC_SUM = "Create a document"
+CREATE_DOC_DESC = f"{CREATE_DOC_SUM}."
+DOC_TITLE = "Document title."
+DOC_FILE = "Document PDF file."
 DOC_ACCEPTED = "Document accepted."
 NO_FILE_NAME = "The file does not have a name."
 UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)."
 DOC_EXISTS = "A document with the same title or file name already exists."
 FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
 ERROR_UPL_FILE = 'Error uploading file "{}".'
+UPDATE_DOC_SUM = "Update a document"
+UPDATE_DOC_DESC = f"{UPDATE_DOC_SUM}."
+DELETE_DOC_SUM = "Delete a document"
+DELETE_DOC_DESC = f"{DELETE_DOC_SUM}."
 DOC_DELETED_1 = "Document deleted."
 DOC_DELETED_2 = 'Document "{}" deleted.'
 DOC_NOT_FOUND_1 = "Document not found."
 DOC_NOT_FOUND_2 = 'Document "{}" not found.'
 ERROR_DEL_DOC = 'Error deleting document "{}".'
 
-# API documentation
-GET_DOC_DESC = "Get a document."
-CREATE_DOC_DESC = "Create a document."
-UPDATE_DOC_DESC = "Update a document."
-DELETE_DOC_DESC = "Delete a document."
+# In the "create_document" and "update_document" endpoints, we can't set a SQLModel as
+# the input schema holding both the document title and the document file because
+# SQLModel doesn't support file uploads. Also, we can't use a SQLModel to hold just the
+# title (e.g. the "team_copilot.models.request.DocumentRequest" model, which contains
+# only the title), because SQLModel works with JSON strings and the file is sent as
+# "multipart/form-data", which would make the request body an invalid JSON string.
+# Therefore, we need to send the title as "multipart/form-data" as well, using the
+# "Form" class and use the "DocumentRequest" model to validate the title.
 
-# Files
+# By not using a SQLModel model as the input schema of the "create_document" and
+# "update_document" endpoints, the FastAPI application object generates schema names
+# equal to the operation IDs of the endpoints. Therefore, we need to rename the schemas
+# in the OpenAPI documentation that the FastAPI application object generates (see the
+# "team_copilot.main" module).
+
+# Schemas to rename
+SCHEMA_NAMES = {
+    "Body_create_document": "DocumentRequest",
+    "Body_update_document": "DocumentRequest",
+}
+
+# Requests
 DOC_MIME_TYPE = "application/pdf"
 
 # Router
@@ -63,11 +91,11 @@ router = APIRouter(
     dependencies=[Depends(get_staff_user)],
     responses={
         status.HTTP_401_UNAUTHORIZED: {
-            "description": UNAUTHORIZED,
+            "description": UNAUTH,
             "model": MessageResponse,
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
-            "description": VALIDATION_ERROR,
+            "description": VAL_ERROR,
             "model": MessageResponse,
         },
     },
@@ -75,16 +103,16 @@ router = APIRouter(
 
 
 def validate_title(title: str):
-    """Validate a document title.
+    """Validate a document request title.
 
     Args:
-        title (str): Document title.
+        title (str): Document request title.
 
     Raises:
         RequestValidationError: If the title is invalid.
     """
     try:
-        # If the title is invalid, creating a document will raise a ValueError
+        # If the title is invalid, creating a Document object will raise a ValueError
         DocumentRequest(title=title)
     except ValueError as e:
         # Re-raise the exception as a RequestValidationError exception, which will be
@@ -149,6 +177,8 @@ async def upload_file(file: UploadFile, path: str):
 
 @router.get(
     "/{id}",
+    operation_id="get_document",
+    summary=GET_DOC_SUM,
     description=GET_DOC_DESC,
     responses={
         status.HTTP_200_OK: {
@@ -161,7 +191,9 @@ async def upload_file(file: UploadFile, path: str):
         },
     },
 )
-async def get_document(id: UUID) -> DocumentResponse:
+async def get_document(
+    id: Annotated[UUID, Path(description=DOC_ID)],
+) -> DocumentResponse:
     """Get a document.
 
     Args:
@@ -187,6 +219,8 @@ async def get_document(id: UUID) -> DocumentResponse:
 
 @router.post(
     "/",
+    operation_id="create_document",
+    summary=CREATE_DOC_SUM,
     description=CREATE_DOC_DESC,
     status_code=status.HTTP_202_ACCEPTED,
     responses={
@@ -209,8 +243,8 @@ async def get_document(id: UUID) -> DocumentResponse:
     },
 )
 async def create_document(
-    title: str,
-    file: Annotated[UploadFile, File(description="PDF file to upload")],
+    title: Annotated[str, Form(description=DOC_TITLE, min_length=1, max_length=100)],
+    file: Annotated[UploadFile, File(description=DOC_FILE)],
     bg_tasks: BackgroundTasks,
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> DocumentStatusResponse:
@@ -264,6 +298,8 @@ async def create_document(
 
 @router.put(
     "/{id}",
+    operation_id="update_document",
+    summary=UPDATE_DOC_SUM,
     description=UPDATE_DOC_DESC,
     status_code=status.HTTP_202_ACCEPTED,
     responses={
@@ -290,9 +326,9 @@ async def create_document(
     },
 )
 async def update_document(
-    id: UUID,
-    title: str,
-    file: Annotated[UploadFile, File(description="PDF file to upload")],
+    id: Annotated[UUID, Path(description=DOC_ID)],
+    title: Annotated[str, Form(description=DOC_TITLE, min_length=1, max_length=100)],
+    file: Annotated[UploadFile, File(description=DOC_FILE)],
     bg_tasks: BackgroundTasks,
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> DocumentStatusResponse:
@@ -360,6 +396,8 @@ async def update_document(
 
 @router.delete(
     "/{id}",
+    operation_id="delete_document",
+    summary=DELETE_DOC_SUM,
     description=DELETE_DOC_DESC,
     responses={
         status.HTTP_200_OK: {
@@ -372,7 +410,9 @@ async def update_document(
         },
     },
 )
-async def delete_document(id: UUID) -> MessageResponse:
+async def delete_document(
+    id: Annotated[UUID, Path(description=DOC_ID)],
+) -> MessageResponse:
     """Delete a document.
 
     Args:

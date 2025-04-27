@@ -7,14 +7,13 @@ from fastapi import APIRouter, Depends, status
 from team_copilot.models.data import User
 from team_copilot.models.response import UserResponse, MessageResponse
 from team_copilot.dependencies import get_enabled_user
-from team_copilot.routers import UNAUTHORIZED
+from team_copilot.routers import UNAUTH
 
 
-# Messages
+# Descriptions and messages
+GET_CUR_USER_SUM = "Get the current authenticated user"
+GET_CUR_USER_DESC = f"{GET_CUR_USER_SUM}."
 CURRENT_USER = "Current user"
-
-# API documentation
-GET_CUR_USER_DESC = "Get the current authenticated user."
 
 # Router
 router = APIRouter(
@@ -23,7 +22,7 @@ router = APIRouter(
     dependencies=[Depends(get_enabled_user)],
     responses={
         status.HTTP_401_UNAUTHORIZED: {
-            "description": UNAUTHORIZED,
+            "description": UNAUTH,
             "model": MessageResponse,
         },
     },
@@ -32,6 +31,8 @@ router = APIRouter(
 
 @router.get(
     "/me",
+    operation_id="get_current_user",
+    summary=GET_CUR_USER_SUM,
     description=GET_CUR_USER_DESC,
     responses={status.HTTP_200_OK: {"description": CURRENT_USER}},
     response_model=UserResponse,

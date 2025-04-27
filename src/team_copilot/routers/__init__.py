@@ -1,6 +1,6 @@
 """Team Copilot - Routers."""
 
-# Messages
-VALIDATION_ERROR = "Validation error"
-INVALID_CREDENTIALS = "Invalid credentials"
-UNAUTHORIZED = "Unauthorized"
+# Descriptions and messages
+VAL_ERROR = "Validation error"
+INV_CRED = "Invalid credentials"
+UNAUTH = "Unauthorized"

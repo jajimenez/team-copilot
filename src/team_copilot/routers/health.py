@@ -10,11 +10,11 @@ from team_copilot.models.data import DbStatus
 from team_copilot.models.response import AppStatusResponse, DbStatusResponse
 
 
-# Descriptions
-GET_APP_STATUS_DESC = "Get the status of the application."
-GET_DB_STATUS_DESC = "Get the status of the database."
-
-# Messages
+# Descriptions and messages
+GET_APP_STATUS_SUM = "Get the application status"
+GET_APP_STATUS_DESC = f"{GET_APP_STATUS_SUM}."
+GET_DB_STATUS_SUM = "Get the database status"
+GET_DB_STATUS_DESC = f"{GET_DB_STATUS_SUM}."
 APP_AVAILABLE = "Application is available."
 DB_AVAILABLE = "Database is available."
 DB_UNAVAILABLE = "Database is unavailable."
@@ -29,6 +29,8 @@ router = APIRouter(prefix="/health", tags=["health"])
 
 @router.get(
     "/app",
+    operation_id="get_app_status",
+    summary=GET_APP_STATUS_SUM,
     description=GET_APP_STATUS_DESC,
     responses={status.HTTP_200_OK: {"description": APP_AVAILABLE}},
     response_model=AppStatusResponse,
@@ -44,6 +46,8 @@ def get_app_status() -> AppStatusResponse:
 
 @router.get(
     "/db",
+    operation_id="get_db_status",
+    summary=GET_DB_STATUS_SUM,
     description=GET_DB_STATUS_DESC,
     responses={
         status.HTTP_200_OK: {

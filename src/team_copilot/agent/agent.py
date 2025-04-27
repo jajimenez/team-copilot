@@ -88,29 +88,7 @@ class Agent:
         msg = self.llm.invoke(messages)
         return {"messages": [msg]}
 
-    def query(self, text: str) -> str:
-        """Query the agent.
-
-        Args:
-            text (str): Query text.
-
-        Returns:
-            str: Response.
-        """
-        # Check that the text is not null or empty
-        if not text:
-            raise ValueError("Query text cannot be null or empty.")
-
-        # Create the input messages
-        messages = {"messages": [HumanMessage(content=text)]}
-
-        # Call the graph
-        res = self.graph.invoke(messages)
-
-        # Get the response
-        return res["messages"][-1].content
-
-    def stream_query(self, text: str) -> Generator[str, None, None]:
+    def query(self, text: str) -> Generator[str, None, None]:
         """Query the agent in stream mode.
 
         Args:
@@ -127,9 +105,9 @@ class Agent:
 
         for token, _ in self.graph.stream(inp, stream_mode="messages"):
             if (
-                token.type == "AIMessageChunk" and
-                hasattr(token, "content") and
-                token.content and
-                (token_txt := token.content[0].get("text"))
+                token.type == "AIMessageChunk"
+                and hasattr(token, "content")
+                and token.content
+                and (token_txt := token.content[0].get("text"))
             ):
                 yield token_txt
