@@ -1,6 +1,6 @@
 """Team Copilot - Services - Extraction."""
 
-import fitz
+import fitz  # Main module from the "pymupdf" package
 from PIL import Image
 import pytesseract
 
