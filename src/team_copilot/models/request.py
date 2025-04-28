@@ -6,32 +6,32 @@ from sqlmodel import SQLModel, Field
 
 USERNAME = "Username"
 PASSWORD = "Password"
-DOC_TITLE = "Document title"
+DOC_NAME = "Document name"
 QUERY_TEXT = "Query text"
 
 
 class DocumentRequest(SQLModel, table=False):
     """Document request model."""
 
-    title: str = Field(min_length=1, max_length=100, description=DOC_TITLE)
+    name: str = Field(min_length=1, max_length=100, description=DOC_NAME)
 
-    @field_validator("title")
-    def validate_title(cls, v: str) -> str:
-        """Validate the title field.
+    @field_validator("name")
+    def validate_name(cls, v: str) -> str:
+        """Validate the name field.
 
-        The title field, when stripped, must not be empty.
+        The name field, when stripped, must not be empty.
 
         Args:
-            v (str): Title value.
+            v (str): Name value.
 
         Raises:
-            ValueError: If the title is empty after stripping.
+            ValueError: If the name is empty after stripping.
 
         Returns:
-            str: Title value.
+            str: Name value.
         """
         if not v.strip():
-            raise ValueError("Title must not be empty.")
+            raise ValueError("Name must not be empty.")
 
         return v
 

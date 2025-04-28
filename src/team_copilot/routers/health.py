@@ -20,8 +20,8 @@ GET_DB_STATUS_DESC = "Get the database status."
 GET_DB_STATUS_SUM = "Get the database status"
 
 # Examples
-DB_AVAILABLE_EX = DbStatusResponse(status=DbStatus.AVAILABLE).model_dump()
-DB_UNAVAILABLE_EX = DbStatusResponse(status=DbStatus.UNAVAILABLE).model_dump()
+DB_AVAILABLE_EX: dict = DbStatusResponse(status=DbStatus.AVAILABLE).model_dump()
+DB_UNAVAILABLE_EX: dict = DbStatusResponse(status=DbStatus.UNAVAILABLE).model_dump()
 
 # Router
 router = APIRouter(prefix="/health", tags=["health"])

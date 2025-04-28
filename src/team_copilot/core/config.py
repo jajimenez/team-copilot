@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     app_secret_key: str
     app_hash_algorithm: str = "HS256"
     app_acc_token_exp_min: int = 60
+    app_temp_dir: str = "/tmp/team-copilot"
     app_docs_max_size_bytes: int = 1024 * 1024 * 10  # 10 MB
-    app_docs_dir: str
     app_admin_user: str | None = None
     app_admin_password: str | None = None
     db_url: str

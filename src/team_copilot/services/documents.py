@@ -1,6 +1,7 @@
 """Team Copilot - Services - Documents."""
 
 from os import remove
+from os.path import join, exists
 from datetime import datetime, timezone
 from uuid import UUID
 import logging
@@ -19,13 +20,27 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Messages
-GET_DOC_ARG_ERROR = "At least one of the ID, title or path must be provided."
-PROC_DOC = 'Processing document "{}" ("{}")...'
-DOC_PROC = 'Document "{}" ("{}") processed.'
-ERROR_PROC_DOC = 'Error processing document "{}" ("{}"): "{}".'
-DOC_DELETED = 'Document "{}" ("{}") deleted.'
-DOC_NOT_FOUND = 'Document "{}" not found.'
-ERROR_DEL_DOC = 'Error deleting document "{}": "{}".'
+DOC_ALR_PROC = "Document {} ({}) already processed."
+DOC_DEL = "Document {} ({}) deleted."
+DOC_NF = "Document {} not found."
+DOC_PROC = "Document {} ({}) processed."
+ERROR_DEL_DOC = "Error deleting document {}: {}."
+ERROR_PROC_DOC = "Error processing document {} ({}): {}."
+GET_DOC_ARG_ERROR = "At least, the ID or the name must be provided."
+PROC_DOC = "Processing document {} ({})..."
+TEMP_FILE_DEL = "Temporary PDF file ({}) of the document {} ({}) deleted."
+
+
+def get_doc_temp_file_path(doc_id: UUID) -> str:
+    """Get the path of the temporary PDF file of a document given the document ID.
+
+    Args:
+        doc_id (UUID): Document ID.
+
+    Returns:
+        str: Temporary PDF file path.
+    """
+    return join(settings.app_temp_dir, f"{doc_id}.pdf")
 
 
 def save_doc(doc: Document):
@@ -57,40 +72,38 @@ def save_doc(doc: Document):
         session.refresh(doc)
 
 
-def get_doc(
-    id: UUID | None = None,
-    title: str | None = None,
-    path: str | None = None,
-) -> Document | None:
-    """Get a document by its ID, title or file path.
+def get_doc(id: UUID | None = None, name: str | None = None) -> Document | None:
+    """Get a document by its ID or name.
 
     Args:
         id (UUID | None): Document ID.
-        title (str | None): Document title.
-        path (str | None): Document file path.
+        name (str | None): Document name.
 
     Returns:
-        bool: Wether the document exists.
+        Document | None: The document if it exists or None otherwise.
     """
-    if not id and not title and not path:
+    if not id and not name:
         raise ValueError(GET_DOC_ARG_ERROR)
 
     with open_session(settings.db_url) as session:
-        s = select(Document).where(
-            (Document.id == id) | (Document.title == title) | (Document.path == path)
-        )
+        # Create statement
+        s = select(Document).where((Document.id == id) | (Document.name == name))
 
+        # Execute the statement
         return session.exec(s).first()
 
 
 def process_doc(id: UUID):
-    """Process a document.
+    """Process a document after its PDF file has been uploaded.
+
+    When the document is processed, its PDF file is deleted.
 
     Args:
         id (UUID): Document ID.
 
     Raises:
-        ValueError: If the document is not found.
+        ValueError: If the document is not found or if the document has been already
+            processed.
     """
     with open_session(settings.db_url) as session:
         try:
@@ -99,9 +112,13 @@ def process_doc(id: UUID):
 
             # Check that the document exists
             if not doc:
-                raise ValueError(DOC_NOT_FOUND.format(id))
+                raise ValueError(DOC_NF.format(id))
 
-            logger.info(PROC_DOC.format(doc.id, doc.title))
+            # Check that the document has not been already processed
+            if doc.status != DocumentStatus.PENDING:
+                raise ValueError(DOC_ALR_PROC.format(doc.id, doc.name))
+
+            logger.info(PROC_DOC.format(doc.id, doc.name))
 
             # Add document to the session
             session.add(doc)
@@ -112,8 +129,9 @@ def process_doc(id: UUID):
             # Commit the changes to the database
             session.commit()
 
-            # Extract the text chunks from the document
-            text_chunks: list[str] = get_text(doc.path)
+            # Extract the text chunks from the PDF file
+            file_path = get_doc_temp_file_path(doc.id)
+            text_chunks: list[str] = get_text(file_path)
 
             # Delete the existing chunks from the database if any
             if doc.chunks:
@@ -140,9 +158,12 @@ def process_doc(id: UUID):
             # Commit the changes to the database
             session.commit()
 
-            logger.info(DOC_PROC.format(doc.id, doc.title))
+            # Delete the temporary PDF file
+            remove(file_path)
+
+            logger.info(DOC_PROC.format(doc.id, doc.name))
         except Exception as e:
-            logger.error(ERROR_PROC_DOC.format(doc.id, doc.title, e))
+            logger.error(ERROR_PROC_DOC.format(doc.id, doc.name, e))
 
             # Update the document status to Failed
             doc.status = DocumentStatus.FAILED
@@ -168,7 +189,7 @@ def delete_doc(id: UUID):
         doc = session.get(Document, id)
 
         if not doc:
-            m = DOC_NOT_FOUND.format(id)
+            m = DOC_NF.format(id)
             logger.error(m)
             raise ValueError(m)
 
@@ -179,12 +200,16 @@ def delete_doc(id: UUID):
             # Commit the changes to the database
             session.commit()
 
-            # Delete the document file
-            remove(doc.path)
+            # Delete the temporary PDF file if it exists
+            file_path = get_doc_temp_file_path(doc.id)
+
+            if exists(file_path):
+                remove(file_path)
+                logger.info(TEMP_FILE_DEL.format(file_path, doc.id, doc.name))
         except Exception as e:
             logger.error(ERROR_DEL_DOC.format(doc.id, e))
 
             # Re-raise the exception
             raise
 
-        logger.info(DOC_DELETED.format(doc.id, doc.title))
+        logger.info(DOC_DEL.format(doc.id, doc.name))

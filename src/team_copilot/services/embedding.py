@@ -1,12 +1,11 @@
 """Team Copilot - Services - Documents."""
 
 from voyageai import Client
-
 from team_copilot.core.config import settings
 
 
 # Messages
-NO_EMB_FOUND = "No embedding found in the API response."
+NO_EMB = "No embedding found in the API response."
 
 
 def get_embedding(text: str, input_type: str) -> list[float]:
@@ -27,7 +26,7 @@ def get_embedding(text: str, input_type: str) -> list[float]:
     """
     # Check the input type
     if input_type not in ["document", "query"]:
-        raise ValueError(f'Invalid input type: "{input_type}".')
+        raise ValueError(f"Invalid input type: {input_type}.")
 
     # Voyage AI API client
     client = Client(
@@ -47,6 +46,6 @@ def get_embedding(text: str, input_type: str) -> list[float]:
     emb = res.embeddings[0]
 
     if not emb:
-        raise ValueError(NO_EMB_FOUND)
+        raise ValueError(NO_EMB)
 
     return emb

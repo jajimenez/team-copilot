@@ -14,11 +14,12 @@ from team_copilot.routers import VAL_ERROR, UNAUTH
 
 
 # Descriptions and messages
-AGENT_RES_CHUNK = dedent(
-    """Agent response chunk. Each chunk is a string containing "data: " followed by the
-    actual data in JSON format ({"index": string, "last": boolean, "text": string}) and
-    followed by two newline characters. The last chunk has "index" set to -1, "last" set
-    to true and "text" set to an empty string."""
+AGENT_RES = dedent(
+    """Stream of events with the Server-Sent Events (SSE) format. Each event is a string
+    containing "data: " followed by the actual event data in JSON format
+    ({"index": string, "last": boolean, "text": string}) and followed by two newline
+    characters. The data of the last event has "index" set to -1, "last" set to true and
+    "text" set to an empty string."""
 )
 
 QUERY_AGENT_DESC = (
@@ -28,12 +29,10 @@ QUERY_AGENT_DESC = (
 QUERY_AGENT_SUM = "Query the agent"
 
 # Responses
-AGENT_RES_EVENT = "data: {}\n\n"
 TEXT_EVENT_STREAM = "text/event-stream"
 
 # Examples
-chunk_ex = AgentResponseChunk(index=0, last=False, text="Text chunk")
-AGENT_RES_EX = AGENT_RES_EVENT.format(chunk_ex.model_dump_json(indent=2))
+chunk_ex: str = AgentResponseChunk(index=0, last=False, text="Text chunk").to_sse()
 
 # Router
 router = APIRouter(
@@ -60,8 +59,8 @@ router = APIRouter(
     description=QUERY_AGENT_DESC,
     responses={
         status.HTTP_200_OK: {
-            "description": AGENT_RES_CHUNK,
-            "content": {TEXT_EVENT_STREAM: {"example": AGENT_RES_EX}},
+            "description": AGENT_RES,
+            "content": {TEXT_EVENT_STREAM: {"example": chunk_ex}},
         },
     },
     response_class=StreamingResponse,
@@ -69,11 +68,11 @@ router = APIRouter(
 async def query_agent(query: AgentQueryRequest) -> StreamingResponse:
     """Query the agent and get a streaming response.
 
-    The response follows the Server-Sent Events (SSE) format, being returned as a stream
-    of events. The data of each event is a string containing "data: " followed by the
-    actual data in JSON format ({"index": string, "last": boolean, "text": string}) and
-    followed by two newline characters. The JSON data of the last event has "index" set
-    to -1, "last" set to true and "text" set to an empty string.
+    The response is a stream of events with the Server-Sent Events (SSE) format. Each
+    event is a string containing "data: " followed by the actual event data in JSON
+    format ({"index": string, "last": boolean, "text": string}) and followed by two
+    newline characters. The data of the last event has "index" set to -1, "last" set to
+    true and "text" set to an empty string.
 
     Args:
         query (AgentQueryRequest): Query to send to the agent.
@@ -86,12 +85,10 @@ async def query_agent(query: AgentQueryRequest) -> StreamingResponse:
         """Get a generator to yield agent response chunks."""
         # Query the agent and yield each response chunk
         for i, res in enumerate(agent.query(text)):
-            chunk = AgentResponseChunk(index=i, last=False, text=res)
-            yield AGENT_RES_EVENT.format(chunk.model_dump_json())
+            yield AgentResponseChunk(index=i, last=False, text=res).to_sse()
 
         # Yield the last chunk to indicate completion
-        last_chunk = AgentResponseChunk(index=-1, last=True, text="")
-        yield AGENT_RES_EVENT.format(last_chunk.model_dump_json())
+        yield AgentResponseChunk(index=-1, last=True, text="").to_sse()
 
     # Create an agent instance
     agent = Agent()

@@ -12,7 +12,7 @@ from team_copilot.services.embedding import get_embedding
 
 
 # Messages
-NO_EMB_FOUND = 'No embedding found for text "{}".'
+NO_EMB = 'No embedding found for text "{}".'
 ERROR_GET_CHUNKS = 'Error getting similar chunks for text "{}": "{}".'
 
 # Setup logging
@@ -34,7 +34,7 @@ def get_most_similar_chunks(query: str, limit: int = 5) -> list[DocumentChunk]:
     emb = get_embedding(query, "query")
 
     if not emb:
-        error = NO_EMB_FOUND.format(query)
+        error = NO_EMB.format(query)
         logger.error(error)
 
         raise ValueError(error)

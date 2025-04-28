@@ -105,8 +105,7 @@ class Document(SQLModel, table=True):
         default=None,
     )
 
-    title: str = Field(unique=True, min_length=1, max_length=100)
-    path: str = Field(unique=True, min_length=1, max_length=300)
+    name: str = Field(unique=True, min_length=1, max_length=100)
 
     # "status" is a custom type, so it requires an explicit Column definition.
     status: DocumentStatus = Field(

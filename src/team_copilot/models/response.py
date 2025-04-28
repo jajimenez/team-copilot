@@ -1,8 +1,8 @@
 """Team Copilot - Models - Response Models."""
 
-from os.path import basename
 from uuid import UUID
 from datetime import datetime
+import json
 
 from sqlmodel import SQLModel
 
@@ -77,8 +77,7 @@ class DocumentResponse(SQLModel, table=False):
     """Document Response model."""
 
     id: UUID | None
-    title: str
-    file_name: str
+    name: str
     status: DocumentStatus
     created_at: datetime | None
     updated_at: datetime | None
@@ -92,8 +91,7 @@ class DocumentResponse(SQLModel, table=False):
         """
         return cls(
             id=document.id,
-            title=document.title,
-            file_name=basename(document.path),
+            name=document.name,
             status=document.status,
             created_at=document.created_at,
             updated_at=document.updated_at,
@@ -113,3 +111,20 @@ class AgentResponseChunk(SQLModel, table=False):
     index: int
     last: bool = False
     text: str
+
+    def to_sse(self) -> str:
+        """Convert the instance to an event string with the Server-Sent Events (SSE)
+        format.
+
+        Returns:
+            str: Server-Sent Events (SSE) event string, containing "data: " followed by
+                the actual data in JSON format ({"index": string, "last": boolean,
+                "text": string}) and followed by two newline characters.
+        """
+        # We call the "json.dumps" function and the "SQLModel.model_dump" method instead
+        # of calling the "SQLModel.model_dump_json" method directly because
+        # "SQLModel.model_dump_json" generates the JSON string without a whitespace
+        # after each separator (comma or semicolon) and it doesn't allow to add the
+        # whitespaces.
+        data = json.dumps(self.model_dump(), separators=(", ", ": "))
+        return f"data: {data}\n\n"

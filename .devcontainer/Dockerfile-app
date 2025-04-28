@@ -1,22 +1,22 @@
 # Base image
 FROM mcr.microsoft.com/devcontainers/python:1-3.12-bullseye
 
-# Directory where the uploaded PDF files will be stored
-ENV TEAM_COPILOT_APP_DOCS_DIR=/team-copilot-docs
+# Temporary directory where the PDF documents will be uploaded
+ENV TEAM_COPILOT_APP_TEMP_DIR=/tmp/team-copilot
 
 # Steps:
 #   1. Create a directory as the workspace inside the user's home directory.
-#   2. Create a directory to store the PDF files.
-#   3. Change the owner of the PDF files directory to the "vscode" user. This is neeeded to allow
-#      the API to store the uploaded PDF files to this directory, when running the API in this dev
-#      container.
+#   2. Create the temporary directory to upload the PDF documents to.
+#   3. Change the owner of the temporary directory to the "vscode" user. This is neeeded
+#      to allow the application to save the uploaded PDF documents in this directory.
 #   4. Update the APT package list.
-#   5. Install the APT packages for building the Psycopg2 Python package and install Tesseract.
+#   5. Install the APT packages for building the Psycopg2 Python package and install
+#      Tesseract.
 #   6. Update the PIP Python package.
 #   7. Install the Poetry Python package.
 RUN mkdir -p /home/vscode/team-copilot && \
-    mkdir -p $TEAM_COPILOT_APP_DOCS_DIR && \
-    chown vscode:vscode $TEAM_COPILOT_APP_DOCS_DIR && \
+    mkdir -p $TEAM_COPILOT_APP_TEMP_DIR && \
+    chown vscode:vscode $TEAM_COPILOT_APP_TEMP_DIR && \
     apt-get update && \
     apt-get install -y python3-dev libpq-dev tesseract-ocr-all && \
     pip install --root-user-action ignore --upgrade pip && \
