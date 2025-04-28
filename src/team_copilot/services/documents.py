@@ -105,6 +105,9 @@ def process_doc(id: UUID):
         ValueError: If the document is not found or if the document has been already
             processed.
     """
+    # Temporary PDF file path
+    file_path = get_doc_temp_file_path(doc.id)
+
     with open_session(settings.db_url) as session:
         try:
             # Get the document
@@ -130,7 +133,6 @@ def process_doc(id: UUID):
             session.commit()
 
             # Extract the text chunks from the PDF file
-            file_path = get_doc_temp_file_path(doc.id)
             text_chunks: list[str] = get_text(file_path)
 
             # Delete the existing chunks from the database if any
@@ -160,6 +162,7 @@ def process_doc(id: UUID):
 
             # Delete the temporary PDF file
             remove(file_path)
+            logger.info(TEMP_FILE_DEL.format(file_path, doc.id, doc.name))
 
             logger.info(DOC_PROC.format(doc.id, doc.name))
         except Exception as e:
@@ -170,6 +173,11 @@ def process_doc(id: UUID):
 
             # Commit the changes to the database
             session.commit()
+
+            # Delete the temporary PDF file if it exists
+            if exists(file_path):
+                remove(file_path)
+                logger.info(TEMP_FILE_DEL.format(file_path, doc.id, doc.name))
 
             # Re-raise the exception
             raise
