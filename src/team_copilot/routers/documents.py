@@ -18,7 +18,8 @@ from fastapi import (
 
 from fastapi.exceptions import RequestValidationError, HTTPException
 
-from team_copilot.core.config import Settings, get_settings, settings
+from team_copilot.core.config import settings
+from team_copilot.core.auth import get_staff_user
 from team_copilot.models.data import Document
 from team_copilot.models.request import DocumentRequest
 
@@ -27,8 +28,6 @@ from team_copilot.models.response import (
     DocumentResponse,
     DocumentStatusResponse,
 )
-
-from team_copilot.dependencies import get_staff_user
 
 from team_copilot.services.documents import (
     get_doc_temp_file_path,
@@ -44,10 +43,10 @@ from team_copilot.routers import VAL_ERROR, UNAUTH
 # Descriptions and messages
 max_size_mb = settings.app_docs_max_size_bytes // (1024 * 1024)
 
-CREATE_DOC_DESC = "Create a document."
-CREATE_DOC_SUM = "Create a document"
-DELETE_DOC_DESC = "Delete a document."
-DELETE_DOC_SUM = "Delete a document"
+CRE_DOC_DESC = "Create a document. Only staff users are authorized."
+CRE_DOC_SUM = "Create a document"
+DEL_DOC_DESC = "Delete a document. Only staff users are authorized."
+DEL_DOC_SUM = "Delete a document"
 DOC_ACCEPTED = "Document accepted."
 DOC_DATA = "Document data."
 DOC_DEL_1 = "Document deleted."
@@ -64,7 +63,7 @@ FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
 GET_DOC_DESC = "Get a document."
 GET_DOC_SUM = "Get a document"
 UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)."
-UPDATE_DOC_DESC = "Update a document."
+UPDATE_DOC_DESC = "Update a document. Only staff users are authorized."
 UPDATE_DOC_SUM = "Update a document"
 
 # In the "create_document" and "update_document" endpoints, we can't set a SQLModel as
@@ -233,8 +232,8 @@ async def get_document(
 @router.post(
     "/",
     operation_id="create_document",
-    summary=CREATE_DOC_SUM,
-    description=CREATE_DOC_DESC,
+    summary=CRE_DOC_SUM,
+    description=CRE_DOC_DESC,
     status_code=status.HTTP_202_ACCEPTED,
     responses={
         status.HTTP_202_ACCEPTED: {
@@ -403,8 +402,8 @@ async def update_document(
 @router.delete(
     "/{id}",
     operation_id="delete_document",
-    summary=DELETE_DOC_SUM,
-    description=DELETE_DOC_DESC,
+    summary=DEL_DOC_SUM,
+    description=DEL_DOC_DESC,
     responses={
         status.HTTP_200_OK: {
             "description": DOC_DEL_1,

@@ -10,6 +10,29 @@ DOC_NAME = "Document name"
 QUERY_TEXT = "Query text"
 
 
+class UpdateUserRequest(SQLModel, table=False):
+    """Update User request model."""
+
+    username: str = Field(min_length=3, max_length=100)
+    name: str | None = Field(min_length=1, max_length=100)
+    email: str | None = Field(min_length=3, max_length=100)
+    staff: bool | None = False
+    admin: bool = False
+    enabled: bool = False
+
+
+class CreateUserRequest(UpdateUserRequest):
+    """Create User request model."""
+
+    password: str = Field(min_length=8, max_length=200)
+
+
+class UpdateUserPasswordRequest(SQLModel, table=False):
+    """Update User Password request model."""
+
+    password: str = Field(min_length=8, max_length=200)
+
+
 class DocumentRequest(SQLModel, table=False):
     """Document request model."""
 

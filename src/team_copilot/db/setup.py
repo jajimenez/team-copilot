@@ -1,5 +1,7 @@
 """Team Copilot - Database - Setup."""
 
+import logging
+
 from sqlmodel import create_engine, SQLModel
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
@@ -9,8 +11,14 @@ from sqlalchemy.engine import Engine
 # database.
 from team_copilot.models.data import *
 
+from team_copilot.models.data import User
 from team_copilot.core.config import settings
-from team_copilot.core.auth import get_user, create_user
+from team_copilot.services.users import get_user, save_user
+
+
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def setup(db_url: str):
@@ -52,12 +60,19 @@ def setup(db_url: str):
     # "TEAM_COPILOT_APP_ADMIN_PASSWORD" environment variables are set and the user does
     # not already exist.
     if settings.app_admin_user is not None and settings.app_admin_password is not None:
-        if not get_user(settings.app_admin_user):
-            create_user(
-                settings.app_admin_user,
-                settings.app_admin_password,
+        if not get_user(username=settings.app_admin_user):
+            # Create the user object. The ID is set to None because it will be generated
+            # automatically by the database server when the user is saved to the
+            # database.
+            user = User(
+                username=settings.app_admin_user,
+                password=settings.app_admin_password,
                 name="Administrator",
                 staff=True,
                 admin=True,
                 enabled=True,
             )
+
+            # Save the user to the database. The password is hashed automatically and
+            # the ID is set to the ID generated automatically by the database server.
+            save_user(user)

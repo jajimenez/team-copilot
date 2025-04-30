@@ -7,24 +7,8 @@ services:
       - "8000:8000"
     depends_on:
       - db
-    environment:
-      - TEAM_COPILOT_DEBUG=false
-      - TEAM_COPILOT_APP_HOST=0.0.0.0
-      - TEAM_COPILOT_APP_PORT=8000
-      - TEAM_COPILOT_APP_SECRET_KEY=${TEAM_COPILOT_APP_SECRET_KEY}
-      - TEAM_COPILOT_APP_TEMP_DIR=/tmp/team-copilot
-      - TEAM_COPILOT_APP_ADMIN_USER=admin
-      - TEAM_COPILOT_APP_ADMIN_PASSWORD=admin
-      - TEAM_COPILOT_DB_URL=postgresql://team_copilot:team_copilot@db:5432/team_copilot
-      - TEAM_COPILOT_LLM_API_KEY=${TEAM_COPILOT_LLM_API_KEY}
-      - TEAM_COPILOT_LLM_MODEL=${TEAM_COPILOT_LLM_MODEL}
-      - TEAM_COPILOT_LLM_MAX_RETRIES=2
-      - TEAM_COPILOT_LLM_TIMEOUT_SEC=60
-      - TEAM_COPILOT_EMB_API_KEY=${TEAM_COPILOT_EMB_API_KEY}
-      - TEAM_COPILOT_EMB_MODEL=${TEAM_COPILOT_EMB_MODEL}
-      - TEAM_COPILOT_EMB_DIM=1024
-      - TEAM_COPILOT_EMB_MAX_RETRIES=2
-      - TEAM_COPILOT_EMB_TIMEOUT_SEC=60
+    env_file:
+      - .env_app
     volumes:
       - ..:/home/vscode/team-copilot
     stdin_open: true
@@ -35,10 +19,8 @@ services:
       dockerfile: Dockerfile-db
     ports:
       - "5432:5432"
-    environment:
-      - POSTGRES_USER=team_copilot
-      - POSTGRES_PASSWORD=team_copilot
-      - POSTGRES_DB=team_copilot
+    env_file:
+      - .env_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]

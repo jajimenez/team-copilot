@@ -15,7 +15,7 @@ from team_copilot.services.embedding import get_embedding
 NO_EMB = 'No embedding found for text "{}".'
 ERROR_GET_CHUNKS = 'Error getting similar chunks for text "{}": "{}".'
 
-# Setup logging
+# Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

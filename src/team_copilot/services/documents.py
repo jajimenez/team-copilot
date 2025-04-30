@@ -15,20 +15,43 @@ from team_copilot.services.extraction import get_text
 from team_copilot.services.embedding import get_embedding
 
 
-# Setup logging
+# Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Messages
 DOC_ALR_PROC = "Document {} ({}) already processed."
+DOC_CRE = "Document {} ({}) created."
 DOC_DEL = "Document {} ({}) deleted."
 DOC_NF = "Document {} not found."
 DOC_PROC = "Document {} ({}) processed."
-ERROR_DEL_DOC = "Error deleting document {}: {}."
+DOC_UPD = "Document {} ({}) updated."
+ERROR_DEL_DOC = "Error deleting document {} ({}): {}."
 ERROR_PROC_DOC = "Error processing document {} ({}): {}."
-GET_DOC_ARG_ERROR = "At least, the ID or the name must be provided."
+GET_DOC_ARG = "At least, the ID or the name must be provided."
 PROC_DOC = "Processing document {} ({})..."
 TEMP_FILE_DEL = "Temporary PDF file ({}) of the document {} ({}) deleted."
+
+
+def get_doc(id: UUID | None = None, name: str | None = None) -> Document | None:
+    """Get a document by its ID or name.
+
+    Args:
+        id (UUID | None): Document ID.
+        name (str | None): Document name.
+
+    Returns:
+        Document | None: The document if it exists or None otherwise.
+    """
+    if not id and not name:
+        raise ValueError(GET_DOC_ARG)
+
+    with open_session(settings.db_url) as session:
+        # Create statement
+        s = select(Document).where((Document.id == id) | (Document.name == name))
+
+        # Execute the statement
+        return session.exec(s).first()
 
 
 def get_doc_temp_file_path(doc_id: UUID) -> str:
@@ -46,7 +69,7 @@ def get_doc_temp_file_path(doc_id: UUID) -> str:
 def save_doc(doc: Document):
     """Save a document to the database.
 
-    If the document is new, the ID in the database object is set to the ID generated
+    If the document is new, the ID in the `Document` object is set to the ID generated
     automatically by the database server. If the document already exists, its
     "updated_at" field is updated to the current time.
 
@@ -60,37 +83,24 @@ def save_doc(doc: Document):
         # Set the status to Pending
         doc.status = DocumentStatus.PENDING
 
-        # Check if the document already exists (it exists if the ID in the document
+        # Check if the document already exists (it exists if the ID in the Document
         # object is set). If it exists, update the "updated_at" field.
         if doc.id:
+            update = True
             doc.updated_at = datetime.now(timezone.utc)
+        else:
+            update = False
 
         # Commit the changes to the database
         session.commit()
 
+        if update:
+            logger.info(DOC_UPD.format(doc.id, doc.name))
+        else:
+            logger.info(DOC_CRE.format(doc.id, doc.name))
+
         # Refresh the document to get the ID
         session.refresh(doc)
-
-
-def get_doc(id: UUID | None = None, name: str | None = None) -> Document | None:
-    """Get a document by its ID or name.
-
-    Args:
-        id (UUID | None): Document ID.
-        name (str | None): Document name.
-
-    Returns:
-        Document | None: The document if it exists or None otherwise.
-    """
-    if not id and not name:
-        raise ValueError(GET_DOC_ARG_ERROR)
-
-    with open_session(settings.db_url) as session:
-        # Create statement
-        s = select(Document).where((Document.id == id) | (Document.name == name))
-
-        # Execute the statement
-        return session.exec(s).first()
 
 
 def process_doc(id: UUID):
@@ -106,7 +116,7 @@ def process_doc(id: UUID):
             processed.
     """
     # Temporary PDF file path
-    file_path = get_doc_temp_file_path(doc.id)
+    file_path = get_doc_temp_file_path(id)
 
     with open_session(settings.db_url) as session:
         try:
@@ -159,20 +169,18 @@ def process_doc(id: UUID):
 
             # Commit the changes to the database
             session.commit()
+            logger.info(DOC_PROC.format(doc.id, doc.name))
 
             # Delete the temporary PDF file
             remove(file_path)
             logger.info(TEMP_FILE_DEL.format(file_path, doc.id, doc.name))
-
-            logger.info(DOC_PROC.format(doc.id, doc.name))
         except Exception as e:
-            logger.error(ERROR_PROC_DOC.format(doc.id, doc.name, e))
-
             # Update the document status to Failed
             doc.status = DocumentStatus.FAILED
 
             # Commit the changes to the database
             session.commit()
+            logger.error(ERROR_PROC_DOC.format(doc.id, doc.name, e))
 
             # Delete the temporary PDF file if it exists
             if exists(file_path):
@@ -199,6 +207,7 @@ def delete_doc(id: UUID):
         if not doc:
             m = DOC_NF.format(id)
             logger.error(m)
+
             raise ValueError(m)
 
         try:
@@ -207,6 +216,7 @@ def delete_doc(id: UUID):
 
             # Commit the changes to the database
             session.commit()
+            logger.info(DOC_DEL.format(doc.id, doc.name))
 
             # Delete the temporary PDF file if it exists
             file_path = get_doc_temp_file_path(doc.id)
@@ -215,9 +225,7 @@ def delete_doc(id: UUID):
                 remove(file_path)
                 logger.info(TEMP_FILE_DEL.format(file_path, doc.id, doc.name))
         except Exception as e:
-            logger.error(ERROR_DEL_DOC.format(doc.id, e))
+            logger.error(ERROR_DEL_DOC.format(doc.id, doc.name, e))
 
             # Re-raise the exception
             raise
-
-        logger.info(DOC_DEL.format(doc.id, doc.name))

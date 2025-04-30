@@ -5,10 +5,9 @@ from textwrap import dedent
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import StreamingResponse
 
-from team_copilot.models.response import MessageResponse
-from team_copilot.dependencies import get_enabled_user
+from team_copilot.core.auth import get_enabled_user
 from team_copilot.models.request import AgentQueryRequest
-from team_copilot.models.response import AgentResponseChunk
+from team_copilot.models.response import MessageResponse, AgentResponseChunk
 from team_copilot.agent.agent import Agent
 from team_copilot.routers import VAL_ERROR, UNAUTH
 
