@@ -3,6 +3,8 @@
 from pydantic import field_validator
 from sqlmodel import SQLModel, Field
 
+from team_copilot.models.data import User
+
 
 USERNAME = "Username"
 PASSWORD = "Password"
@@ -25,6 +27,22 @@ class CreateUserRequest(UpdateUserRequest):
     """Create User request model."""
 
     password: str = Field(min_length=8, max_length=200)
+
+    def to_user(self) -> User:
+        """Convert the instance to a User instance.
+
+        Returns:
+            User: User instance.
+        """
+        return User(
+            username=self.username,
+            name=self.name,
+            email=self.email,
+            password=self.password,
+            staff=self.staff,
+            admin=self.admin,
+            enabled=self.enabled,
+        )
 
 
 class UpdateUserPasswordRequest(SQLModel, table=False):

@@ -73,6 +73,12 @@ class UserResponse(SQLModel, table=False):
         )
 
 
+class UserSavedResponse(MessageResponse):
+    """User saved response model."""
+
+    user_id: UUID
+
+
 class DocumentResponse(SQLModel, table=False):
     """Document Response model."""
 

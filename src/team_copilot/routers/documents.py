@@ -1,7 +1,7 @@
 """Team Copilot - Routers - Documents."""
 
 from os import makedirs, remove
-from os.path import join, exists, dirname
+from os.path import exists, dirname
 from uuid import UUID
 from typing import Annotated
 
@@ -47,7 +47,7 @@ CRE_DOC_DESC = "Create a document. Only staff users are authorized."
 CRE_DOC_SUM = "Create a document"
 DEL_DOC_DESC = "Delete a document. Only staff users are authorized."
 DEL_DOC_SUM = "Delete a document"
-DOC_ACCEPTED = "Document accepted."
+DOC_ACC = "Document accepted."
 DOC_DATA = "Document data."
 DOC_DEL_1 = "Document deleted."
 DOC_DEL_2 = "Document {} ({}) deleted."
@@ -118,7 +118,8 @@ def validate_name(name: str):
         RequestValidationError: If the name is invalid.
     """
     try:
-        # If the name is invalid, creating a Document object will raise a ValueError
+        # If the name is invalid, creating a DocumentRequest object will raise a
+        # ValueError.
         DocumentRequest(name=name)
     except ValueError as e:
         # Re-raise the exception as a RequestValidationError exception, which will be
@@ -237,7 +238,7 @@ async def get_document(
     status_code=status.HTTP_202_ACCEPTED,
     responses={
         status.HTTP_202_ACCEPTED: {
-            "description": DOC_ACCEPTED,
+            "description": DOC_ACC,
             "model": DocumentStatusResponse,
         },
         status.HTTP_409_CONFLICT: {
@@ -284,11 +285,11 @@ async def create_document(
     if get_doc(name=name):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=DOC_EXISTS)
 
-    # Create a new document object
+    # Create a new Document object
     doc = Document(name=name)
 
-    # Save the document object to the database. The ID of the document is set by the
-    # database and it's set in the document object by "save_doc".
+    # Save the Document object to the database. The ID of the document is set by the
+    # database and is set in the Document object by "save_doc".
     save_doc(doc)
 
     # Get the path where the PDF file of the document will be saved temporarily
@@ -313,7 +314,7 @@ async def create_document(
     status_code=status.HTTP_202_ACCEPTED,
     responses={
         status.HTTP_202_ACCEPTED: {
-            "description": DOC_ACCEPTED,
+            "description": DOC_ACC,
             "model": DocumentStatusResponse,
         },
         status.HTTP_404_NOT_FOUND: {
@@ -377,12 +378,12 @@ async def update_document(
     if other_doc and other_doc.id != id:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=DOC_EXISTS)
 
-    # Update the document object. We set the "updated_at" field to None to let the
+    # Update the Document object. We set the "updated_at" field to None to let the
     # database set it to the current timestamp when we save it to the database.
     doc.name = name
     doc.updated_at = None
 
-    # Save the document object to the database
+    # Save the Document object to the database
     save_doc(doc)
 
     # Get the path where the PDF file of the document will be saved temporarily

@@ -24,12 +24,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_user(id: UUID | None = None, username: str | None = None) -> User | None:
-    """Get a user by its ID or username.
+def get_user(
+    id: UUID | None = None,
+    username: str | None = None,
+    email: str | None = None,
+) -> User | None:
+    """Get a user by its ID, username or e-mail address.
 
     Args:
         id (UUID | None): User ID.
         username (str | None): Username.
+        email (str | None): E-mail address.
 
     Returns:
         User | None: User if found, None otherwise.
@@ -39,7 +44,11 @@ def get_user(id: UUID | None = None, username: str | None = None) -> User | None
 
     with open_session(settings.db_url) as session:
         # Create the statement
-        s = select(User).where((User.id == id) | (User.username == username))
+        s = select(User).where(
+            (User.id == id) |
+            (User.username == username) |
+            (User.email == email)
+        )
 
         # Execute the statement and return the first element
         return session.exec(s).first()
