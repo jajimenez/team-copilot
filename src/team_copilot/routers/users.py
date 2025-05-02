@@ -4,7 +4,7 @@ from uuid import UUID
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Path, status
-from fastapi.exceptions import RequestValidationError, HTTPException
+from fastapi.exceptions import HTTPException
 
 
 
@@ -26,6 +26,8 @@ from team_copilot.routers import VAL_ERROR, UNAUTH
 CRE_USER_DESC = "Create a user. Only administrator users are authorized."
 CRE_USER_SUM = "Create a user"
 CUR_USER = "Current user"
+DEL_USER_DESC = "Delete a user. Only staff users are authorized."
+DEL_USER_SUM = "Delete a user"
 GET_CUR_USER_DESC = "Get the current authenticated user."
 GET_CUR_USER_SUM = "Get the current authenticated user"
 UPD_USER_DESC = "Update a user. Only administrator users are authorized."
@@ -33,6 +35,8 @@ UPD_USER_SUM = "Update a user"
 USER_CRE_1 = "User created."
 USER_CRE_2 = "User {} ({}) created."
 USER_DATA = "User data."
+USER_DEL_1 = "User deleted."
+USER_DEL_2 = "User {} ({}) deleted."
 USER_EXISTS = "A user with the same username or e-mail address exists."
 USER_ID = "User ID."
 USER_NF_1 = "User not found."
@@ -114,7 +118,7 @@ async def create_user(
         HTTPException: If another user with the same username or e-mail address exists.
 
     Returns:
-        UserSavedResponse: ID of the user and a message.
+        UserSavedResponse: User ID and a message.
     """
     # Check that another user with the same username or e-mail address doesn't exist
     if get_user(username=user.username, email=user.email):
@@ -124,7 +128,7 @@ async def create_user(
     u: User = user.to_user()
 
     # Save the User object to the database. The ID of the user is set by the database
-    # and is set in the User object by "save_doc".
+    # and is set in the User object by "save_user".
     save_user(u)
 
     # Return the user ID and a message
@@ -165,10 +169,11 @@ async def update_user(
 
     Raises:
         RequestValidationError: If the any field is invalid.
-        HTTPException: If another user with the same username or e-mail address exists.
+        HTTPException: If the user doesn't exist or another user with the same username
+            or e-mail address exists.
 
     Returns:
-        UserSavedResponse: ID of the user and a message.
+        UserSavedResponse: User ID and a message.
     """
     # Check that the user exists and get it
     u = get_user(id=id)
@@ -200,3 +205,58 @@ async def update_user(
 
     # Return the user ID and a message
     return UserSavedResponse(user_id=u.id, message=USER_CRE_2.format(u.id, u.username))
+
+
+@router.delete(
+    "/{id}",
+    operation_id="delete_user",
+    summary=DEL_USER_SUM,
+    description=DEL_USER_DESC,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": USER_DEL_1,
+            "model": MessageResponse,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "description": USER_NF_1,
+            "model": MessageResponse,
+        },
+    },
+)
+async def delete_user(
+    id: Annotated[UUID, Path(description=USER_ID)],
+) -> MessageResponse:
+    """Delete a user.
+
+    Args:
+        id (UUID): User ID.
+
+    Raises:
+        HTTPException: If the user is not found.
+
+    Returns:
+        MessageResponse: User ID and a message.
+    """
+    try:
+        # Get the user from the database
+        user = get_user(id=id)
+
+        # Check that the user exists
+        if not user:
+            raise ValueError()
+
+        username = user.username
+
+        # Delete the user. A ValueError will be raised if the user doesn't exist
+        # although this should never happen because we already checked that the user
+        # exists.
+        delete_user(id)
+    except ValueError:
+        # Re-raise exception as HTTPException
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=USER_NF_2.format(id),
+        )
+
+    return MessageResponse(message=USER_DEL_2.format(id, username))
