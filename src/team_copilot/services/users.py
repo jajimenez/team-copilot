@@ -39,16 +39,27 @@ def get_user(
     Returns:
         User | None: User if found, None otherwise.
     """
-    if not id and not username:
+    if not id and not username and not email:
         raise ValueError(GET_USER_ARG)
 
     with open_session(settings.db_url) as session:
+        conditions = []
+
+        if id is not None:
+            conditions.append(User.id == id)
+
+        if username is not None:
+            conditions.append(User.username == username)
+
+        if email is not None:
+            conditions.append(User.email == email)
+
         # Create the statement
-        s = select(User).where(
-            (User.id == id) |
-            (User.username == username) |
-            (User.email == email)
-        )
+        s = select(User)
+
+        # Apply the conditions with "and" logic
+        for c in conditions:
+            s = s.where(c)
 
         # Execute the statement and return the first element
         return session.exec(s).first()

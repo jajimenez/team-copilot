@@ -47,10 +47,22 @@ def get_doc(id: UUID | None = None, name: str | None = None) -> Document | None:
         raise ValueError(GET_DOC_ARG)
 
     with open_session(settings.db_url) as session:
-        # Create statement
-        s = select(Document).where((Document.id == id) | (Document.name == name))
+        conditions = []
 
-        # Execute the statement
+        if id is not None:
+            conditions.append(Document.id == id)
+
+        if name is not None:
+            conditions.append(Document.name == name)
+
+        # Create statement
+        s = select(Document)
+
+        # Apply the conditions with "and" logic
+        for c in conditions:
+            s = s.where(c)
+
+        # Execute the statement and return the first element
         return session.exec(s).first()
 
 
