@@ -56,6 +56,7 @@ router = APIRouter(
     operation_id="query_agent",
     summary=QUERY_AGENT_SUM,
     description=QUERY_AGENT_DESC,
+    status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
             "description": AGENT_RES,

@@ -32,8 +32,13 @@ router = APIRouter(prefix="/health", tags=["health"])
     operation_id="get_app_status",
     summary=GET_APP_STATUS_SUM,
     description=GET_APP_STATUS_DESC,
-    responses={status.HTTP_200_OK: {"description": APP_AVAILABLE}},
-    response_model=AppStatusResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": APP_AVAILABLE,
+            "model": AppStatusResponse,
+        }
+    },
 )
 def get_app_status() -> AppStatusResponse:
     """Get the status of the application.
@@ -49,6 +54,7 @@ def get_app_status() -> AppStatusResponse:
     operation_id="get_db_status",
     summary=GET_DB_STATUS_SUM,
     description=GET_DB_STATUS_DESC,
+    status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
             "description": DB_AVAILABLE,

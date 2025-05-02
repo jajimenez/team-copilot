@@ -37,6 +37,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     operation_id="login",
     summary=LOGIN_SUM,
     description=LOGIN_DESC,
+    status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
             "description": LOGIN_OUT_DESC,

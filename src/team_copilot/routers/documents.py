@@ -63,8 +63,8 @@ FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
 GET_DOC_DESC = "Get a document."
 GET_DOC_SUM = "Get a document"
 UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)."
-UPDATE_DOC_DESC = "Update a document. Only staff users are authorized."
-UPDATE_DOC_SUM = "Update a document"
+UPD_DOC_DESC = "Update a document. Only staff users are authorized."
+UPD_DOC_SUM = "Update a document"
 
 # In the "create_document" and "update_document" endpoints, we can't set a SQLModel as
 # the input schema holding both the document name and the document file because SQLModel
@@ -193,6 +193,7 @@ async def upload_file(file: UploadFile, path: str):
     operation_id="get_document",
     summary=GET_DOC_SUM,
     description=GET_DOC_DESC,
+    status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
             "description": DOC_DATA,
@@ -309,8 +310,8 @@ async def create_document(
 @router.put(
     "/{id}",
     operation_id="update_document",
-    summary=UPDATE_DOC_SUM,
-    description=UPDATE_DOC_DESC,
+    summary=UPD_DOC_SUM,
+    description=UPD_DOC_DESC,
     status_code=status.HTTP_202_ACCEPTED,
     responses={
         status.HTTP_202_ACCEPTED: {
@@ -405,6 +406,7 @@ async def update_document(
     operation_id="delete_document",
     summary=DEL_DOC_SUM,
     description=DEL_DOC_DESC,
+    status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
             "description": DOC_DEL_1,
