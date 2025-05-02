@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 import logging
 
-from sqlmodel import select
+from sqlmodel import select, or_
 
 from team_copilot.db.session import open_session
 from team_copilot.models.data import Document, DocumentStatus, DocumentChunk
@@ -56,11 +56,7 @@ def get_doc(id: UUID | None = None, name: str | None = None) -> Document | None:
             conditions.append(Document.name == name)
 
         # Create statement
-        s = select(Document)
-
-        # Apply the conditions with "and" logic
-        for c in conditions:
-            s = s.where(c)
+        s = select(Document).where(or_(*conditions))
 
         # Execute the statement and return the first element
         return session.exec(s).first()

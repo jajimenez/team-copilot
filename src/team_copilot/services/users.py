@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 import logging
 
-from sqlmodel import select
+from sqlmodel import select, or_
 
 from team_copilot.db.session import open_session
 from team_copilot.models.data import User
@@ -39,7 +39,7 @@ def get_user(
     Returns:
         User | None: User if found, None otherwise.
     """
-    if not id and not username and not email:
+    if id is None and username is None and email is None:
         raise ValueError(GET_USER_ARG)
 
     with open_session(settings.db_url) as session:
@@ -55,11 +55,7 @@ def get_user(
             conditions.append(User.email == email)
 
         # Create the statement
-        s = select(User)
-
-        # Apply the conditions with "and" logic
-        for c in conditions:
-            s = s.where(c)
+        s = select(User).where(or_(*conditions))
 
         # Execute the statement and return the first element
         return session.exec(s).first()
