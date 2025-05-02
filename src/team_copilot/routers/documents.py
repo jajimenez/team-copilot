@@ -274,7 +274,7 @@ async def create_document(
             exceeds the maximum limit.
 
     Returns:
-        DocumentStatus: Document status.
+        DocumentStatus: Document ID and status.
     """
     # Check that the name is valid
     validate_name(name)
@@ -356,7 +356,7 @@ async def update_document(
             name exists or the file size exceeds the maximum limit.
 
     Returns:
-        DocumentStatus: Document status.
+        DocumentStatus: Document ID and status.
     """
     # Check that the name is valid
     validate_name(name)
@@ -430,7 +430,7 @@ async def delete_document(
         HTTPException: If the document is not found.
 
     Returns:
-        MessageResponse: Success message.
+        MessageResponse: Document ID and a message.
     """
     try:
         # Get the document from the database
