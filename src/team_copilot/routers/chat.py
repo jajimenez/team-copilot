@@ -1,8 +1,9 @@
 """Team Copilot - Routers - Chat."""
 
 from textwrap import dedent
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Body, status
 from fastapi.responses import StreamingResponse
 
 from team_copilot.core.auth import get_enabled_user
@@ -13,7 +14,9 @@ from team_copilot.routers import VAL_ERROR, UNAUTH
 
 
 # Descriptions and messages
-AGENT_RES = dedent(
+AG_QUERY_DAT = "Agent query data."
+
+AG_RES = dedent(
     """Stream of events with the Server-Sent Events (SSE) format. Each event is a string
     containing "data: " followed by the actual event data in JSON format
     ({"index": string, "last": boolean, "text": string}) and followed by two newline
@@ -21,14 +24,14 @@ AGENT_RES = dedent(
     "text" set to an empty string."""
 )
 
-QUERY_AGENT_DESC = (
+QUERY_AG_DESC = (
     "Ask the agent a question about the documents and get a streaming response."
 )
 
-QUERY_AGENT_SUM = "Query the agent"
+QUERY_AG_SUM = "Query the agent"
 
 # Responses
-TEXT_EVENT_STREAM = "text/event-stream"
+TEXT_EV_STR = "text/event-stream"
 
 # Examples
 chunk_ex: str = AgentResponseChunk(index=0, last=False, text="Text chunk").to_sse()
@@ -54,18 +57,18 @@ router = APIRouter(
 @router.post(
     "/",
     operation_id="query_agent",
-    summary=QUERY_AGENT_SUM,
-    description=QUERY_AGENT_DESC,
+    summary=QUERY_AG_SUM,
+    description=QUERY_AG_DESC,
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
-            "description": AGENT_RES,
-            "content": {TEXT_EVENT_STREAM: {"example": chunk_ex}},
+            "description": AG_RES,
+            "content": {TEXT_EV_STR: {"example": chunk_ex}},
         },
     },
     response_class=StreamingResponse,
 )
-async def query_agent(query: AgentQueryRequest) -> StreamingResponse:
+async def query_agent(query: Annotated[AgentQueryRequest, Body(description=AG_QUERY_DAT)]) -> StreamingResponse:
     """Query the agent and get a streaming response.
 
     The response is a stream of events with the Server-Sent Events (SSE) format. Each
@@ -95,5 +98,5 @@ async def query_agent(query: AgentQueryRequest) -> StreamingResponse:
 
     return StreamingResponse(
         get_response_gen(agent, query.text),
-        media_type=TEXT_EVENT_STREAM,
+        media_type=TEXT_EV_STR,
     )

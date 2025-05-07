@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 
 from sqlmodel import SQLModel
+from pydantic import EmailStr
 
 from team_copilot.models.data import AppStatus, DbStatus, DocumentStatus, User, Document
 
@@ -43,15 +44,15 @@ class TokenResponse(SQLModel, table=False):
 class UserResponse(SQLModel, table=False):
     """User Response model."""
 
-    id: UUID | None
+    id: UUID
     username: str
     name: str | None
-    email: str | None
+    email: EmailStr | None
     staff: bool
     admin: bool
     enabled: bool
-    created_at: datetime | None
-    updated_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def from_user(cls, user: User) -> "UserResponse":

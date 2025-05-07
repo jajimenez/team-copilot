@@ -1,32 +1,38 @@
 """Team Copilot - Models - Request Models."""
 
-from pydantic import field_validator
+from pydantic import field_validator, EmailStr
 from sqlmodel import SQLModel, Field
 
 from team_copilot.models.data import User
 
 
-USERNAME = "Username"
-PASSWORD = "Password"
+# Descriptions and messages
 DOC_NAME = "Document name"
+NAME_NOT_EMP = "Name must not be empty."
+PASSWORD = "Password"
 QUERY_TEXT = "Query text"
+USERNAME = "Username"
 
 
-class UpdateUserRequest(SQLModel, table=False):
-    """Update User request model."""
+class Undefined:
+    """Class to indicate that a field was not provided in a request.
+
+    This class is used to differentiate between a field that was not provided and a
+    field that was provided with a value of None.
+    """
+    pass
+
+
+class CreateUserRequest(SQLModel, table=False):
+    """Create User Request model."""
 
     username: str = Field(min_length=3, max_length=100)
+    password: str = Field(min_length=8, max_length=200)
     name: str | None = Field(min_length=1, max_length=100)
-    email: str | None = Field(min_length=3, max_length=100)
-    staff: bool | None = False
+    email: EmailStr | None = Field(max_length=100)
+    staff: bool = False
     admin: bool = False
     enabled: bool = False
-
-
-class CreateUserRequest(UpdateUserRequest):
-    """Create User request model."""
-
-    password: str = Field(min_length=8, max_length=200)
 
     def to_user(self) -> User:
         """Convert the instance to a User instance.
@@ -45,14 +51,20 @@ class CreateUserRequest(UpdateUserRequest):
         )
 
 
-class UpdateUserPasswordRequest(SQLModel, table=False):
-    """Update User Password request model."""
+class UpdateUserRequest(SQLModel, table=False):
+    """Update User Request model."""
 
-    password: str = Field(min_length=8, max_length=200)
+    username: str = Field(default=Undefined, min_length=3, max_length=100)
+    password: str = Field(default=Undefined, min_length=8, max_length=200)
+    name: str | None = Field(default=Undefined, min_length=1, max_length=100)
+    email: EmailStr | None = Field(default=Undefined, max_length=100)
+    staff: bool = Field(default=Undefined)
+    admin: bool = Field(default=Undefined)
+    enabled: bool = Field(default=Undefined)
 
 
-class DocumentRequest(SQLModel, table=False):
-    """Document request model."""
+class CreateDocumentRequest(SQLModel, table=False):
+    """Create Document Request model."""
 
     name: str = Field(min_length=1, max_length=100, description=DOC_NAME)
 
@@ -66,13 +78,44 @@ class DocumentRequest(SQLModel, table=False):
             v (str): Name value.
 
         Raises:
-            ValueError: If the name is empty after stripping.
+            ValueError: If the name is invalid.
 
         Returns:
             str: Name value.
         """
         if not v.strip():
-            raise ValueError("Name must not be empty.")
+            raise ValueError(NAME_NOT_EMP)
+
+        return v
+
+
+class UpdateDocumentRequest(SQLModel, table=False):
+    """Update Document Request model."""
+
+    name: str | None = Field(
+        default=Undefined,
+        min_length=1,
+        max_length=100,
+        description=DOC_NAME,
+    )
+
+    @field_validator("name")
+    def validate_name(cls, v: str | None) -> str | None:
+        """Validate the name field if provided (i.e. it's not None).
+
+        The name field, if provided, and when stripped, must not be empty.
+
+        Args:
+            v (str): Name value.
+
+        Raises:
+            ValueError: If the name is invalid.
+
+        Returns:
+            str | None: Name value.
+        """
+        if v is not None and not v.strip():
+            raise ValueError(NAME_NOT_EMP)
 
         return v
 
@@ -92,7 +135,7 @@ class AgentQueryRequest(SQLModel, table=False):
             v (str): Text value.
 
         Raises:
-            ValueError: If the text is empty after stripping.
+            ValueError: If the text is invalid.
 
         Returns:
             str: Text value.

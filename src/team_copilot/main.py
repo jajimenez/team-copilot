@@ -2,28 +2,30 @@
 
 from contextlib import asynccontextmanager
 
+from starlette.exceptions import HTTPException as StHttpException
+
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.openapi.utils import get_openapi
 
+from team_copilot.core.config import settings
 from team_copilot.db.setup import setup
 from team_copilot.routers import health, auth, users, documents, chat
-
 from team_copilot.models.response import MessageResponse
-from team_copilot.core.config import settings
 
 
 # Descriptions and messages
-INTERNAL_SERVER_ERROR = "Internal server error"
-APP_WELCOME = f"Welcome to {settings.app_name}!"
-APP_OK = "The application is running."
-APP_ISE = "Internal server error."
 APP_INV_CRED = "Invalid credentials"
-DB_OK = "The database is available."
+APP_ISE = "Internal server error."
+APP_OK = "The application is running."
+APP_WELCOME = f"Welcome to {settings.app_name}!"
 DB_ERROR_MESSAGE = "The database is not available."
+DB_OK = "The database is available."
+GET_WEL_MSG_DESC = "Get a welcome message."
 GET_WEL_MSG_SUM = "Get a welcome message"
-GET_WEL_MSG_DESC = f"{GET_WEL_MSG_SUM}."
+INT_SER_ERR = "Internal server error"
+INV_REQ_FOR_ERR = "Invalid request format error."
 
 
 @asynccontextmanager
@@ -47,7 +49,7 @@ app = FastAPI(
     lifespan=lifespan,
     responses={
         status.HTTP_500_INTERNAL_SERVER_ERROR: {
-            "description": INTERNAL_SERVER_ERROR,
+            "description": INT_SER_ERR,
             "model": MessageResponse,
         },
     },
@@ -136,6 +138,45 @@ def openapi() -> dict:
 app.openapi = openapi
 
 
+# @app.exception_handler(StHttpException)
+# async def handle_invfor_error(request: Request, exc: StHttpException) -> JSONResponse:
+#     """Handle low-level Starlette HTTPException exceptions.
+
+#     Args:
+#         request (Request): Request.
+#         exc (StHttpException): Exception.
+
+#     Returns:
+#         JSONResponse: Error message.
+#     """
+#     msg = MessageResponse(message=INV_REQ_FOR_ERR)
+
+#     return JSONResponse(
+#         status_code=status.HTTP_400_BAD_REQUEST,
+#         content=msg.model_dump(),
+#     )
+
+
+@app.exception_handler(StHttpException)
+@app.exception_handler(HTTPException)
+async def handle_http_error(
+    request: Request,
+    exc: StHttpException | HTTPException,
+) -> JSONResponse:
+    """Handle low-level Starlette HTTPException exceptions and FastAPI HTTPException
+    exceptions.
+
+    Args:
+        request (Request): Request.
+        exc (StHttpException | HTTPException): Exception.
+
+    Returns:
+        JSONResponse: Error message.
+    """
+    msg_res = MessageResponse(message=exc.detail)
+    return JSONResponse(status_code=exc.status_code, content=msg_res.model_dump())
+
+
 @app.exception_handler(RequestValidationError)
 async def handle_reqval_error(
     request: Request,
@@ -150,30 +191,14 @@ async def handle_reqval_error(
     Returns:
         JSONResponse: Error message.
     """
-    msg = [i["msg"] for i in exc.errors()]
+    msg = [f'{i["loc"][1]}: {i["msg"]}' for i in exc.errors()]
     msg = ", ".join(msg)
-
-    msg_res = MessageResponse(message=msg)
+    msg = MessageResponse(message=msg)
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=msg_res.model_dump(),
+        content=msg.model_dump(),
     )
-
-
-@app.exception_handler(HTTPException)
-async def handle_http_error(request: Request, exc: HTTPException) -> JSONResponse:
-    """Handle HTTPException exceptions.
-
-    Args:
-        request (Request): Request.
-        exc (HTTPException): Exception.
-
-    Returns:
-        JSONResponse: Error message.
-    """
-    msg_res = MessageResponse(message=exc.detail)
-    return JSONResponse(status_code=exc.status_code, content=msg_res.model_dump())
 
 
 @app.exception_handler(Exception)
@@ -190,7 +215,7 @@ async def handle_error(request: Request, exc: Exception) -> JSONResponse:
     msg_res = MessageResponse(message=APP_ISE)
 
     return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        status_code=status.HTTP_500_INT_SER_ERR,
         content=msg_res.model_dump(),
     )
 

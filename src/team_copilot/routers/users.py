@@ -3,14 +3,12 @@
 from uuid import UUID
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, Path, status
+from fastapi import APIRouter, Depends, Path, Body, status
 from fastapi.exceptions import HTTPException
-
-
 
 from team_copilot.core.auth import get_enabled_user, get_admin_user
 from team_copilot.models.data import User
-from team_copilot.models.request import CreateUserRequest, UpdateUserRequest
+from team_copilot.models.request import Undefined, CreateUserRequest, UpdateUserRequest
 
 from team_copilot.models.response import (
     MessageResponse,
@@ -30,7 +28,11 @@ DEL_USER_DESC = "Delete a user. Only staff users are authorized."
 DEL_USER_SUM = "Delete a user"
 GET_CUR_USER_DESC = "Get the current authenticated user."
 GET_CUR_USER_SUM = "Get the current authenticated user"
-UPD_USER_DESC = "Update a user. Only administrator users are authorized."
+
+UPD_USER_DESC = (
+    "Update a user (some or all fields). Only administrator users are authorized."
+)
+
 UPD_USER_SUM = "Update a user"
 USER_CRE_1 = "User created."
 USER_CRE_2 = "User {} ({}) created."
@@ -41,7 +43,8 @@ USER_EXISTS = "A user with the same username or e-mail address exists."
 USER_ID = "User ID."
 USER_NF_1 = "User not found."
 USER_NF_2 = "User {} not found."
-USER_UPD = "User updated."
+USER_UPD_1 = "User updated."
+USER_UPD_2 = "User {} ({}) updated."
 
 # Router
 router = APIRouter(
@@ -106,7 +109,7 @@ def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> UserRe
     },
 )
 async def create_user(
-    user: Annotated[CreateUserRequest, Form(description=USER_DATA)],
+    user: Annotated[CreateUserRequest, Body(description=USER_DATA)],
 ) -> UserSavedResponse:
     """Create a user.
 
@@ -144,7 +147,7 @@ async def create_user(
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
-            "description": USER_UPD,
+            "description": USER_UPD_1,
             "model": UserSavedResponse,
         },
         status.HTTP_404_NOT_FOUND: {
@@ -159,7 +162,7 @@ async def create_user(
 )
 async def update_user(
     id: Annotated[UUID, Path(description=USER_ID)],
-    user: Annotated[UpdateUserRequest, Form(description=USER_DATA)],
+    user: Annotated[UpdateUserRequest, Body(description=USER_DATA)],
 ) -> UserSavedResponse:
     """Update a user.
 
@@ -175,7 +178,7 @@ async def update_user(
     Returns:
         UserSavedResponse: User ID and a message.
     """
-    # Check that the user exists and get it
+    # Check that the user exists and get the user
     u = get_user(id=id)
 
     if not user:
@@ -184,27 +187,42 @@ async def update_user(
             detail=USER_NF_2.format(id),
         )
 
-    # Check that another user with the same username or e-mail address doesn't exist
-    other_user = get_user(username=user.username, email=user.email)
+    # If the username or e-mail address have been provided, check that another user with
+    # the same username or e-mail address doesn't exist.
+    username_prov = user.username is not Undefined
+    email_prov = user.email is not Undefined
 
-    if other_user and other_user.id != id:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=USER_EXISTS)
+    if username_prov or email_prov:
+        other_user = get_user(
+            username=user.username if username_prov else None,
+            email=user.email if email_prov else None,
+        )
 
-    # Update the User object. We set the "updated_at" field to None to let the database
-    # set it to the current timestamp when we save it to the database.
-    u.username = user.username
-    u.name = user.name
-    u.email = user.email
-    u.staff = user.staff
-    u.admin = user.admin
-    u.enabled = user.enabled
+        if other_user and other_user.id != id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=USER_EXISTS,
+            )
+
+    # Update the User object for the provided fields
+    for i in ["username", "password", "name", "email", "staff", "admin", "enabled"]:
+        # Get the value of the field from the request user object
+        val = getattr(user, i)
+
+        # If the value has been provided (i.e. it's not Undefined), set the value of the
+        # corresponding field in the existing user object to the provided value.
+        if val is not Undefined:
+            setattr(u, i, val)
+
+    # Set the "updated_at" field to None to let the database update it to the current
+    # timestamp when we save it to the database.
     u.updated_at = None
 
-    # Save the User object to the database
+    # Save the existing user object to the database
     save_user(u)
 
     # Return the user ID and a message
-    return UserSavedResponse(user_id=u.id, message=USER_CRE_2.format(u.id, u.username))
+    return UserSavedResponse(user_id=u.id, message=USER_UPD_2.format(u.id, u.username))
 
 
 @router.delete(
@@ -212,6 +230,7 @@ async def update_user(
     operation_id="delete_user",
     summary=DEL_USER_SUM,
     description=DEL_USER_DESC,
+    dependencies=[Depends(get_admin_user)],
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {

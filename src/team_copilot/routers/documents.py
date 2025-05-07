@@ -21,7 +21,7 @@ from fastapi.exceptions import RequestValidationError, HTTPException
 from team_copilot.core.config import settings
 from team_copilot.core.auth import get_staff_user
 from team_copilot.models.data import Document
-from team_copilot.models.request import DocumentRequest
+from team_copilot.models.request import CreateDocumentRequest, UpdateDocumentRequest
 
 from team_copilot.models.response import (
     MessageResponse,
@@ -37,7 +37,7 @@ from team_copilot.services.documents import (
     delete_doc,
 )
 
-from team_copilot.routers import VAL_ERROR, UNAUTH
+from team_copilot.routers import BAD_REQ, VAL_ERROR, UNAUTH
 
 
 # Descriptions and messages
@@ -48,28 +48,37 @@ CRE_DOC_SUM = "Create a document"
 DEL_DOC_DESC = "Delete a document. Only staff users are authorized."
 DEL_DOC_SUM = "Delete a document"
 DOC_ACC = "Document accepted."
-DOC_DATA = "Document data."
+DOC_DAT = "Document data."
 DOC_DEL_1 = "Document deleted."
 DOC_DEL_2 = "Document {} ({}) deleted."
 DOC_EXISTS = "A document with the same name exists."
 DOC_FILE = "Document PDF file."
 DOC_ID = "Document ID."
+DOC_NAME = "Document name."
 DOC_NF_1 = "Document not found."
 DOC_NF_2 = "Document {} not found."
-DOC_NAME = "Document name."
 ERROR_DEL_DOC = "Error deleting document {}."
 ERROR_UPL_FILE = "Error uploading file {}."
 FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
 GET_DOC_DESC = "Get a document."
 GET_DOC_SUM = "Get a document"
-UNSUPPORTED_FILE_TYPE = "Unsupported file type (only PDF files are allowed)."
-UPD_DOC_DESC = "Update a document. Only staff users are authorized."
+UNS_FILE_TYP = "Unsupported file type (only PDF files are allowed)."
+UPD_ARG_ERR = "At least one of the name or file must be provided."
+
+UPD_DOC_DESC = (
+    "Update a document (one or both fields). Only staff users are authorized. To update"
+    " only one of the fields, omit the other one from the request (don't send it with "
+    "an empty value). Note that the OpenAPI UI doesn't support omitting a field when "
+    "sending a request with the form-data content type (instead, it sends the field "
+    "with an empty value). "
+)
+
 UPD_DOC_SUM = "Update a document"
 
 # In the "create_document" and "update_document" endpoints, we can't set a SQLModel as
 # the input schema holding both the document name and the document file because SQLModel
 # doesn't support file uploads. Also, we can't use a SQLModel to hold just the name
-# (e.g. the "team_copilot.models.request.DocumentRequest" model, which contains
+# (e.g. the "team_copilot.models.request.CreateDocumentRequest" model, which contains
 # only the name), because SQLModel works with JSON strings and the file is sent as
 # "multipart/form-data", which would make the request body an invalid JSON string.
 # Therefore, we need to send the name as "multipart/form-data" as well, using the "Form"
@@ -83,8 +92,8 @@ UPD_DOC_SUM = "Update a document"
 
 # Schemas to rename
 SCHEMA_NAMES = {
-    "Body_create_document": "DocumentRequest",
-    "Body_update_document": "DocumentRequest",
+    "Body_create_document": "CreateDocumentRequest",
+    "Body_update_document": "UpdateDocumentRequest",
 }
 
 # Requests
@@ -96,6 +105,10 @@ router = APIRouter(
     tags=["documents"],
     dependencies=[Depends(get_staff_user)],
     responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "description": BAD_REQ,
+            "model": MessageResponse,
+        },
         status.HTTP_401_UNAUTHORIZED: {
             "description": UNAUTH,
             "model": MessageResponse,
@@ -108,19 +121,23 @@ router = APIRouter(
 )
 
 
-def validate_name(name: str):
+def validate_name(name: str | None, update: bool = False):
     """Validate a document request name.
 
     Args:
-        name (str): Document request name.
+        name (str | None): Document request name.
+        update (bool): Whether the request is an update request or not.
 
     Raises:
         RequestValidationError: If the name is invalid.
     """
     try:
-        # If the name is invalid, creating a DocumentRequest object will raise a
-        # ValueError.
-        DocumentRequest(name=name)
+        # If the name is invalid, creating an UpdateDocumentRequest object or a
+        # CreateDocumentRequest will raise a ValueError.
+        if update:
+            UpdateDocumentRequest(name=name)
+        else:
+            CreateDocumentRequest(name=name)
     except ValueError as e:
         # Re-raise the exception as a RequestValidationError exception, which will be
         # caught by one of the exception handlers in the "team_copilot.main" module.
@@ -142,7 +159,7 @@ def validate_file(file: UploadFile):
 
     # Validate file type
     if file.content_type != DOC_MIME_TYPE:
-        raise RequestValidationError(UNSUPPORTED_FILE_TYPE)
+        raise RequestValidationError(UNS_FILE_TYP)
 
     if file.size > settings.app_docs_max_size_bytes:
         raise HTTPException(
@@ -196,7 +213,7 @@ async def upload_file(file: UploadFile, path: str):
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
-            "description": DOC_DATA,
+            "description": DOC_DAT,
             "model": DocumentResponse,
         },
         status.HTTP_404_NOT_FOUND: {
@@ -251,7 +268,7 @@ async def get_document(
             "model": MessageResponse,
         },
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
-            "description": UNSUPPORTED_FILE_TYPE,
+            "description": UNS_FILE_TYP,
             "model": MessageResponse,
         },
     },
@@ -286,7 +303,7 @@ async def create_document(
     if get_doc(name=name):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=DOC_EXISTS)
 
-    # Create a new Document object
+    # Create a new Document object (the status is set to "pending" by default)
     doc = Document(name=name)
 
     # Save the Document object to the database. The ID of the document is set by the
@@ -303,7 +320,7 @@ async def create_document(
     # deleted after the processing finishes.
     bg_tasks.add_task(process_doc, doc.id)
 
-    # Return the document status, which is initially "Pending".
+    # Return the document status, which is initially "pending".
     return DocumentStatusResponse(document_id=doc.id, document_status=doc.status)
 
 
@@ -331,40 +348,42 @@ async def create_document(
             "model": MessageResponse,
         },
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
-            "description": UNSUPPORTED_FILE_TYPE,
+            "description": UNS_FILE_TYP,
             "model": MessageResponse,
         },
     },
 )
 async def update_document(
-    id: Annotated[UUID, Path(description=DOC_ID)],
-    name: Annotated[str, Form(description=DOC_NAME, min_length=1, max_length=100)],
-    file: Annotated[UploadFile, File(description=DOC_FILE)],
     bg_tasks: BackgroundTasks,
+    id: Annotated[UUID, Path(description=DOC_ID)],
+    name: Annotated[
+        str | None,
+        Form(description=DOC_NAME, min_length=1, max_length=100)
+    ] = None,
+    file: Annotated[UploadFile | None, File(description=DOC_FILE)] = None,
 ) -> DocumentStatusResponse:
     """Update a document.
 
     Args:
-        id (UUID): Document ID.
-        name (str): New document name.
-        file (UploadFile): New document PDF file.
         bg_tasks (BackgroundTasks): Background tasks.
+        id (UUID): Document ID.
+        name (str | None): New document name.
+        file (UploadFile | None): New document PDF file.
 
     Raises:
-        RequestValidationError: If the name is invalid or the file type isn't supported.
+        RequestValidationError: If no fields are provided or the name is invalid or the
+            file type isn't supported.
         HTTPException: If the document doesn't exist or another document with the same
             name exists or the file size exceeds the maximum limit.
 
     Returns:
         DocumentStatus: Document ID and status.
     """
-    # Check that the name is valid
-    validate_name(name)
+    # Check that at least one of the name or file is provided
+    if name is None and file is None:
+        raise RequestValidationError([UPD_ARG_ERR])
 
-    # Check that the file to upload is valid
-    validate_file(file)
-
-    # Check that the document exists
+    # Check that the document exists and get the document
     doc = get_doc(id=id)
 
     if not doc:
@@ -373,29 +392,43 @@ async def update_document(
             detail=DOC_NF_2.format(id),
         )
 
-    # Check that another document with the same name doesn't exist
-    other_doc = get_doc(name=name)
+    # Validate and update name if provided
+    if name is not None:
+        # Check that the name is valid
+        validate_name(name, True)
 
-    if other_doc and other_doc.id != id:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=DOC_EXISTS)
+        # Check that another document with the same name doesn't exist
+        other_doc = get_doc(name=name)
 
-    # Update the Document object. We set the "updated_at" field to None to let the
-    # database set it to the current timestamp when we save it to the database.
-    doc.name = name
+        if other_doc and other_doc.id != id:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=DOC_EXISTS)
+
+        # Update name
+        doc.name = name
+
+    # Validate file if provided
+    if file is not None:
+        # Check that the file to upload is valid
+        validate_file(file)
+
+    # Set the "updated_at" field to None to let the database update it to the current
+    # timestamp when we save it to the database.
     doc.updated_at = None
 
-    # Save the Document object to the database
+    # Save the document object to the database
     save_doc(doc)
 
-    # Get the path where the PDF file of the document will be saved temporarily
-    file_path = get_doc_temp_file_path(doc.id)
+    # Process file if provided
+    if file is not None:
+        # Get the path where the PDF file of the document will be saved temporarily
+        file_path = get_doc_temp_file_path(doc.id)
 
-    # Upload the file
-    await upload_file(file, file_path)
+        # Upload the file
+        await upload_file(file, file_path)
 
-    # Process the document in the background. The temporary PDF file of the document is
-    # deleted after the processing finishes.
-    bg_tasks.add_task(process_doc, doc.id)
+        # Process the document in the background. The temporary PDF file of the document
+        # is deleted after the processing finishes.
+        bg_tasks.add_task(process_doc, doc.id)
 
     # Return the document status
     return DocumentStatusResponse(document_id=doc.id, document_status=doc.status)

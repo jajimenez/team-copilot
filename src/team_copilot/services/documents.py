@@ -88,9 +88,6 @@ def save_doc(doc: Document):
         # Add document to the session
         session.add(doc)
 
-        # Set the status to Pending
-        doc.status = DocumentStatus.PENDING
-
         # Check if the document already exists (it exists if the ID in the Document
         # object is set). If it exists, update the "updated_at" field.
         if doc.id:

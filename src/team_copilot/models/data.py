@@ -5,6 +5,7 @@ from uuid import UUID
 from datetime import datetime
 
 from sqlmodel import SQLModel, Field, Relationship, UniqueConstraint
+from pydantic import EmailStr
 
 from sqlalchemy import (
     Column,
@@ -61,8 +62,8 @@ class User(SQLModel, table=True):
     username: str = Field(unique=True, min_length=3, max_length=100)
     password_hash: str
     name: str | None = Field(min_length=1, max_length=100)
-    email: str | None = Field(unique=True, min_length=3, max_length=100)
-    staff: bool | None = False
+    email: EmailStr | None = Field(unique=True, max_length=100)
+    staff: bool = False
     admin: bool = False
     enabled: bool = False
 
