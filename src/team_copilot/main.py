@@ -215,7 +215,7 @@ async def handle_error(request: Request, exc: Exception) -> JSONResponse:
     msg_res = MessageResponse(message=APP_ISE)
 
     return JSONResponse(
-        status_code=status.HTTP_500_INT_SER_ERR,
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=msg_res.model_dump(),
     )
 

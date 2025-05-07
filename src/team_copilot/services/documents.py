@@ -146,10 +146,6 @@ def process_doc(id: UUID):
             if not doc:
                 raise ValueError(DOC_NF.format(id))
 
-            # Check that the document has not been already processed
-            if doc.status != DocumentStatus.PENDING:
-                raise ValueError(DOC_ALR_PROC.format(doc.id, doc.name))
-
             logger.info(PROC_DOC.format(doc.id, doc.name))
 
             # Add document to the session

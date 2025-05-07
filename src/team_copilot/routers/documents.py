@@ -20,7 +20,7 @@ from fastapi.exceptions import RequestValidationError, HTTPException
 
 from team_copilot.core.config import settings
 from team_copilot.core.auth import get_staff_user
-from team_copilot.models.data import Document
+from team_copilot.models.data import Document, DocumentStatus
 from team_copilot.models.request import CreateDocumentRequest, UpdateDocumentRequest
 
 from team_copilot.models.response import (
@@ -50,6 +50,7 @@ CRE_DOC_SUM = "Create a document"
 DEL_DOC_DESC = "Delete a document. Only staff users are authorized."
 DEL_DOC_SUM = "Delete a document"
 DOC_ACC = "Document accepted."
+DOC_CRE_SCH = "Document {} ({}) created and scheduled for processing."
 DOC_DAT = "Document data."
 DOC_DEL_1 = "Document deleted."
 DOC_DEL_2 = "Document {} ({}) deleted."
@@ -60,6 +61,7 @@ DOC_NAME = "Document name."
 DOC_NF_1 = "Document not found."
 DOC_NF_2 = "Document {} not found."
 DOC_RET = "Document retrieved."
+DOC_UPD_SCH = "Document {} ({}) updated and scheduled for processing."
 DOCS_DAT = "Documents data."
 DOCS_RET = "Documents retrieved."
 ERROR_DEL_DOC = "Error deleting document {}."
@@ -231,8 +233,10 @@ async def get_all_documents() -> DocumentListResponse:
     Returns:
         DocumentListResponse: Message and documents.
     """
-    # Get documents from the database
+    # Get all the documents from the database
     docs = get_all_docs()
+
+    # Return a message and the documents
     return DocumentListResponse.create(message=DOCS_RET, documents=docs)
 
 
@@ -276,6 +280,7 @@ async def get_document(
             detail=DOC_NF_2.format(id),
         )
 
+    # Return a message and the document
     return DocumentResponse.create(message=DOC_RET, document=doc)
 
 
@@ -322,7 +327,7 @@ async def create_document(
             exceeds the maximum limit.
 
     Returns:
-        DocumentStatus: Document ID and status.
+        DocumentStatusResponse: Message and document status.
     """
     # Check that the name is valid
     validate_name(name)
@@ -351,8 +356,9 @@ async def create_document(
     # deleted after the processing finishes.
     bg_tasks.add_task(process_doc, doc.id)
 
-    # Return the document status, which is initially "pending".
-    return DocumentStatusResponse(document_id=doc.id, document_status=doc.status)
+    # Return a message and the document status, which is initially "pending".
+    message = DOC_CRE_SCH.format(doc.id, doc.name)
+    return DocumentStatusResponse.create(message=message, document=doc)
 
 
 @router.put(
@@ -408,7 +414,7 @@ async def update_document(
             name exists or the file size exceeds the maximum limit.
 
     Returns:
-        DocumentStatus: Document ID and status.
+        DocumentStatusResponse: Message and document status.
     """
     # Check that at least one of the name or file is provided
     if name is None and file is None:
@@ -446,6 +452,10 @@ async def update_document(
     # timestamp when we save it to the database.
     doc.updated_at = None
 
+    # Set the document status if the file is provided
+    if file is not None:
+        doc.status = DocumentStatus.PENDING
+
     # Save the document object to the database
     save_doc(doc)
 
@@ -461,8 +471,9 @@ async def update_document(
         # is deleted after the processing finishes.
         bg_tasks.add_task(process_doc, doc.id)
 
-    # Return the document status
-    return DocumentStatusResponse(document_id=doc.id, document_status=doc.status)
+    # Return a message and the document status
+    message = DOC_UPD_SCH.format(doc.id, doc.name)
+    return DocumentStatusResponse.create(message=message, document=doc)
 
 
 @router.delete(
@@ -494,7 +505,7 @@ async def delete_document(
         HTTPException: If the document is not found.
 
     Returns:
-        MessageResponse: Document ID and a message.
+        MessageResponse: Message.
     """
     try:
         # Get the document from the database
@@ -517,4 +528,5 @@ async def delete_document(
             detail=DOC_NF_2.format(id),
         )
 
+    # Return a message
     return MessageResponse(message=DOC_DEL_2.format(id, name))
