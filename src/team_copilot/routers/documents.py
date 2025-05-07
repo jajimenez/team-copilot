@@ -27,12 +27,14 @@ from team_copilot.models.response import (
     MessageResponse,
     DocumentResponse,
     DocumentStatusResponse,
+    DocumentListResponse,
 )
 
 from team_copilot.services.documents import (
     get_doc_temp_file_path,
     save_doc,
     get_doc,
+    get_all_docs,
     process_doc,
     delete_doc,
 )
@@ -57,9 +59,14 @@ DOC_ID = "Document ID."
 DOC_NAME = "Document name."
 DOC_NF_1 = "Document not found."
 DOC_NF_2 = "Document {} not found."
+DOC_RET = "Document retrieved."
+DOCS_DAT = "Documents data."
+DOCS_RET = "Documents retrieved."
 ERROR_DEL_DOC = "Error deleting document {}."
 ERROR_UPL_FILE = "Error uploading file {}."
 FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
+GET_ALL_DOCS_DESC = "Get all documents."
+GET_ALL_DOCS_SUM = "Get all documents"
 GET_DOC_DESC = "Get a document."
 GET_DOC_SUM = "Get a document"
 UNS_FILE_TYP = "Unsupported file type (only PDF files are allowed)."
@@ -206,6 +213,30 @@ async def upload_file(file: UploadFile, path: str):
 
 
 @router.get(
+    "/",
+    operation_id="get_all_documents",
+    summary=GET_ALL_DOCS_SUM,
+    description=GET_ALL_DOCS_DESC,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": DOCS_DAT,
+            "model": DocumentListResponse,
+        },
+    },
+)
+async def get_all_documents() -> DocumentListResponse:
+    """Get all documents.
+
+    Returns:
+        DocumentListResponse: Message and documents.
+    """
+    # Get documents from the database
+    docs = get_all_docs()
+    return DocumentListResponse.create(message=DOCS_RET, documents=docs)
+
+
+@router.get(
     "/{id}",
     operation_id="get_document",
     summary=GET_DOC_SUM,
@@ -234,7 +265,7 @@ async def get_document(
         HTTPException: If the document is not found.
 
     Returns:
-        DocumentResponse: Document response.
+        DocumentResponse: Message and document.
     """
     # Get the document from the database
     doc = get_doc(id=id)
@@ -245,7 +276,7 @@ async def get_document(
             detail=DOC_NF_2.format(id),
         )
 
-    return DocumentResponse.from_document(doc)
+    return DocumentResponse.create(message=DOC_RET, document=doc)
 
 
 @router.post(

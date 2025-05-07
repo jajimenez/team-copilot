@@ -33,6 +33,20 @@ PROC_DOC = "Processing document {} ({})..."
 TEMP_FILE_DEL = "Temporary PDF file ({}) of the document {} ({}) deleted."
 
 
+def get_all_docs() -> list[Document]:
+    """Get all documents.
+
+    Returns:
+        list[Document]: Documents.
+    """
+    with open_session(settings.db_url) as session:
+        # Create statement
+        s = select(Document)
+
+        # Execute the statement and return all elements
+        return session.exec(s).all()
+
+
 def get_doc(id: UUID | None = None, name: str | None = None) -> Document | None:
     """Get a document by its ID or name.
 

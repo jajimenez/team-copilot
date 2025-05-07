@@ -80,8 +80,8 @@ class UserSavedResponse(MessageResponse):
     user_id: UUID
 
 
-class DocumentResponse(SQLModel, table=False):
-    """Document Response model."""
+class DocumentResponseData(SQLModel, table=False):
+    """Document Response Data model."""
 
     id: UUID | None
     name: str
@@ -90,11 +90,11 @@ class DocumentResponse(SQLModel, table=False):
     updated_at: datetime | None
 
     @classmethod
-    def from_document(cls, document: Document) -> "DocumentResponse":
-        """Convert the instance to a DocumentResponse instance.
+    def create(cls, document: Document) -> "DocumentResponseData":
+        """Create a DocumentResponseData instance given a Document instance.
 
         Returns:
-            DocumentResponse: DocumentResponse instance.
+            DocumentResponseData: DocumentResponseData instance.
         """
         return cls(
             id=document.id,
@@ -105,11 +105,68 @@ class DocumentResponse(SQLModel, table=False):
         )
 
 
-class DocumentStatusResponse(SQLModel, table=False):
-    """Document status response model."""
+class DocumentResponse(MessageResponse):
+    """Document Response model."""
+
+    data: DocumentResponseData | None
+
+    @classmethod
+    def create(cls, message: str, document: Document) -> "DocumentResponse":
+        """Create a DocumentResponse instance given a message and a Document instance.
+
+        Returns:
+            DocumentResponse: DocumentResponse instance.
+        """
+        return cls(message=message, data=DocumentResponseData.from_document(document))
+
+
+class DocumentStatusResponseData(SQLModel, table=False):
+    """Document Status Response Data model."""
 
     document_id: UUID
     document_status: DocumentStatus
+
+    @classmethod
+    def create(cls, document: Document) -> "DocumentStatusResponseData":
+        """Create a DocumentStatusResponseData instance given a Document instance.
+
+        Returns:
+            DocumentStatusResponseData: DocumentStatusResponseData instance.
+        """
+        return cls(document_id=document.id, document_status=document.status)
+
+
+class DocumentStatusResponse(MessageResponse):
+    """Document Status Response model."""
+
+    data: DocumentStatusResponseData | None
+
+    @classmethod
+    def create(cls, message: str, document: Document) -> "DocumentStatusResponse":
+        """Create a DocumentStatusResponse instance given a message and a Document
+        instance.
+
+        Returns:
+            DocumentStatusResponse: DocumentStatusResponse instance.
+        """
+        return cls(message=message, data=DocumentStatusResponseData.create(document))
+
+
+class DocumentListResponse(MessageResponse):
+    """Document List Response model."""
+
+    data: list[DocumentResponseData] | None
+
+    @classmethod
+    def create(cls, message: str, documents: list[Document]) -> "DocumentListResponse":
+        """Create a DocumentListResponse instance given a message and a list of Document
+        instances.
+
+        Returns:
+            DocumentListResponse: DocumentListResponse instance.
+        """
+        docs = [DocumentResponseData.create(d) for d in documents]
+        return cls(message=message, data=docs)
 
 
 class AgentResponseChunk(SQLModel, table=False):
