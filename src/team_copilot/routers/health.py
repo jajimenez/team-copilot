@@ -6,7 +6,7 @@ from fastapi import APIRouter, Response, Depends, status
 
 from team_copilot.core.config import Settings, get_settings
 from team_copilot.db.status import check_status
-from team_copilot.models.data import DbStatus
+from team_copilot.models.data import AppStatus, DbStatus
 from team_copilot.models.response import AppStatusResponse, DbStatusResponse
 
 
@@ -44,9 +44,9 @@ def get_app_status() -> AppStatusResponse:
     """Get the status of the application.
 
     Returns:
-        AppStatusResponse: Application status response.
+        AppStatusResponse: Message and application status.
     """
-    return AppStatusResponse()
+    return AppStatusResponse.create(message=APP_AVAILABLE, status=AppStatus.AVAILABLE)
 
 
 @router.get(
@@ -79,10 +79,10 @@ def get_db_status(
         settings (Settings): Application settings.
 
     Returns:
-        DbStatusResponse: Database status response.
+        DbStatusResponse: Message and database status.
     """
     if check_status(settings.db_url):
-        return DbStatusResponse(status=DbStatus.AVAILABLE)
+        return DbStatusResponse.create(message=DB_AVAILABLE, status=DbStatus.AVAILABLE)
 
     response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-    return DbStatusResponse(status=DbStatus.UNAVAILABLE)
+    return DbStatusResponse.create(message=DB_UNAVAILABLE, status=DbStatus.UNAVAILABLE)

@@ -22,16 +22,65 @@ class ErrorResponse(SQLModel, table=False):
     error: str
 
 
-class AppStatusResponse(SQLModel, table=False):
-    """Application status response model."""
+class AppStatusResponseData(SQLModel, table=False):
+    """Application Status Response Data model."""
 
     status: AppStatus = AppStatus.AVAILABLE
 
+    @classmethod
+    def create(cls, status: AppStatus) -> "AppStatusResponseData":
+        """Create an AppStatusResponseData instance given a AppStatus instance.
 
-class DbStatusResponse(SQLModel, table=False):
-    """Database status response model."""
+        Returns:
+            AppStatusResponseData: AppStatusResponseData instance.
+        """
+        return cls(status=status)
+
+
+class AppStatusResponse(MessageResponse):
+    """Application Status Response model."""
+
+    data: AppStatusResponseData | None
+
+    @classmethod
+    def create(cls, message: str, status: AppStatus) -> "AppStatusResponse":
+        """Create an AppStatusResponse instance given a message and an AppStatus
+        instance.
+
+        Returns:
+            AppStatusResponse: AppStatusResponse instance.
+        """
+        return cls(message=message, data=AppStatusResponseData.create(status))
+
+
+class DbStatusResponseData(SQLModel, table=False):
+    """Database Status Response model."""
 
     status: DbStatus
+
+    @classmethod
+    def create(cls, status: DbStatus) -> "DbStatusResponseData":
+        """Create a DbStatusResponse instance given a DbStatus instance.
+
+        Returns:
+            DbStatusResponseData: DbStatusResponseData instance.
+        """
+        return cls(status=status)
+
+
+class DbStatusResponse(MessageResponse):
+    """Database Status Response model."""
+
+    data: DbStatusResponseData | None
+
+    @classmethod
+    def create(cls, message: str, status: DbStatus) -> "DbStatusResponse":
+        """Create a DbStatusResponse instance given a message and a DbStatus instance.
+
+        Returns:
+            DbStatusResponse: DbStatusResponse instance.
+        """
+        return cls(message=message, data=DbStatusResponseData.create(status))
 
 
 class TokenResponse(SQLModel, table=False):
