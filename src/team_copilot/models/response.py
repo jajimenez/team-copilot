@@ -27,15 +27,6 @@ class AppStatusResponseData(SQLModel, table=False):
 
     status: AppStatus = AppStatus.AVAILABLE
 
-    @classmethod
-    def create(cls, status: AppStatus) -> "AppStatusResponseData":
-        """Create an AppStatusResponseData instance given a AppStatus instance.
-
-        Returns:
-            AppStatusResponseData: AppStatusResponseData instance.
-        """
-        return cls(status=status)
-
 
 class AppStatusResponse(MessageResponse):
     """Application Status Response model."""
@@ -50,22 +41,13 @@ class AppStatusResponse(MessageResponse):
         Returns:
             AppStatusResponse: AppStatusResponse instance.
         """
-        return cls(message=message, data=AppStatusResponseData.create(status))
+        return cls(message=message, data=status)
 
 
 class DbStatusResponseData(SQLModel, table=False):
     """Database Status Response model."""
 
     status: DbStatus
-
-    @classmethod
-    def create(cls, status: DbStatus) -> "DbStatusResponseData":
-        """Create a DbStatusResponse instance given a DbStatus instance.
-
-        Returns:
-            DbStatusResponseData: DbStatusResponseData instance.
-        """
-        return cls(status=status)
 
 
 class DbStatusResponse(MessageResponse):
@@ -80,14 +62,32 @@ class DbStatusResponse(MessageResponse):
         Returns:
             DbStatusResponse: DbStatusResponse instance.
         """
-        return cls(message=message, data=DbStatusResponseData.create(status))
+        return cls(message=message, data=status)
 
 
-class TokenResponse(SQLModel, table=False):
-    """Token model."""
+class TokenResponseData(SQLModel, table=False):
+    """Token Response Data model."""
 
     access_token: str
     token_type: str
+
+
+class TokenResponse(MessageResponse):
+    """Token Response model."""
+
+    data: TokenResponseData | None
+
+    @classmethod
+    def create(cls, message: str, access_token: str) -> "TokenResponse":
+        """Create a TokenResponse instance given a message and an access token.
+
+        Returns:
+            TokenResponse: TokenResponse instance.
+        """
+        return cls(
+            message=message,
+            data=TokenResponseData(access_token=access_token, token_type="bearer"),
+        )
 
 
 class UserResponseData(SQLModel, table=False):
@@ -100,6 +100,8 @@ class UserResponseData(SQLModel, table=False):
     staff: bool
     admin: bool
     enabled: bool
+    created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def create(cls, user: User) -> "UserResponseData":
@@ -116,6 +118,8 @@ class UserResponseData(SQLModel, table=False):
             staff=user.staff,
             admin=user.admin,
             enabled=user.enabled,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
         )
 
 

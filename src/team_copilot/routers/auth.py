@@ -67,8 +67,9 @@ def login(
         HTTPException: If the credentials are invalid.
 
     Returns:
-        TokenResponse: Token.
+        TokenResponse: Message, token and token type.
     """
+    # Check credentials
     user = authenticate_user(login_data.username, login_data.password)
 
     if not user:
@@ -82,7 +83,9 @@ def login(
             headers=headers,
         )
 
+    # Create the token
     exp = timedelta(minutes=settings.app_acc_token_exp_min)
     token = create_access_token(data={"sub": user.username}, exp_delta=exp)
 
-    return TokenResponse(access_token=token, token_type="bearer")
+    # Return a message, the token and the token type.
+    return TokenResponse.create(message=TOKEN_RET, access_token=token)
