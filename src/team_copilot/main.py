@@ -12,20 +12,16 @@ from fastapi.openapi.utils import get_openapi
 from team_copilot.core.config import settings
 from team_copilot.db.setup import setup
 from team_copilot.routers import health, auth, users, documents, chat
-from team_copilot.models.response import MessageResponse
+from team_copilot.models.response import Response, ErrorResponse
 
 
 # Descriptions and messages
-APP_INV_CRED = "Invalid credentials"
-APP_ISE = "Internal server error."
-APP_OK = "The application is running."
-APP_WELCOME = f"Welcome to {settings.app_name}!"
-DB_ERROR_MESSAGE = "The database is not available."
-DB_OK = "The database is available."
+ERR_OCC = "An error occurred."
 GET_WEL_MSG_DESC = "Get a welcome message."
 GET_WEL_MSG_SUM = "Get a welcome message"
-INT_SER_ERR = "Internal server error"
-INV_REQ_FOR_ERR = "Invalid request format error."
+INT_SER_ERR = "Internal server error."
+VAL_ERR_OCC = "A validation error occurred."
+WELCOME = f"Welcome to {settings.app_name}!"
 
 
 @asynccontextmanager
@@ -50,7 +46,7 @@ app = FastAPI(
     responses={
         status.HTTP_500_INTERNAL_SERVER_ERROR: {
             "description": INT_SER_ERR,
-            "model": MessageResponse,
+            "model": ErrorResponse,
         },
     },
 )
@@ -138,25 +134,6 @@ def openapi() -> dict:
 app.openapi = openapi
 
 
-# @app.exception_handler(StHttpException)
-# async def handle_invfor_error(request: Request, exc: StHttpException) -> JSONResponse:
-#     """Handle low-level Starlette HTTPException exceptions.
-
-#     Args:
-#         request (Request): Request.
-#         exc (StHttpException): Exception.
-
-#     Returns:
-#         JSONResponse: Error message.
-#     """
-#     msg = MessageResponse(message=INV_REQ_FOR_ERR)
-
-#     return JSONResponse(
-#         status_code=status.HTTP_400_BAD_REQUEST,
-#         content=msg.model_dump(),
-#     )
-
-
 @app.exception_handler(StHttpException)
 @app.exception_handler(HTTPException)
 async def handle_http_error(
@@ -173,8 +150,8 @@ async def handle_http_error(
     Returns:
         JSONResponse: Error message.
     """
-    msg_res = MessageResponse(message=exc.detail)
-    return JSONResponse(status_code=exc.status_code, content=msg_res.model_dump())
+    res = ErrorResponse.create(message=ERR_OCC, error=exc.detail)
+    return JSONResponse(status_code=exc.status_code, content=res.model_dump())
 
 
 @app.exception_handler(RequestValidationError)
@@ -191,13 +168,14 @@ async def handle_reqval_error(
     Returns:
         JSONResponse: Error message.
     """
-    msg = [f'{i["loc"][1]}: {i["msg"]}' for i in exc.errors()]
-    msg = ", ".join(msg)
-    msg = MessageResponse(message=msg)
+    message = [f'{i["loc"][1]}: {i["msg"]}' for i in exc.errors()]
+    message = ", ".join(message)
+
+    res = ErrorResponse.create(message=VAL_ERR_OCC, error=message)
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=msg.model_dump(),
+        content=res.model_dump(),
     )
 
 
@@ -212,11 +190,11 @@ async def handle_error(request: Request, exc: Exception) -> JSONResponse:
     Returns:
         JSONResponse: Error message.
     """
-    msg_res = MessageResponse(message=APP_ISE)
+    res = ErrorResponse.create(message=ERR_OCC, error=INT_SER_ERR)
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=msg_res.model_dump(),
+        content=res.model_dump(),
     )
 
 
@@ -225,12 +203,12 @@ async def handle_error(request: Request, exc: Exception) -> JSONResponse:
     operation_id="get_welcome_message",
     summary=GET_WEL_MSG_SUM,
     description=GET_WEL_MSG_DESC,
-    response_model=MessageResponse,
+    response_model=Response,
 )
-def get_welcome_message() -> MessageResponse:
+def get_welcome_message() -> Response:
     """Get a welcome message.
 
     Returns:
-        MessageResponse: Welcome message.
+        Response: Welcome message.
     """
-    return MessageResponse(message=APP_WELCOME)
+    return Response(message=WELCOME)

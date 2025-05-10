@@ -11,15 +11,30 @@ from team_copilot.models.data import AppStatus, DbStatus, DocumentStatus, User, 
 
 
 class Response(SQLModel, table=False):
-    """Message response model."""
+    """Response model."""
 
     message: str
 
 
-class ErrorResponse(SQLModel, table=False):
-    """Error response model."""
+class ErrorResponseData(SQLModel, table=False):
+    """Error Response Data model."""
 
     error: str
+
+
+class ErrorResponse(Response):
+    """Error Response model."""
+
+    data: ErrorResponseData | None
+
+    @classmethod
+    def create(cls, message: str, error: str) -> "ErrorResponse":
+        """Create an ErrorResponse instance given a message and an error string.
+
+        Returns:
+            ErrorResponse: ErrorResponse instance.
+        """
+        return cls(message=message, data=ErrorResponseData(error=error))
 
 
 class AppStatusResponseData(SQLModel, table=False):
