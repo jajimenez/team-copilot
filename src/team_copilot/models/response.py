@@ -10,7 +10,7 @@ from pydantic import EmailStr
 from team_copilot.models.data import AppStatus, DbStatus, DocumentStatus, User, Document
 
 
-class MessageResponse(SQLModel, table=False):
+class Response(SQLModel, table=False):
     """Message response model."""
 
     message: str
@@ -28,7 +28,7 @@ class AppStatusResponseData(SQLModel, table=False):
     status: AppStatus = AppStatus.AVAILABLE
 
 
-class AppStatusResponse(MessageResponse):
+class AppStatusResponse(Response):
     """Application Status Response model."""
 
     data: AppStatusResponseData | None
@@ -50,7 +50,7 @@ class DbStatusResponseData(SQLModel, table=False):
     status: DbStatus
 
 
-class DbStatusResponse(MessageResponse):
+class DbStatusResponse(Response):
     """Database Status Response model."""
 
     data: DbStatusResponseData | None
@@ -72,7 +72,7 @@ class TokenResponseData(SQLModel, table=False):
     token_type: str
 
 
-class TokenResponse(MessageResponse):
+class TokenResponse(Response):
     """Token Response model."""
 
     data: TokenResponseData | None
@@ -123,7 +123,7 @@ class UserResponseData(SQLModel, table=False):
         )
 
 
-class UserResponse(MessageResponse):
+class UserResponse(Response):
     """User Response model."""
 
     data: UserResponseData | None
@@ -153,7 +153,7 @@ class UserSavedResponseData(SQLModel, table=False):
         return cls(id=user.id)
 
 
-class UserSavedResponse(MessageResponse):
+class UserSavedResponse(Response):
     """User Saved response model."""
 
     data: UserSavedResponseData | None
@@ -193,7 +193,7 @@ class DocumentResponseData(SQLModel, table=False):
         )
 
 
-class DocumentResponse(MessageResponse):
+class DocumentResponse(Response):
     """Document Response model."""
 
     data: DocumentResponseData | None
@@ -224,7 +224,7 @@ class DocumentStatusResponseData(SQLModel, table=False):
         return cls(document_id=document.id, document_status=document.status)
 
 
-class DocumentStatusResponse(MessageResponse):
+class DocumentStatusResponse(Response):
     """Document Status Response model."""
 
     data: DocumentStatusResponseData | None
@@ -240,7 +240,7 @@ class DocumentStatusResponse(MessageResponse):
         return cls(message=message, data=DocumentStatusResponseData.create(document))
 
 
-class DocumentListResponse(MessageResponse):
+class DocumentListResponse(Response):
     """Document List Response model."""
 
     data: list[DocumentResponseData] | None

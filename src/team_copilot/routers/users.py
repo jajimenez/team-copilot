@@ -11,7 +11,7 @@ from team_copilot.models.data import User
 from team_copilot.models.request import Undefined, CreateUserRequest, UpdateUserRequest
 
 from team_copilot.models.response import (
-    MessageResponse,
+    Response,
     UserResponse,
     UserSavedResponse,
 )
@@ -53,11 +53,11 @@ router = APIRouter(
     responses={
         status.HTTP_401_UNAUTHORIZED: {
             "description": UNAUTH,
-            "model": MessageResponse,
+            "model": Response,
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
             "description": VAL_ERROR,
-            "model": MessageResponse,
+            "model": Response,
         },
     },
 )
@@ -104,7 +104,7 @@ def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> UserRe
         },
         status.HTTP_409_CONFLICT: {
             "description": USER_EXISTS,
-            "model": MessageResponse,
+            "model": Response,
         },
     },
 )
@@ -153,11 +153,11 @@ async def create_user(
         },
         status.HTTP_404_NOT_FOUND: {
             "description": USER_NF_1,
-            "model": MessageResponse,
+            "model": Response,
         },
         status.HTTP_409_CONFLICT: {
             "description": USER_EXISTS,
-            "model": MessageResponse,
+            "model": Response,
         },
     },
 )
@@ -237,17 +237,17 @@ async def update_user(
     responses={
         status.HTTP_200_OK: {
             "description": USER_DEL_1,
-            "model": MessageResponse,
+            "model": Response,
         },
         status.HTTP_404_NOT_FOUND: {
             "description": USER_NF_1,
-            "model": MessageResponse,
+            "model": Response,
         },
     },
 )
 async def delete_user(
     id: Annotated[UUID, Path(description=USER_ID)],
-) -> MessageResponse:
+) -> Response:
     """Delete a user.
 
     Args:
@@ -257,7 +257,7 @@ async def delete_user(
         HTTPException: If the user is not found.
 
     Returns:
-        MessageResponse: Message.
+        Response: Message.
     """
     try:
         # Get the user from the database
@@ -280,4 +280,4 @@ async def delete_user(
 
     # Return a message
     message = USER_DEL_2.format(user.id, user.username)
-    return MessageResponse(message=message)
+    return Response(message=message)

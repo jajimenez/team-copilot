@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from team_copilot.core.config import Settings, settings, get_settings
 from team_copilot.core.auth import authenticate_user, create_access_token
-from team_copilot.models.response import MessageResponse, TokenResponse
+from team_copilot.models.response import Response, TokenResponse
 from team_copilot.routers import VAL_ERROR, INV_CRED
 
 
@@ -45,11 +45,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
         },
         status.HTTP_401_UNAUTHORIZED: {
             "description": INV_CRED,
-            "model": MessageResponse,
+            "model": Response,
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
             "description": VAL_ERROR,
-            "model": MessageResponse,
+            "model": Response,
         },
     },
 )
