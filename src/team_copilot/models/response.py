@@ -135,34 +135,34 @@ class UserResponse(Response):
         return cls(message=message, data=UserResponseData.create(user))
 
 
-class UserSavedResponseData(SQLModel, table=False):
-    """User Saved Response Data model."""
+class UserCreatedResponseData(SQLModel, table=False):
+    """User Created Response Data model."""
 
-    id: UUID | None
-
-    @classmethod
-    def create(cls, user: User) -> "UserSavedResponseData":
-        """Create a UserSavedResponseData instance given a User instance.
-
-        Returns:
-            UserSavedResponseData: UserSavedResponseData instance.
-        """
-        return cls(id=user.id)
-
-
-class UserSavedResponse(Response):
-    """User Saved response model."""
-
-    data: UserSavedResponseData | None
+    user_id: UUID | None
 
     @classmethod
-    def create(cls, message: str, user: User) -> "UserSavedResponse":
-        """Create a UserSavedResponse instance given a message and a User instance.
+    def create(cls, user: User) -> "UserCreatedResponseData":
+        """Create a UserCreatedResponseData instance given a User instance.
 
         Returns:
-            UserSavedResponse: UserSavedResponse instance.
+            UserCreatedResponseData: UserCreatedResponseData instance.
         """
-        return cls(message=message, data=UserSavedResponseData.create(user))
+        return cls(user_id=user.id)
+
+
+class UserCreatedResponse(Response):
+    """User Created response model."""
+
+    data: UserCreatedResponseData | None
+
+    @classmethod
+    def create(cls, message: str, user: User) -> "UserCreatedResponse":
+        """Create a UserCreatedResponse instance given a message and a User instance.
+
+        Returns:
+            UserCreatedResponse: UserCreatedResponse instance.
+        """
+        return cls(message=message, data=UserCreatedResponseData.create(user))
 
 
 class DocumentResponseData(SQLModel, table=False):
@@ -205,41 +205,42 @@ class DocumentResponse(Response):
         return cls(message=message, data=DocumentResponseData.create(document))
 
 
-class DocumentStatusResponseData(SQLModel, table=False):
-    """Document Status Response Data model."""
+class DocumentCreatedResponseData(SQLModel, table=False):
+    """Document Created Response Data model."""
 
     document_id: UUID
     document_status: DocumentStatus
 
     @classmethod
-    def create(cls, document: Document) -> "DocumentStatusResponseData":
-        """Create a DocumentStatusResponseData instance given a Document instance.
+    def create(cls, document: Document) -> "DocumentCreatedResponseData":
+        """Create a DocumentCreatedResponseData instance given a Document instance.
 
         Returns:
-            DocumentStatusResponseData: DocumentStatusResponseData instance.
+            DocumentCreatedResponseData: DocumentCreatedResponseData instance.
         """
         return cls(document_id=document.id, document_status=document.status)
 
 
-class DocumentStatusResponse(Response):
-    """Document Status Response model."""
+class DocumentCreatedResponse(Response):
+    """Document Created Response model."""
 
-    data: DocumentStatusResponseData | None
+    data: DocumentCreatedResponseData | None
 
     @classmethod
-    def create(cls, message: str, document: Document) -> "DocumentStatusResponse":
-        """Create a DocumentStatusResponse instance given a message and a Document
+    def create(cls, message: str, document: Document) -> "DocumentCreatedResponse":
+        """Create a DocumentCreatedResponse instance given a message and a Document
         instance.
 
         Returns:
-            DocumentStatusResponse: DocumentStatusResponse instance.
+            DocumentCreatedResponse: DocumentCreatedResponse instance.
         """
-        return cls(message=message, data=DocumentStatusResponseData.create(document))
+        return cls(message=message, data=DocumentCreatedResponseData.create(document))
 
 
 class DocumentListResponse(Response):
     """Document List Response model."""
 
+    count: int
     data: list[DocumentResponseData] | None
 
     @classmethod
@@ -251,7 +252,7 @@ class DocumentListResponse(Response):
             DocumentListResponse: DocumentListResponse instance.
         """
         docs = [DocumentResponseData.create(d) for d in documents]
-        return cls(message=message, data=docs)
+        return cls(count=len(docs), message=message, data=docs)
 
 
 class AgentResponseChunk(SQLModel, table=False):

@@ -33,7 +33,7 @@ PROC_DOC = "Processing document {} ({})..."
 TEMP_FILE_DEL = "Temporary PDF file ({}) of the document {} ({}) deleted."
 
 
-def get_all_docs() -> list[Document]:
+def get_all_documents() -> list[Document]:
     """Get all documents.
 
     Returns:
@@ -47,7 +47,7 @@ def get_all_docs() -> list[Document]:
         return session.exec(s).all()
 
 
-def get_doc(id: UUID | None = None, name: str | None = None) -> Document | None:
+def get_document(id: UUID | None = None, name: str | None = None) -> Document | None:
     """Get a document by its ID or name.
 
     Args:
@@ -76,7 +76,7 @@ def get_doc(id: UUID | None = None, name: str | None = None) -> Document | None:
         return session.exec(s).first()
 
 
-def get_doc_temp_file_path(doc_id: UUID) -> str:
+def get_document_file_path(doc_id: UUID) -> str:
     """Get the path of the temporary PDF file of a document given the document ID.
 
     Args:
@@ -88,7 +88,7 @@ def get_doc_temp_file_path(doc_id: UUID) -> str:
     return join(settings.app_temp_dir, f"{doc_id}.pdf")
 
 
-def save_doc(doc: Document):
+def save_document(doc: Document):
     """Save a document to the database.
 
     If the document is new, the ID in the `Document` object is set to the ID generated
@@ -122,7 +122,7 @@ def save_doc(doc: Document):
         session.refresh(doc)
 
 
-def process_doc(id: UUID):
+def process_document(id: UUID):
     """Process a document after its PDF file has been uploaded.
 
     When the document is processed, its PDF file is deleted.
@@ -206,7 +206,7 @@ def process_doc(id: UUID):
             raise
 
 
-def delete_doc(id: UUID):
+def delete_document(id: UUID):
     """Delete a document from the database.
 
     Args:

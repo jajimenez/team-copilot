@@ -9,14 +9,14 @@ from fastapi.exceptions import HTTPException
 from team_copilot.core.auth import get_enabled_user, get_admin_user
 from team_copilot.models.data import User
 from team_copilot.models.request import Undefined, CreateUserRequest, UpdateUserRequest
+from team_copilot.models.response import Response, UserResponse, UserCreatedResponse
 
-from team_copilot.models.response import (
-    Response,
-    UserResponse,
-    UserSavedResponse,
+from team_copilot.services.users import (
+    get_user as get_us,
+    save_user,
+    delete_user as del_user,
 )
 
-from team_copilot.services.users import get_user, save_user, delete_user
 from team_copilot.routers import VAL_ERROR, UNAUTH
 
 
@@ -39,10 +39,11 @@ USER_CRE_2 = "User {} ({}) created."
 USER_DATA = "User data."
 USER_DEL_1 = "User deleted."
 USER_DEL_2 = "User {} ({}) deleted."
-USER_EXISTS = "A user with the same username or e-mail address exists."
+USER_EXISTS = "A user with the same username or e-mail address already exists."
 USER_ID = "User ID."
 USER_NF_1 = "User not found."
 USER_NF_2 = "User {} not found."
+USER_RET = "User {} ({}) retrieved."
 USER_UPD_1 = "User updated."
 USER_UPD_2 = "User {} ({}) updated."
 
@@ -87,7 +88,8 @@ def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> UserRe
     Returns:
         UserResponse: Message and current user.
     """
-    return UserResponse.create(user)
+    message = USER_RET.format(user.id, user.username)
+    return UserResponse.create(message=message, user=user)
 
 
 @router.post(
@@ -100,7 +102,7 @@ def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> UserRe
     responses={
         status.HTTP_201_CREATED: {
             "description": USER_CRE_1,
-            "model": UserSavedResponse,
+            "model": UserCreatedResponse,
         },
         status.HTTP_409_CONFLICT: {
             "description": USER_EXISTS,
@@ -110,7 +112,7 @@ def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> UserRe
 )
 async def create_user(
     user: Annotated[CreateUserRequest, Body(description=USER_DATA)],
-) -> UserSavedResponse:
+) -> UserCreatedResponse:
     """Create a user.
 
     Args:
@@ -121,10 +123,10 @@ async def create_user(
         HTTPException: If another user with the same username or e-mail address exists.
 
     Returns:
-        UserSavedResponse: Message and user ID.
+        UserCreatedResponse: Message and user ID.
     """
     # Check that another user with the same username or e-mail address doesn't exist
-    if get_user(username=user.username, email=user.email):
+    if get_us(username=user.username, email=user.email):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=USER_EXISTS)
 
     # Create a new User object
@@ -134,9 +136,9 @@ async def create_user(
     # and is set in the User object by "save_user".
     save_user(u)
 
-    # Return a message and the user ID
+    # Return message and user ID
     message = USER_CRE_2.format(u.id, u.username)
-    return UserSavedResponse.create(message=message, user=u)
+    return UserCreatedResponse.create(message=message, user=u)
 
 
 @router.put(
@@ -149,7 +151,7 @@ async def create_user(
     responses={
         status.HTTP_200_OK: {
             "description": USER_UPD_1,
-            "model": UserSavedResponse,
+            "model": UserResponse,
         },
         status.HTTP_404_NOT_FOUND: {
             "description": USER_NF_1,
@@ -164,7 +166,7 @@ async def create_user(
 async def update_user(
     id: Annotated[UUID, Path(description=USER_ID)],
     user: Annotated[UpdateUserRequest, Body(description=USER_DATA)],
-) -> UserSavedResponse:
+) -> UserResponse:
     """Update a user.
 
     Args:
@@ -177,10 +179,10 @@ async def update_user(
             or e-mail address exists.
 
     Returns:
-        UserSavedResponse: Message and user ID.
+        UserResponse: Message and user.
     """
     # Check that the user exists and get the user
-    u = get_user(id=id)
+    u = get_us(id=id)
 
     if not user:
         raise HTTPException(
@@ -194,7 +196,7 @@ async def update_user(
     email_prov = user.email is not Undefined
 
     if username_prov or email_prov:
-        other_user = get_user(
+        other_user = get_us(
             username=user.username if username_prov else None,
             email=user.email if email_prov else None,
         )
@@ -222,9 +224,9 @@ async def update_user(
     # Save the existing user object to the database
     save_user(u)
 
-    # Return a message and the user ID
+    # Return message and user
     message = USER_UPD_2.format(u.id, u.username)
-    return UserSavedResponse.create(message=message, user=u)
+    return UserResponse.create(message=message, user=u)
 
 
 @router.delete(
@@ -261,7 +263,7 @@ async def delete_user(
     """
     try:
         # Get the user from the database
-        user = get_user(id=id)
+        user = get_us(id=id)
 
         # Check that the user exists
         if not user:
@@ -270,7 +272,7 @@ async def delete_user(
         # Delete the user. A ValueError will be raised if the user doesn't exist
         # although this should never happen because we already checked that the user
         # exists.
-        delete_user(id)
+        del_user(id)
     except ValueError:
         # Re-raise exception as HTTPException
         raise HTTPException(
@@ -278,6 +280,6 @@ async def delete_user(
             detail=USER_NF_2.format(id),
         )
 
-    # Return a message
+    # Return message
     message = USER_DEL_2.format(user.id, user.username)
     return Response(message=message)

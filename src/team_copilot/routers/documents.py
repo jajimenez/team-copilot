@@ -26,17 +26,17 @@ from team_copilot.models.request import CreateDocumentRequest, UpdateDocumentReq
 from team_copilot.models.response import (
     Response,
     DocumentResponse,
-    DocumentStatusResponse,
+    DocumentCreatedResponse,
     DocumentListResponse,
 )
 
 from team_copilot.services.documents import (
-    get_doc_temp_file_path,
-    save_doc,
-    get_doc,
-    get_all_docs,
-    process_doc,
-    delete_doc,
+    get_all_documents as get_all_docs,
+    get_document as get_doc,
+    get_document_file_path,
+    save_document,
+    process_document,
+    delete_document as delete_doc,
 )
 
 from team_copilot.routers import BAD_REQ, VAL_ERROR, UNAUTH
@@ -63,7 +63,8 @@ DOC_NF_2 = "Document {} not found."
 DOC_RET = "Document retrieved."
 DOC_UPD_SCH = "Document {} ({}) updated and scheduled for processing."
 DOCS_DAT = "Documents data."
-DOCS_RET = "Documents retrieved."
+DOCS_RET_1 = "1 document retrieved."
+DOCS_RET_2 = "{} documents retrieved."
 ERROR_DEL_DOC = "Error deleting document {}."
 ERROR_UPL_FILE = "Error uploading file {}."
 FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
@@ -231,13 +232,17 @@ async def get_all_documents() -> DocumentListResponse:
     """Get all documents.
 
     Returns:
-        DocumentListResponse: Message and documents.
+        DocumentListResponse: Message, document count and documents.
     """
     # Get all the documents from the database
     docs = get_all_docs()
 
-    # Return a message and the documents
-    return DocumentListResponse.create(message=DOCS_RET, documents=docs)
+    # Get document count and message
+    count = len(docs)
+    message = DOCS_RET_1 if count == 1 else DOCS_RET_2.format(count)
+
+    # Return message, document count and documents.
+    return DocumentListResponse.create(message=message, documents=docs)
 
 
 @router.get(
@@ -293,7 +298,7 @@ async def get_document(
     responses={
         status.HTTP_202_ACCEPTED: {
             "description": DOC_ACC,
-            "model": DocumentStatusResponse,
+            "model": DocumentCreatedResponse,
         },
         status.HTTP_409_CONFLICT: {
             "description": DOC_EXISTS,
@@ -313,7 +318,7 @@ async def create_document(
     name: Annotated[str, Form(description=DOC_NAME, min_length=1, max_length=100)],
     file: Annotated[UploadFile, File(description=DOC_FILE)],
     bg_tasks: BackgroundTasks,
-) -> DocumentStatusResponse:
+) -> DocumentCreatedResponse:
     """Create a document.
 
     Args:
@@ -327,7 +332,7 @@ async def create_document(
             exceeds the maximum limit.
 
     Returns:
-        DocumentStatusResponse: Message and document status.
+        DocumentCreatedResponse: Message, document ID and document status.
     """
     # Check that the name is valid
     validate_name(name)
@@ -343,22 +348,22 @@ async def create_document(
     doc = Document(name=name)
 
     # Save the Document object to the database. The ID of the document is set by the
-    # database and is set in the Document object by "save_doc".
-    save_doc(doc)
+    # database and is set in the Document object by "save_document".
+    save_document(doc)
 
     # Get the path where the PDF file of the document will be saved temporarily
-    file_path = get_doc_temp_file_path(doc.id)
+    file_path = get_document_file_path(doc.id)
 
     # Upload the file
     await upload_file(file, file_path)
 
     # Process the document in the background. The temporary PDF file of the document is
     # deleted after the processing finishes.
-    bg_tasks.add_task(process_doc, doc.id)
+    bg_tasks.add_task(process_document, doc.id)
 
-    # Return a message and the document status, which is initially "pending".
+    # Return message, document ID and document status (which is initially "pending").
     message = DOC_CRE_SCH.format(doc.id, doc.name)
-    return DocumentStatusResponse.create(message=message, document=doc)
+    return DocumentCreatedResponse.create(message=message, document=doc)
 
 
 @router.put(
@@ -370,7 +375,7 @@ async def create_document(
     responses={
         status.HTTP_202_ACCEPTED: {
             "description": DOC_ACC,
-            "model": DocumentStatusResponse,
+            "model": DocumentResponse,
         },
         status.HTTP_404_NOT_FOUND: {
             "description": DOC_NF_1,
@@ -398,7 +403,7 @@ async def update_document(
         Form(description=DOC_NAME, min_length=1, max_length=100)
     ] = None,
     file: Annotated[UploadFile | None, File(description=DOC_FILE)] = None,
-) -> DocumentStatusResponse:
+) -> DocumentResponse:
     """Update a document.
 
     Args:
@@ -414,7 +419,7 @@ async def update_document(
             name exists or the file size exceeds the maximum limit.
 
     Returns:
-        DocumentStatusResponse: Message and document status.
+        DocumentResponse: Message and document.
     """
     # Check that at least one of the name or file is provided
     if name is None and file is None:
@@ -457,23 +462,23 @@ async def update_document(
         doc.status = DocumentStatus.PENDING
 
     # Save the document object to the database
-    save_doc(doc)
+    save_document(doc)
 
     # Process file if provided
     if file is not None:
         # Get the path where the PDF file of the document will be saved temporarily
-        file_path = get_doc_temp_file_path(doc.id)
+        file_path = get_document_file_path(doc.id)
 
         # Upload the file
         await upload_file(file, file_path)
 
         # Process the document in the background. The temporary PDF file of the document
         # is deleted after the processing finishes.
-        bg_tasks.add_task(process_doc, doc.id)
+        bg_tasks.add_task(process_document, doc.id)
 
-    # Return a message and the document status
+    # Return message and document
     message = DOC_UPD_SCH.format(doc.id, doc.name)
-    return DocumentStatusResponse.create(message=message, document=doc)
+    return DocumentResponse.create(message=message, document=doc)
 
 
 @router.delete(
