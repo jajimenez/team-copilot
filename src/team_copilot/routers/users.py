@@ -85,9 +85,9 @@ def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> UserRe
         user (User): Current user.
 
     Returns:
-        UserResponse: Current user response.
+        UserResponse: Message and current user.
     """
-    return UserResponse.from_user(user)
+    return UserResponse.create(user)
 
 
 @router.post(
@@ -121,7 +121,7 @@ async def create_user(
         HTTPException: If another user with the same username or e-mail address exists.
 
     Returns:
-        UserSavedResponse: User ID and a message.
+        UserSavedResponse: Message and user ID.
     """
     # Check that another user with the same username or e-mail address doesn't exist
     if get_user(username=user.username, email=user.email):
@@ -134,8 +134,9 @@ async def create_user(
     # and is set in the User object by "save_user".
     save_user(u)
 
-    # Return the user ID and a message
-    return UserSavedResponse(user_id=u.id, message=USER_CRE_2.format(u.id, u.username))
+    # Return a message and the user ID
+    message = USER_CRE_2.format(u.id, u.username)
+    return UserSavedResponse.create(message=message, user=u)
 
 
 @router.put(
@@ -176,7 +177,7 @@ async def update_user(
             or e-mail address exists.
 
     Returns:
-        UserSavedResponse: User ID and a message.
+        UserSavedResponse: Message and user ID.
     """
     # Check that the user exists and get the user
     u = get_user(id=id)
@@ -221,8 +222,9 @@ async def update_user(
     # Save the existing user object to the database
     save_user(u)
 
-    # Return the user ID and a message
-    return UserSavedResponse(user_id=u.id, message=USER_UPD_2.format(u.id, u.username))
+    # Return a message and the user ID
+    message = USER_UPD_2.format(u.id, u.username)
+    return UserSavedResponse.create(message=message, user=u)
 
 
 @router.delete(
@@ -255,7 +257,7 @@ async def delete_user(
         HTTPException: If the user is not found.
 
     Returns:
-        MessageResponse: User ID and a message.
+        MessageResponse: Message.
     """
     try:
         # Get the user from the database
@@ -264,8 +266,6 @@ async def delete_user(
         # Check that the user exists
         if not user:
             raise ValueError()
-
-        username = user.username
 
         # Delete the user. A ValueError will be raised if the user doesn't exist
         # although this should never happen because we already checked that the user
@@ -278,4 +278,6 @@ async def delete_user(
             detail=USER_NF_2.format(id),
         )
 
-    return MessageResponse(message=USER_DEL_2.format(id, username))
+    # Return a message
+    message = USER_DEL_2.format(user.id, user.username)
+    return MessageResponse(message=message)

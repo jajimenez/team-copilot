@@ -41,25 +41,23 @@ class TokenResponse(SQLModel, table=False):
     token_type: str
 
 
-class UserResponse(SQLModel, table=False):
-    """User Response model."""
+class UserResponseData(SQLModel, table=False):
+    """User Response Data model."""
 
-    id: UUID
+    id: UUID | None
     username: str
     name: str | None
     email: EmailStr | None
     staff: bool
     admin: bool
     enabled: bool
-    created_at: datetime
-    updated_at: datetime
 
     @classmethod
-    def from_user(cls, user: User) -> "UserResponse":
-        """Convert the instance to a UserResponse instance.
+    def create(cls, user: User) -> "UserResponseData":
+        """Create a UserResponseData instance given a User instance.
 
         Returns:
-            UserResponse: UserResponse instance.
+            UserResponseData: UserResponseData instance.
         """
         return cls(
             id=user.id,
@@ -69,15 +67,52 @@ class UserResponse(SQLModel, table=False):
             staff=user.staff,
             admin=user.admin,
             enabled=user.enabled,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
         )
 
 
-class UserSavedResponse(MessageResponse):
-    """User saved response model."""
+class UserResponse(MessageResponse):
+    """User Response model."""
 
-    user_id: UUID
+    data: UserResponseData | None
+
+    @classmethod
+    def create(cls, message: str, user: User) -> "UserResponse":
+        """Create a UserResponse instance given a message and a User instance.
+
+        Returns:
+            UserResponse: UserResponse instance.
+        """
+        return cls(message=message, data=UserResponseData.create(user))
+
+
+class UserSavedResponseData(SQLModel, table=False):
+    """User Saved Response Data model."""
+
+    id: UUID | None
+
+    @classmethod
+    def create(cls, user: User) -> "UserSavedResponseData":
+        """Create a UserSavedResponseData instance given a User instance.
+
+        Returns:
+            UserSavedResponseData: UserSavedResponseData instance.
+        """
+        return cls(id=user.id)
+
+
+class UserSavedResponse(MessageResponse):
+    """User Saved response model."""
+
+    data: UserSavedResponseData | None
+
+    @classmethod
+    def create(cls, message: str, user: User) -> "UserSavedResponse":
+        """Create a UserSavedResponse instance given a message and a User instance.
+
+        Returns:
+            UserSavedResponse: UserSavedResponse instance.
+        """
+        return cls(message=message, data=UserSavedResponseData.create(user))
 
 
 class DocumentResponseData(SQLModel, table=False):
@@ -117,7 +152,7 @@ class DocumentResponse(MessageResponse):
         Returns:
             DocumentResponse: DocumentResponse instance.
         """
-        return cls(message=message, data=DocumentResponseData.from_document(document))
+        return cls(message=message, data=DocumentResponseData.create(document))
 
 
 class DocumentStatusResponseData(SQLModel, table=False):
