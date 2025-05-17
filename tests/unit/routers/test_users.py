@@ -3,7 +3,7 @@
 from unittest.mock import patch
 from dateutil.parser import parse
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
 from team_copilot.core.auth import get_enabled_user, get_admin_user
@@ -28,7 +28,7 @@ def test_get_all_users(
 
     with patch("team_copilot.routers.users.get_all_us", return_value=mock_db_users):
         response = test_client.get("/users")
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
 
         user_count = len(mock_db_users)
 
@@ -54,6 +54,24 @@ def test_get_all_users(
     app.dependency_overrides.clear()
 
 
+def test_get_all_users_unauth(test_client: TestClient):
+    """Test the get_all_users endpoint with an unauthenticated user.
+
+    Args:
+        app (FastAPI): FastAPI application.
+        test_client (TestClient): FastAPI test client.
+    """
+    response = test_client.get("/users")
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    res_data = response.json()
+    assert len(res_data) == 2
+    assert res_data["message"] == "An error occurred."
+
+    data = res_data["data"]
+    assert data["error"] == "Not authenticated"
+
+
 def test_get_current_user(
     app: FastAPI,
     test_client: TestClient,
@@ -70,7 +88,7 @@ def test_get_current_user(
 
     with patch("team_copilot.routers.users.get_us", return_value=mock_enabled_user):
         response = test_client.get("/users/me")
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
 
         res_data = response.json()
         assert len(res_data) == 2
