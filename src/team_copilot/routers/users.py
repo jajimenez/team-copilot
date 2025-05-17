@@ -235,7 +235,7 @@ async def update_user(
     # Check that the user exists and get the user
     u = get_us(id=id)
 
-    if not user:
+    if not u:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=USER_NF_2.format(id),
