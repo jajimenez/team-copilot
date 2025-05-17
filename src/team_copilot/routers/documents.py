@@ -25,6 +25,7 @@ from team_copilot.models.request import CreateDocumentRequest, UpdateDocumentReq
 
 from team_copilot.models.response import (
     Response,
+    ErrorResponse,
     DocumentResponse,
     DocumentCreatedResponse,
     DocumentListResponse,
@@ -118,19 +119,19 @@ router = APIRouter(
     responses={
         status.HTTP_400_BAD_REQUEST: {
             "description": BAD_REQ,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_401_UNAUTHORIZED: {
             "description": NOT_AUTHENTICATED,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_403_FORBIDDEN: {
             "description": NOT_AUTHORIZED,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
             "description": VAL_ERROR,
-            "model": Response,
+            "model": ErrorResponse,
         },
     },
 )
@@ -263,7 +264,7 @@ async def get_all_documents() -> DocumentListResponse:
         },
         status.HTTP_404_NOT_FOUND: {
             "description": DOC_NF_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
     },
 )
@@ -307,15 +308,15 @@ async def get_document(
         },
         status.HTTP_409_CONFLICT: {
             "description": DOC_EXISTS_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {
             "description": FILE_TOO_LARGE_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
             "description": UNS_FILE_TYP_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
     },
 )
@@ -384,19 +385,19 @@ async def create_document(
         },
         status.HTTP_404_NOT_FOUND: {
             "description": DOC_NF_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_409_CONFLICT: {
             "description": DOC_EXISTS_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {
             "description": FILE_TOO_LARGE_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
             "description": UNS_FILE_TYP_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
     },
 )
@@ -502,13 +503,11 @@ async def update_document(
         },
         status.HTTP_404_NOT_FOUND: {
             "description": DOC_NF_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
     },
 )
-async def delete_document(
-    id: Annotated[UUID, Path(description=DOC_ID)],
-) -> Response:
+async def delete_document(id: Annotated[UUID, Path(description=DOC_ID)]) -> Response:
     """Delete a document.
 
     Args:

@@ -7,7 +7,14 @@ import json
 from sqlmodel import SQLModel
 from pydantic import EmailStr
 
-from team_copilot.models.data import AppStatus, DbStatus, DocumentStatus, User, Document
+from team_copilot.models.data import (
+    Error,
+    AppStatus,
+    DbStatus,
+    DocumentStatus,
+    User,
+    Document,
+)
 
 
 class Response(SQLModel, table=False):
@@ -19,22 +26,38 @@ class Response(SQLModel, table=False):
 class ErrorResponseData(SQLModel, table=False):
     """Error Response Data model."""
 
-    error: str
+    id: str
+    message: str
+
+    @classmethod
+    def create(cls, error: Error) -> "ErrorResponseData":
+        """Create an ErrorResponseData instance given an Error instance.
+
+        Args:
+            error (Error): Error instance.
+
+        Returns:
+            ErrorResponseData: ErrorResponseData instance.
+        """
+        return cls(id=error.id, message=error.message)
 
 
 class ErrorResponse(Response):
     """Error Response model."""
 
-    data: ErrorResponseData | None
+    count: int
+    data: list[ErrorResponseData]
 
     @classmethod
-    def create(cls, message: str, error: str) -> "ErrorResponse":
-        """Create an ErrorResponse instance given a message and an error string.
+    def create(cls, message: str, errors: list[Error] | None = None) -> "ErrorResponse":
+        """Create an ErrorResponse instance given a message and a list of Error
+        instances.
 
         Returns:
             ErrorResponse: ErrorResponse instance.
         """
-        return cls(message=message, data=ErrorResponseData(error=error))
+        errors = errors or []
+        return cls(message=message, count=len(errors), data=errors)
 
 
 class AppStatusResponseData(SQLModel, table=False):
@@ -46,7 +69,7 @@ class AppStatusResponseData(SQLModel, table=False):
 class AppStatusResponse(Response):
     """Application Status Response model."""
 
-    data: AppStatusResponseData | None
+    data: AppStatusResponseData
 
     @classmethod
     def create(cls, message: str, status: AppStatus) -> "AppStatusResponse":
@@ -68,7 +91,7 @@ class DbStatusResponseData(SQLModel, table=False):
 class DbStatusResponse(Response):
     """Database Status Response model."""
 
-    data: DbStatusResponseData | None
+    data: DbStatusResponseData
 
     @classmethod
     def create(cls, message: str, status: DbStatus) -> "DbStatusResponse":
@@ -90,7 +113,7 @@ class TokenResponse(SQLModel, table=False):
 class UserResponseData(SQLModel, table=False):
     """User Response Data model."""
 
-    id: UUID | None
+    id: UUID
     username: str
     name: str | None
     email: EmailStr | None
@@ -123,7 +146,7 @@ class UserResponseData(SQLModel, table=False):
 class UserResponse(Response):
     """User Response model."""
 
-    data: UserResponseData | None
+    data: UserResponseData
 
     @classmethod
     def create(cls, message: str, user: User) -> "UserResponse":
@@ -139,7 +162,7 @@ class UserListResponse(Response):
     """User List Response model."""
 
     count: int
-    data: list[UserResponseData] | None
+    data: list[UserResponseData]
 
     @classmethod
     def create(cls, message: str, users: list[User]) -> "UserListResponse":
@@ -156,7 +179,7 @@ class UserListResponse(Response):
 class UserCreatedResponseData(SQLModel, table=False):
     """User Created Response Data model."""
 
-    user_id: UUID | None
+    user_id: UUID
 
     @classmethod
     def create(cls, user: User) -> "UserCreatedResponseData":
@@ -171,7 +194,7 @@ class UserCreatedResponseData(SQLModel, table=False):
 class UserCreatedResponse(Response):
     """User Created response model."""
 
-    data: UserCreatedResponseData | None
+    data: UserCreatedResponseData
 
     @classmethod
     def create(cls, message: str, user: User) -> "UserCreatedResponse":
@@ -186,11 +209,11 @@ class UserCreatedResponse(Response):
 class DocumentResponseData(SQLModel, table=False):
     """Document Response Data model."""
 
-    id: UUID | None
+    id: UUID
     name: str
     status: DocumentStatus
-    created_at: datetime | None
-    updated_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def create(cls, document: Document) -> "DocumentResponseData":
@@ -211,7 +234,7 @@ class DocumentResponseData(SQLModel, table=False):
 class DocumentResponse(Response):
     """Document Response model."""
 
-    data: DocumentResponseData | None
+    data: DocumentResponseData
 
     @classmethod
     def create(cls, message: str, document: Document) -> "DocumentResponse":
@@ -227,7 +250,7 @@ class DocumentListResponse(Response):
     """Document List Response model."""
 
     count: int
-    data: list[DocumentResponseData] | None
+    data: list[DocumentResponseData]
 
     @classmethod
     def create(cls, message: str, documents: list[Document]) -> "DocumentListResponse":
@@ -260,7 +283,7 @@ class DocumentCreatedResponseData(SQLModel, table=False):
 class DocumentCreatedResponse(Response):
     """Document Created Response model."""
 
-    data: DocumentCreatedResponseData | None
+    data: DocumentCreatedResponseData
 
     @classmethod
     def create(cls, message: str, document: Document) -> "DocumentCreatedResponse":

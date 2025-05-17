@@ -31,6 +31,13 @@ PASS_VAL_ERROR = "Password must be a string between 8 and 200 characters long."
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+class Error(SQLModel, table=False):
+    """Error model."""
+
+    id: str
+    message: str
+
+
 class AppStatus(str, Enum):
     """Application status enumeration."""
 

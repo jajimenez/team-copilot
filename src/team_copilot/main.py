@@ -12,16 +12,19 @@ from fastapi.openapi.utils import get_openapi
 from team_copilot.core.config import settings
 from team_copilot.db.setup import setup
 from team_copilot.routers import health, auth, users, documents, chat
+from team_copilot.models.data import Error
 from team_copilot.models.response import Response, ErrorResponse
 
 
 # Descriptions and messages
-ERR_OCC = "An error occurred."
+AUTHENTICATION_ERR = "Authentication error."
+AUTHORIZATION_ERR = "Authorization error."
+ERROR = "Error."
 GET_WEL_MSG_DESC = "Get a welcome message."
 GET_WEL_MSG_SUM = "Get a welcome message"
 INT_SER_ERR_1 = "Internal server error"
 INT_SER_ERR_2 = "Internal server error."
-VAL_ERR_OCC = "A validation error occurred."
+VAL_ERR = "Validation error."
 WELCOME = f"Welcome to {settings.app_name}!"
 
 
@@ -151,7 +154,19 @@ async def handle_http_error(
     Returns:
         JSONResponse: Error message.
     """
-    res = ErrorResponse.create(message=ERR_OCC, error=exc.detail)
+    if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+        id = "authentication"
+        message = AUTHENTICATION_ERR
+    elif exc.status_code == status.HTTP_403_FORBIDDEN:
+        id = "authorization"
+        message = AUTHORIZATION_ERR
+    else:
+        id = "error"
+        message = ERROR
+
+    errors = [Error(id=id, message=exc.detail)]
+    res = ErrorResponse.create(message=message, errors=errors)
+
     return JSONResponse(status_code=exc.status_code, content=res.model_dump())
 
 
@@ -169,10 +184,14 @@ async def handle_reqval_error(
     Returns:
         JSONResponse: Error message.
     """
-    message = [f'{i["loc"][1]}: {i["msg"]}' for i in exc.errors()]
-    message = ", ".join(message)
+    def get_error(e: dict) -> Error:
+        if len(e["loc"]) > 1 and isinstance(e["loc"][1], str):
+            return Error(id=e["loc"][1], message=e["msg"])
+        else:
+            return Error(id=e["loc"][0], message=e["msg"])
 
-    res = ErrorResponse.create(message=VAL_ERR_OCC, error=message)
+    errors = list(map(get_error, exc.errors()))
+    res = ErrorResponse.create(message=VAL_ERR, errors=errors)
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -191,7 +210,8 @@ async def handle_error(request: Request, exc: Exception) -> JSONResponse:
     Returns:
         JSONResponse: Error message.
     """
-    res = ErrorResponse.create(message=ERR_OCC, error=INT_SER_ERR_2)
+    errors = [Error(id="internal_server_error", message=INT_SER_ERR_2)]
+    res = ErrorResponse.create(message=INT_SER_ERR_2, errors=errors)
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

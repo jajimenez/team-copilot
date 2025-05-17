@@ -35,11 +35,11 @@ def test_client(app) -> TestClient:
 
 
 @pytest.fixture
-def mock_db_users() -> list[User]:
-    """Mock a list of users for testing endpoints.
+def users_mock() -> list[User]:
+    """Users mock for testing endpoints.
 
     Returns:
-        list[User]: Mocked user objects.
+        list[User]: Users mock.
     """
     now = datetime.now(timezone.utc)
 
@@ -72,11 +72,11 @@ def mock_db_users() -> list[User]:
 
 
 @pytest.fixture
-def mock_enabled_user() -> Generator[User, None, None]:
-    """Mock an enabled user for testing endpoints.
+def enabled_user_mock() -> Generator[User, None, None]:
+    """Enabled user mock for testing endpoints.
 
     Returns:
-        Generator[User, None, None]: Mocked user object.
+        Generator[User, None, None]: User mock.
     """
     now = datetime.now(timezone.utc)
 
@@ -98,11 +98,11 @@ def mock_enabled_user() -> Generator[User, None, None]:
 
 
 @pytest.fixture
-def mock_staff_user() -> Generator[User, None, None]:
-    """Mock an enabled staff user for testing endpoints.
+def staff_user_mock() -> Generator[User, None, None]:
+    """Enabled staff user mock for testing endpoints.
 
     Returns:
-        Generator[User, None, None]: Mocked user object.
+        Generator[User, None, None]: User mock.
     """
     now = datetime.now(timezone.utc)
 
@@ -124,11 +124,11 @@ def mock_staff_user() -> Generator[User, None, None]:
 
 
 @pytest.fixture
-def mock_admin_user() -> Generator[User, None, None]:
-    """Mock an enabled administrator user for testing endpoints.
+def admin_user_mock() -> Generator[User, None, None]:
+    """Enabled administrator user mock for testing endpoints.
 
     Returns:
-        Generator[User, None, None]: Mocked user object.
+        Generator[User, None, None]: User mock.
     """
     now = datetime.now(timezone.utc)
 

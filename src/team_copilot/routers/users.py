@@ -11,7 +11,11 @@ from team_copilot.models.data import User
 from team_copilot.models.request import Undefined, CreateUserRequest, UpdateUserRequest
 
 from team_copilot.models.response import (
-    Response, UserResponse, UserListResponse, UserCreatedResponse
+    Response,
+    ErrorResponse,
+    UserResponse,
+    UserListResponse,
+    UserCreatedResponse,
 )
 
 from team_copilot.services.users import (
@@ -45,7 +49,8 @@ USER_CRE_2 = "User {} ({}) created."
 USER_DATA = "User data"
 USER_DEL_1 = "User deleted"
 USER_DEL_2 = "User {} ({}) deleted."
-USER_EXISTS = "A user with the same username or e-mail address already exists."
+USER_EXISTS_1 = "A user with the same username or e-mail address already exists"
+USER_EXISTS_2 = "A user with the same username or e-mail address already exists."
 USER_ID = "User ID"
 USER_NF_1 = "User not found"
 USER_NF_2 = "User {} not found."
@@ -63,15 +68,15 @@ router = APIRouter(
     responses={
         status.HTTP_401_UNAUTHORIZED: {
             "description": NOT_AUTHENTICATED,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_403_FORBIDDEN: {
             "description": NOT_AUTHORIZED,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
             "description": VAL_ERROR,
-            "model": Response,
+            "model": ErrorResponse,
         },
     },
 )
@@ -121,7 +126,9 @@ async def get_all_users() -> UserListResponse:
         }
     },
 )
-async def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> UserResponse:
+async def get_current_user(
+    user: Annotated[User, Depends(get_enabled_user)],
+) -> UserResponse:
     """Get the current authenticated user.
 
     The user must be authenticated and enabled.
@@ -149,8 +156,8 @@ async def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> 
             "model": UserCreatedResponse,
         },
         status.HTTP_409_CONFLICT: {
-            "description": USER_EXISTS,
-            "model": Response,
+            "description": USER_EXISTS_1,
+            "model": ErrorResponse,
         },
     },
 )
@@ -171,7 +178,7 @@ async def create_user(
     """
     # Check that another user with the same username or e-mail address doesn't exist
     if get_us(username=user.username, email=user.email):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=USER_EXISTS)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=USER_EXISTS_2)
 
     # Create a new User object
     u: User = user.to_user()
@@ -199,11 +206,11 @@ async def create_user(
         },
         status.HTTP_404_NOT_FOUND: {
             "description": USER_NF_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
         status.HTTP_409_CONFLICT: {
-            "description": USER_EXISTS,
-            "model": Response,
+            "description": USER_EXISTS_1,
+            "model": ErrorResponse,
         },
     },
 )
@@ -248,7 +255,7 @@ async def update_user(
         if other_user and other_user.id != id:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=USER_EXISTS,
+                detail=USER_EXISTS_2,
             )
 
     # Update the User object for the provided fields
@@ -287,7 +294,7 @@ async def update_user(
         },
         status.HTTP_404_NOT_FOUND: {
             "description": USER_NF_1,
-            "model": Response,
+            "model": ErrorResponse,
         },
     },
 )
