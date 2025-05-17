@@ -3,5 +3,6 @@
 # Descriptions and messages
 BAD_REQ = "Bad request"
 INV_CRED = "Invalid credentials"
-UNAUTH = "Unauthorized"
+NOT_AUTHENTICATED = "Not authenticated"
+NOT_AUTHORIZED = "Not authorized"
 VAL_ERROR = "Validation error"

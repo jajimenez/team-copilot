@@ -16,6 +16,7 @@ from team_copilot.services.users import get_user
 
 # Messages
 INV_CRED = "Invalid credentials."
+UNAUTH = "Unauthorized."
 
 # Authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -124,10 +125,7 @@ async def get_enabled_user(user: Annotated[User, Depends(get_auth_user)]) -> Use
         User: Current user (authenticated and enabled).
     """
     if not user.enabled:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=INV_CRED,
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=UNAUTH)
 
     return user
 
@@ -152,10 +150,7 @@ async def get_staff_user(user: Annotated[User, Depends(get_enabled_user)]) -> Us
         User: Current user (authenticated and enabled and a staff member).
     """
     if not user.staff:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=INV_CRED,
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=UNAUTH)
 
     return user
 
@@ -180,9 +175,6 @@ async def get_admin_user(user: Annotated[User, Depends(get_enabled_user)]) -> Us
         User: Current user (authenticated and enabled and an administrator).
     """
     if not user.staff:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=INV_CRED,
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=UNAUTH)
 
     return user

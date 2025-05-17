@@ -21,7 +21,7 @@ from team_copilot.services.users import (
     delete_user as del_user,
 )
 
-from team_copilot.routers import VAL_ERROR, UNAUTH
+from team_copilot.routers import VAL_ERROR, NOT_AUTHENTICATED, NOT_AUTHORIZED
 
 
 # Descriptions and messages
@@ -40,19 +40,19 @@ UPD_USER_DESC = (
 )
 
 UPD_USER_SUM = "Update a user"
-USER_CRE_1 = "User created."
+USER_CRE_1 = "User created"
 USER_CRE_2 = "User {} ({}) created."
-USER_DATA = "User data."
-USER_DEL_1 = "User deleted."
+USER_DATA = "User data"
+USER_DEL_1 = "User deleted"
 USER_DEL_2 = "User {} ({}) deleted."
 USER_EXISTS = "A user with the same username or e-mail address already exists."
-USER_ID = "User ID."
-USER_NF_1 = "User not found."
+USER_ID = "User ID"
+USER_NF_1 = "User not found"
 USER_NF_2 = "User {} not found."
 USER_RET = "User {} ({}) retrieved."
-USER_UPD_1 = "User updated."
+USER_UPD_1 = "User updated"
 USER_UPD_2 = "User {} ({}) updated."
-USERS_DAT = "Users data."
+USERS_DAT = "Users data"
 USERS_RET_1 = "1 user retrieved."
 USERS_RET_2 = "{} users retrieved."
 
@@ -62,7 +62,11 @@ router = APIRouter(
     tags=["users"],
     responses={
         status.HTTP_401_UNAUTHORIZED: {
-            "description": UNAUTH,
+            "description": NOT_AUTHENTICATED,
+            "model": Response,
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": NOT_AUTHORIZED,
             "model": Response,
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {

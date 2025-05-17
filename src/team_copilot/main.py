@@ -19,7 +19,8 @@ from team_copilot.models.response import Response, ErrorResponse
 ERR_OCC = "An error occurred."
 GET_WEL_MSG_DESC = "Get a welcome message."
 GET_WEL_MSG_SUM = "Get a welcome message"
-INT_SER_ERR = "Internal server error."
+INT_SER_ERR_1 = "Internal server error"
+INT_SER_ERR_2 = "Internal server error."
 VAL_ERR_OCC = "A validation error occurred."
 WELCOME = f"Welcome to {settings.app_name}!"
 
@@ -45,7 +46,7 @@ app = FastAPI(
     lifespan=lifespan,
     responses={
         status.HTTP_500_INTERNAL_SERVER_ERROR: {
-            "description": INT_SER_ERR,
+            "description": INT_SER_ERR_1,
             "model": ErrorResponse,
         },
     },
@@ -190,7 +191,7 @@ async def handle_error(request: Request, exc: Exception) -> JSONResponse:
     Returns:
         JSONResponse: Error message.
     """
-    res = ErrorResponse.create(message=ERR_OCC, error=INT_SER_ERR)
+    res = ErrorResponse.create(message=ERR_OCC, error=INT_SER_ERR_2)
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

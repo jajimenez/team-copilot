@@ -11,19 +11,22 @@ from team_copilot.models.response import AppStatusResponse, DbStatusResponse
 
 
 # Descriptions and messages
-APP_AVA = "Application is available."
-DB_AVA = "Database is available."
-DB_UNA = "Database is unavailable."
+APP_AVA_1 = "Application is available"
+APP_AVA_2 = "Application is available."
+DB_AVA_1 = "Database is available"
+DB_AVA_2 = "Database is available."
+DB_UNA_1 = "Database is unavailable"
+DB_UNA_2 = "Database is unavailable."
 GET_APP_STATUS_DESC = "Get the application status."
 GET_APP_STATUS_SUM = "Get the application status"
 GET_DB_STATUS_DESC = "Get the database status."
 GET_DB_STATUS_SUM = "Get the database status"
 
 # Examples
-DB_AVA_EX = DbStatusResponse.create(message=DB_AVA, status=DbStatus.AVAILABLE)
+DB_AVA_EX = DbStatusResponse.create(message=DB_AVA_2, status=DbStatus.AVAILABLE)
 DB_AVA_EX = DB_AVA_EX.model_dump()
 
-DB_UNA_EX = DbStatusResponse.create(message=DB_UNA, status=DbStatus.UNAVAILABLE)
+DB_UNA_EX = DbStatusResponse.create(message=DB_UNA_2, status=DbStatus.UNAVAILABLE)
 DB_UNA_EX = DB_UNA_EX.model_dump()
 
 # Router
@@ -38,7 +41,7 @@ router = APIRouter(prefix="/health", tags=["health"])
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
-            "description": APP_AVA,
+            "description": APP_AVA_1,
             "model": AppStatusResponse,
         }
     },
@@ -49,7 +52,7 @@ def get_app_status() -> AppStatusResponse:
     Returns:
         AppStatusResponse: Message and application status.
     """
-    return AppStatusResponse.create(message=APP_AVA, status=AppStatus.AVAILABLE)
+    return AppStatusResponse.create(message=APP_AVA_2, status=AppStatus.AVAILABLE)
 
 
 @router.get(
@@ -60,12 +63,12 @@ def get_app_status() -> AppStatusResponse:
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
-            "description": DB_AVA,
+            "description": DB_AVA_1,
             "model": DbStatusResponse,
             "content": {"application/json": {"example": DB_AVA_EX}},
         },
         status.HTTP_503_SERVICE_UNAVAILABLE: {
-            "description": DB_UNA,
+            "description": DB_UNA_1,
             "model": DbStatusResponse,
             "content": {"application/json": {"example": DB_UNA_EX}},
         },
@@ -85,7 +88,7 @@ def get_db_status(
         DbStatusResponse: Message and database status.
     """
     if check_status(settings.db_url):
-        return DbStatusResponse.create(message=DB_AVA, status=DbStatus.AVAILABLE)
+        return DbStatusResponse.create(message=DB_AVA_2, status=DbStatus.AVAILABLE)
 
     response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-    return DbStatusResponse.create(message=DB_UNA, status=DbStatus.UNAVAILABLE)
+    return DbStatusResponse.create(message=DB_UNA_2, status=DbStatus.UNAVAILABLE)

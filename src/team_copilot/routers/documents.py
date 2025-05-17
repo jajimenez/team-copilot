@@ -39,7 +39,7 @@ from team_copilot.services.documents import (
     delete_document as delete_doc,
 )
 
-from team_copilot.routers import BAD_REQ, VAL_ERROR, UNAUTH
+from team_copilot.routers import BAD_REQ, VAL_ERROR, NOT_AUTHENTICATED, NOT_AUTHORIZED
 
 
 # Descriptions and messages
@@ -49,30 +49,31 @@ CRE_DOC_DESC = "Create a document. Only staff users are authorized."
 CRE_DOC_SUM = "Create a document"
 DEL_DOC_DESC = "Delete a document. Only staff users are authorized."
 DEL_DOC_SUM = "Delete a document"
-DOC_ACC = "Document accepted."
+DOC_ACC = "Document accepted"
 DOC_CRE_SCH = "Document {} ({}) created and scheduled for processing."
-DOC_DAT = "Document data."
-DOC_DEL_1 = "Document deleted."
+DOC_DAT = "Document data"
+DOC_DEL_1 = "Document deleted"
 DOC_DEL_2 = "Document {} ({}) deleted."
-DOC_EXISTS = "A document with the same name exists."
-DOC_FILE = "Document PDF file."
-DOC_ID = "Document ID."
-DOC_NAME = "Document name."
-DOC_NF_1 = "Document not found."
+DOC_EXISTS_1 = "A document with the same name exists"
+DOC_EXISTS_2 = "A document with the same name exists."
+DOC_FILE = "Document PDF file"
+DOC_ID = "Document ID"
+DOC_NAME = "Document name"
+DOC_NF_1 = "Document not found"
 DOC_NF_2 = "Document {} not found."
 DOC_RET = "Document retrieved."
 DOC_UPD_SCH = "Document {} ({}) updated and scheduled for processing."
-DOCS_DAT = "Documents data."
+DOCS_DAT = "Documents data"
 DOCS_RET_1 = "1 document retrieved."
 DOCS_RET_2 = "{} documents retrieved."
-ERROR_DEL_DOC = "Error deleting document {}."
-ERROR_UPL_FILE = "Error uploading file {}."
-FILE_TOO_LARGE = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
-GET_ALL_DOCS_DESC = "Get all documents."
+FILE_TOO_LARGE_1 = f"The file size exceeds the maximum limit ({max_size_mb} MB)"
+FILE_TOO_LARGE_2 = f"The file size exceeds the maximum limit ({max_size_mb} MB)."
+GET_ALL_DOCS_DESC = "Get all documents. Only staff users are authorized."
 GET_ALL_DOCS_SUM = "Get all documents"
-GET_DOC_DESC = "Get a document."
+GET_DOC_DESC = "Get a document. Only staff users are authorized."
 GET_DOC_SUM = "Get a document"
-UNS_FILE_TYP = "Unsupported file type (only PDF files are allowed)."
+UNS_FILE_TYP_1 = "Unsupported file type (only PDF files are allowed)"
+UNS_FILE_TYP_2 = "Unsupported file type (only PDF files are allowed)."
 UPD_ARG_ERR = "At least one of the name or file must be provided."
 
 UPD_DOC_DESC = (
@@ -120,7 +121,11 @@ router = APIRouter(
             "model": Response,
         },
         status.HTTP_401_UNAUTHORIZED: {
-            "description": UNAUTH,
+            "description": NOT_AUTHENTICATED,
+            "model": Response,
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": NOT_AUTHORIZED,
             "model": Response,
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
@@ -169,12 +174,12 @@ def validate_file(file: UploadFile):
 
     # Validate file type
     if file.content_type != DOC_MIME_TYPE:
-        raise RequestValidationError(UNS_FILE_TYP)
+        raise RequestValidationError(UNS_FILE_TYP_2)
 
     if file.size > settings.app_docs_max_size_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=FILE_TOO_LARGE,
+            detail=FILE_TOO_LARGE_2,
         )
 
 
@@ -202,7 +207,7 @@ async def upload_file(file: UploadFile, path: str):
                 if file_size > settings.app_docs_max_size_bytes:
                     raise HTTPException(
                         status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                        detail=FILE_TOO_LARGE,
+                        detail=FILE_TOO_LARGE_2,
                     )
 
                 f.write(chunk)
@@ -301,15 +306,15 @@ async def get_document(
             "model": DocumentCreatedResponse,
         },
         status.HTTP_409_CONFLICT: {
-            "description": DOC_EXISTS,
+            "description": DOC_EXISTS_1,
             "model": Response,
         },
         status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {
-            "description": FILE_TOO_LARGE,
+            "description": FILE_TOO_LARGE_1,
             "model": Response,
         },
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
-            "description": UNS_FILE_TYP,
+            "description": UNS_FILE_TYP_1,
             "model": Response,
         },
     },
@@ -342,7 +347,7 @@ async def create_document(
 
     # Check that another document with the same name doesn't exist
     if get_doc(name=name):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=DOC_EXISTS)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=DOC_EXISTS_2)
 
     # Create a new Document object (the status is set to "pending" by default)
     doc = Document(name=name)
@@ -382,15 +387,15 @@ async def create_document(
             "model": Response,
         },
         status.HTTP_409_CONFLICT: {
-            "description": DOC_EXISTS,
+            "description": DOC_EXISTS_1,
             "model": Response,
         },
         status.HTTP_413_REQUEST_ENTITY_TOO_LARGE: {
-            "description": FILE_TOO_LARGE,
+            "description": FILE_TOO_LARGE_1,
             "model": Response,
         },
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE: {
-            "description": UNS_FILE_TYP,
+            "description": UNS_FILE_TYP_1,
             "model": Response,
         },
     },
@@ -443,7 +448,10 @@ async def update_document(
         other_doc = get_doc(name=name)
 
         if other_doc and other_doc.id != id:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=DOC_EXISTS)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=DOC_EXISTS_2,
+            )
 
         # Update name
         doc.name = name

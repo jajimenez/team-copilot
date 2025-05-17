@@ -10,11 +10,11 @@ from team_copilot.core.auth import get_enabled_user
 from team_copilot.models.request import AgentQueryRequest
 from team_copilot.models.response import Response, AgentResponseChunk
 from team_copilot.agent.agent import Agent
-from team_copilot.routers import VAL_ERROR, UNAUTH
+from team_copilot.routers import VAL_ERROR, NOT_AUTHENTICATED, NOT_AUTHORIZED
 
 
 # Descriptions and messages
-AG_QUERY_DAT = "Agent query data."
+AG_QUERY_DAT = "Agent query data"
 
 AG_RES = dedent(
     """Stream of events with the Server-Sent Events (SSE) format. Each event is a string
@@ -43,7 +43,11 @@ router = APIRouter(
     dependencies=[Depends(get_enabled_user)],
     responses={
         status.HTTP_401_UNAUTHORIZED: {
-            "description": UNAUTH,
+            "description": NOT_AUTHENTICATED,
+            "model": Response,
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "description": NOT_AUTHORIZED,
             "model": Response,
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
