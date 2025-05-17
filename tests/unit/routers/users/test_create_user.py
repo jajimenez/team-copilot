@@ -25,9 +25,9 @@ def test_create_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
 
     user_id = uuid4()
     now = datetime.now(timezone.utc)
-    
+
     # Request data
-    data = {
+    req_data = {
         "username": "newuser",
         "password": "newusernewuser",
         "name": "New User",
@@ -48,25 +48,32 @@ def test_create_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
             u.id = user_id
             u.created_at = now
             u.updated_at = now
-            
+
         save_user_mock.side_effect = side_effect
-        
+
         # Make HTTP request
-        response = test_client.post("/users", json=data)
-        
+        response = test_client.post("/users", json=req_data)
+
         # Check response
         assert response.status_code == status.HTTP_201_CREATED
-        
+
         res_data = response.json()
         assert len(res_data) == 2
 
-        assert res_data["message"] == f'User {user_id} ({data["username"]}) created.'
+        assert (
+            res_data["message"] == f'User {user_id} ({req_data["username"]}) created.'
+        )
+
         assert res_data["data"]["user_id"] == str(user_id)
 
         # Check function calls
-        get_user_mock.assert_called_once()
+        get_user_mock.assert_called_once_with(
+            username=req_data["username"],
+            email=req_data["email"],
+        )
+
         save_user_mock.assert_called_once()
-    
+
     app.dependency_overrides.clear()
 
 
@@ -77,7 +84,7 @@ def test_create_user_unauthenticated(test_client: TestClient):
         test_client (TestClient): FastAPI test client.
     """
     # Request data
-    data = {
+    req_data = {
         "username": "newuser",
         "password": "newusernewuser",
         "name": "New User",
@@ -88,7 +95,7 @@ def test_create_user_unauthenticated(test_client: TestClient):
     }
 
     # Make HTTP request
-    response = test_client.post("/users", json=data)
+    response = test_client.post("/users", json=req_data)
 
     # Check response
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -117,7 +124,7 @@ def test_create_user_unauthorized(app: FastAPI, test_client: TestClient):
     app.dependency_overrides[get_admin_user] = raise_not_authorized_exc
 
     # Request data
-    data = {
+    req_data = {
         "username": "newuser",
         "password": "newusernewuser",
         "name": "New User",
@@ -128,7 +135,7 @@ def test_create_user_unauthorized(app: FastAPI, test_client: TestClient):
     }
 
     # Make HTTP request
-    response = test_client.post("/users", json=data)
+    response = test_client.post("/users", json=req_data)
 
     # Check response
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -148,7 +155,7 @@ def test_create_user_unauthorized(app: FastAPI, test_client: TestClient):
     app.dependency_overrides.clear()
 
 
-def test_create_user_user_exists_username(
+def test_create_user_exists_username(
     app: FastAPI,
     test_client: TestClient,
     admin_user_mock: User,
@@ -179,16 +186,16 @@ def test_create_user_user_exists_username(
     )
 
     # Request data
-    data = {
+    req_data = {
         "username": "user1",
         "password": "user2user2",
         "name": "User 2",
         "email": "user2@example.com",
     }
 
-    with patch("team_copilot.routers.users.get_us", return_value=user):
+    with patch("team_copilot.routers.users.get_us", return_value=user) as get_user_mock:
         # Make HTTP request
-        response = test_client.post("/users", json=data)
+        response = test_client.post("/users", json=req_data)
 
         # Check response
         assert response.status_code == status.HTTP_409_CONFLICT
@@ -206,6 +213,12 @@ def test_create_user_user_exists_username(
 
         assert data[0]["message"] == (
             "A user with the same username or e-mail address already exists."
+        )
+
+        # Check function calls
+        get_user_mock.assert_called_once_with(
+            username=req_data["username"],
+            email=req_data["email"],
         )
 
 
@@ -240,16 +253,16 @@ def test_create_user_user_exists_email(
     )
 
     # Request data
-    data = {
+    req_data = {
         "username": "user2",
         "password": "user2user2",
         "name": "User 2",
         "email": "user1@example.com",
     }
 
-    with patch("team_copilot.routers.users.get_us", return_value=user):
+    with patch("team_copilot.routers.users.get_us", return_value=user) as get_user_mock:
         # Make HTTP request
-        response = test_client.post("/users", json=data)
+        response = test_client.post("/users", json=req_data)
 
         # Check response
         assert response.status_code == status.HTTP_409_CONFLICT
@@ -267,4 +280,10 @@ def test_create_user_user_exists_email(
 
         assert data[0]["message"] == (
             "A user with the same username or e-mail address already exists."
+        )
+
+        # Check function calls
+        get_user_mock.assert_called_once_with(
+            username=req_data["username"],
+            email=req_data["email"],
         )

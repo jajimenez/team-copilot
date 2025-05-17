@@ -1,8 +1,8 @@
-"""Team Copilot Tests - Unit Tests - Routers - Users - Create User."""
+"""Team Copilot Tests - Unit Tests - Routers - Users - Update User."""
 
 from uuid import uuid4
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import patch, call
 
 from dateutil.parser import parse
 
@@ -41,9 +41,9 @@ def test_update_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
         created_at=now,
         updated_at=now,
     )
-    
+
     # Request data
-    data = {"name": "New User", "email": "newuser@example.com"}
+    req_data = {"name": "New User", "email": "newuser@example.com"}
 
     with (
         patch("team_copilot.routers.users.get_us") as get_us_mock,
@@ -60,11 +60,11 @@ def test_update_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
         save_user_mock.side_effect = side_effect
 
         # Make HTTP request
-        response = test_client.put(f"/users/{user_id}", json=data)
-        
+        response = test_client.put(f"/users/{user_id}", json=req_data)
+
         # Check response
         assert response.status_code == status.HTTP_200_OK
-        
+
         res_data = response.json()
         assert len(res_data) == 2
         assert res_data["message"] == f"User {user_id} ({user.username}) updated."
@@ -83,8 +83,12 @@ def test_update_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
         assert parse(data["updated_at"]) == user.updated_at
 
         # Check function calls
-        assert get_us_mock.call_count == 2
-        assert save_user_mock.call_count == 1
+        get_us_mock.assert_has_calls([
+            call(id=user_id),
+            call(username=None, email=req_data["email"]),
+        ])
+
+        save_user_mock.assert_called_once()
 
     app.dependency_overrides.clear()
 
@@ -109,7 +113,7 @@ def test_update_user_unauthenticated(test_client: TestClient):
     assert len(res_data) == 3
     assert res_data["message"] == "Authentication error."
     assert res_data["count"] == 1
-    
+
     data = res_data["data"]
     assert len(data) == 1
     assert data[0]["id"] == "authentication"
@@ -128,23 +132,23 @@ def test_update_user_unauthorized(app: FastAPI, test_client: TestClient):
 
     # Request data 
     data = {"name": "New User", "email": "newuser@example.com"}
-    
+
     # Make HTTP request
     response = test_client.put(f"/users/{user_id}", json=data)
 
     # Check response
     assert response.status_code == status.HTTP_403_FORBIDDEN
-    
+
     res_data = response.json()
     assert len(res_data) == 3
     assert res_data["message"] == "Authorization error."
     assert res_data["count"] == 1
-    
+
     data = res_data["data"]
     assert len(data) == 1
     assert data[0]["id"] == "authorization"
     assert data[0]["message"] == "Not authorized"
-    
+
     app.dependency_overrides.clear()
 
 
@@ -169,10 +173,10 @@ def test_update_user_not_found(
     with patch("team_copilot.routers.users.get_us", return_value=None) as get_us_mock:
         # Make HTTP request
         response = test_client.put(f"/users/{user_id}", json=data)
-        
+
         # Check response
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        
+
         res_data = response.json()
         assert len(res_data) == 3
 
@@ -182,7 +186,7 @@ def test_update_user_not_found(
         assert res_data["data"][0]["message"] == f"User {user_id} not found."
 
         # Check function calls
-        assert get_us_mock.call_count == 1
+        get_us_mock.assert_called_once_with(id=user_id)
 
     app.dependency_overrides.clear()
 
@@ -234,7 +238,7 @@ def test_update_user_exists_username(
     )
 
     # Request data
-    data = {
+    req_data = {
         "username": "user2",
         "password": "user3user3",
         "name": "User 3",
@@ -246,7 +250,7 @@ def test_update_user_exists_username(
         get_us_mock.side_effect = [user, other_user]
 
         # Make HTTP request
-        response = test_client.put(f"/users/{user_id}", json=data)
+        response = test_client.put(f"/users/{user_id}", json=req_data)
 
         # Check response
         assert response.status_code == status.HTTP_409_CONFLICT
@@ -267,7 +271,10 @@ def test_update_user_exists_username(
         )
 
         # Check function calls
-        assert get_us_mock.call_count == 2
+        get_us_mock.assert_has_calls([
+            call(id=user_id),
+            call(username=req_data["username"], email=req_data["email"]),
+        ])
 
 
 def test_update_user_exists_email(
@@ -317,7 +324,7 @@ def test_update_user_exists_email(
     )
 
     # Request data
-    data = {
+    req_data = {
         "username": "user3",
         "password": "user3user3",
         "name": "User 3",
@@ -329,7 +336,7 @@ def test_update_user_exists_email(
         get_us_mock.side_effect = [user, other_user]
 
         # Make HTTP request
-        response = test_client.put(f"/users/{user_id}", json=data)
+        response = test_client.put(f"/users/{user_id}", json=req_data)
 
         # Check response
         assert response.status_code == status.HTTP_409_CONFLICT
@@ -350,4 +357,7 @@ def test_update_user_exists_email(
         )
 
         # Check function calls
-        assert get_us_mock.call_count == 2
+        get_us_mock.assert_has_calls([
+            call(id=user_id),
+            call(username=req_data["username"], email=req_data["email"]),
+        ])
