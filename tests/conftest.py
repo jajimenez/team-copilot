@@ -99,7 +99,7 @@ def mock_enabled_user() -> Generator[User, None, None]:
 
 @pytest.fixture
 def mock_staff_user() -> Generator[User, None, None]:
-    """Mock an enabled and staff user for testing endpoints.
+    """Mock an enabled staff user for testing endpoints.
 
     Returns:
         Generator[User, None, None]: Mocked user object.
@@ -125,7 +125,7 @@ def mock_staff_user() -> Generator[User, None, None]:
 
 @pytest.fixture
 def mock_admin_user() -> Generator[User, None, None]:
-    """Mock an enabled and administrator user for testing endpoints.
+    """Mock an enabled administrator user for testing endpoints.
 
     Returns:
         Generator[User, None, None]: Mocked user object.
@@ -136,7 +136,7 @@ def mock_admin_user() -> Generator[User, None, None]:
         id=uuid4(),
         username="admin",
         password="adminadmin",
-        name="Admin",
+        name="Administrator",
         email="admin@example.com",
         staff=True,
         admin=True,
