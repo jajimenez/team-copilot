@@ -136,6 +136,24 @@ def test_get_current_user(
     app.dependency_overrides.clear()
 
 
+def test_get_current_user_unauthicated(test_client: TestClient):
+    """Test the "get_current_user" endpoint for an unauthenticated user.
+
+    Args:
+        app (FastAPI): FastAPI application.
+        test_client (TestClient): FastAPI test client.
+    """
+    response = test_client.get("/users/me")
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    res_data = response.json()
+    assert len(res_data) == 2
+    assert res_data["message"] == "An error occurred."
+
+    data = res_data["data"]
+    assert data["error"] == "Not authenticated"
+
+
 def test_get_current_user_unauthorized(test_client: TestClient):
     """Test the "get_current_user" endpoint for an unauthorized (disabled) user.
 
