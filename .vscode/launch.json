@@ -23,5 +23,14 @@
             ],
             "jinja": true
         },
+        {
+            "name": "Python Debugger: PyTest",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "--cov=team_copilot"
+            ]
+        },
     ]
 }
