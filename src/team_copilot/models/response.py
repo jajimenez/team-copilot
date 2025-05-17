@@ -135,6 +135,24 @@ class UserResponse(Response):
         return cls(message=message, data=UserResponseData.create(user))
 
 
+class UserListResponse(Response):
+    """User List Response model."""
+
+    count: int
+    data: list[UserResponseData] | None
+
+    @classmethod
+    def create(cls, message: str, users: list[User]) -> "UserListResponse":
+        """Create a UserListResponse instance given a message and a list of User
+        instances.
+
+        Returns:
+            UserListResponse: DocumentLUserListResponseistResponse instance.
+        """
+        users = [UserResponseData.create(u) for u in users]
+        return cls(count=len(users), message=message, data=users)
+
+
 class UserCreatedResponseData(SQLModel, table=False):
     """User Created Response Data model."""
 
@@ -205,6 +223,24 @@ class DocumentResponse(Response):
         return cls(message=message, data=DocumentResponseData.create(document))
 
 
+class DocumentListResponse(Response):
+    """Document List Response model."""
+
+    count: int
+    data: list[DocumentResponseData] | None
+
+    @classmethod
+    def create(cls, message: str, documents: list[Document]) -> "DocumentListResponse":
+        """Create a DocumentListResponse instance given a message and a list of Document
+        instances.
+
+        Returns:
+            DocumentListResponse: DocumentListResponse instance.
+        """
+        docs = [DocumentResponseData.create(d) for d in documents]
+        return cls(count=len(docs), message=message, data=docs)
+
+
 class DocumentCreatedResponseData(SQLModel, table=False):
     """Document Created Response Data model."""
 
@@ -235,24 +271,6 @@ class DocumentCreatedResponse(Response):
             DocumentCreatedResponse: DocumentCreatedResponse instance.
         """
         return cls(message=message, data=DocumentCreatedResponseData.create(document))
-
-
-class DocumentListResponse(Response):
-    """Document List Response model."""
-
-    count: int
-    data: list[DocumentResponseData] | None
-
-    @classmethod
-    def create(cls, message: str, documents: list[Document]) -> "DocumentListResponse":
-        """Create a DocumentListResponse instance given a message and a list of Document
-        instances.
-
-        Returns:
-            DocumentListResponse: DocumentListResponse instance.
-        """
-        docs = [DocumentResponseData.create(d) for d in documents]
-        return cls(count=len(docs), message=message, data=docs)
 
 
 class AgentResponseChunk(SQLModel, table=False):

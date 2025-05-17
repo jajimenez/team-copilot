@@ -24,6 +24,20 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def get_all_users() -> list[User]:
+    """Get all users.
+
+    Returns:
+        list[User]: Users.
+    """
+    with open_session(settings.db_url) as session:
+        # Create statement
+        s = select(User)
+
+        # Execute the statement and return all elements
+        return session.exec(s).all()
+
+
 def get_user(
     id: UUID | None = None,
     username: str | None = None,

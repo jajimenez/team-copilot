@@ -9,9 +9,13 @@ from fastapi.exceptions import HTTPException
 from team_copilot.core.auth import get_enabled_user, get_admin_user
 from team_copilot.models.data import User
 from team_copilot.models.request import Undefined, CreateUserRequest, UpdateUserRequest
-from team_copilot.models.response import Response, UserResponse, UserCreatedResponse
+
+from team_copilot.models.response import (
+    Response, UserResponse, UserListResponse, UserCreatedResponse
+)
 
 from team_copilot.services.users import (
+    get_all_users as get_all_us,
     get_user as get_us,
     save_user,
     delete_user as del_user,
@@ -26,6 +30,8 @@ CRE_USER_SUM = "Create a user"
 CUR_USER = "Current user"
 DEL_USER_DESC = "Delete a user. Only staff users are authorized."
 DEL_USER_SUM = "Delete a user"
+GET_ALL_USERS_DESC = "Get all users. Only administrator users are authorized."
+GET_ALL_USERS_SUM = "Get all users"
 GET_CUR_USER_DESC = "Get the current authenticated user."
 GET_CUR_USER_SUM = "Get the current authenticated user"
 
@@ -46,6 +52,9 @@ USER_NF_2 = "User {} not found."
 USER_RET = "User {} ({}) retrieved."
 USER_UPD_1 = "User updated."
 USER_UPD_2 = "User {} ({}) updated."
+USERS_DAT = "Users data."
+USERS_RET_1 = "1 user retrieved."
+USERS_RET_2 = "{} users retrieved."
 
 # Router
 router = APIRouter(
@@ -65,6 +74,37 @@ router = APIRouter(
 
 
 @router.get(
+    "/",
+    operation_id="get_all_users",
+    summary=GET_ALL_USERS_SUM,
+    description=GET_ALL_USERS_DESC,
+    dependencies=[Depends(get_admin_user)],
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": USERS_DAT,
+            "model": UserListResponse,
+        },
+    },
+)
+async def get_all_users() -> UserListResponse:
+    """Get all users.
+
+    Returns:
+        UserListResponse: Message, user count and users.
+    """
+    # Get all the users from the database
+    users = get_all_us()
+
+    # Get user count and message
+    count = len(users)
+    message = USERS_RET_1 if count == 1 else USERS_RET_2.format(count)
+
+    # Return message, user count and users.
+    return UserListResponse.create(message=message, users=users)
+
+
+@router.get(
     "/me",
     operation_id="get_current_user",
     summary=GET_CUR_USER_SUM,
@@ -77,7 +117,7 @@ router = APIRouter(
         }
     },
 )
-def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> UserResponse:
+async def get_current_user(user: Annotated[User, Depends(get_enabled_user)]) -> UserResponse:
     """Get the current authenticated user.
 
     The user must be authenticated and enabled.
