@@ -6,7 +6,7 @@ from dateutil.parser import parse
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from team_copilot.core.auth import get_admin_user
+from team_copilot.core.auth import get_enabled_user, get_admin_user
 from team_copilot.models.data import User
 
 
@@ -16,10 +16,12 @@ def test_get_all_users(
     mock_admin_user: User,
     mock_db_users: list[User],
 ):
-    """Test get all users endpoint.
+    """Test the get_all_users endpoint.
 
     Args:
+        app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
+        mock_admin_user (User): Mocked admin user object.
         mock_db_users (list[User]): Mocked user objects.
     """
     app.dependency_overrides[get_admin_user] = lambda: mock_admin_user
@@ -48,5 +50,45 @@ def test_get_all_users(
             assert u["enabled"] == mock_db_users[i].enabled
             assert parse(u["created_at"]) == mock_db_users[i].created_at
             assert parse(u["updated_at"]) == mock_db_users[i].updated_at
+
+    app.dependency_overrides.clear()
+
+
+def test_get_current_user(
+    app: FastAPI,
+    test_client: TestClient,
+    mock_enabled_user: User,
+):
+    """Test the get_current_user endpoint.
+
+    Args:
+        app (FastAPI): FastAPI application.
+        test_client (TestClient): FastAPI test client.
+        mock_enabled_user (User): Mocked enabled user object.
+    """
+    app.dependency_overrides[get_enabled_user] = lambda: mock_enabled_user
+
+    with patch("team_copilot.routers.users.get_us", return_value=mock_enabled_user):
+        response = test_client.get("/users/me")
+        assert response.status_code == 200
+
+        res_data = response.json()
+        assert len(res_data) == 2
+
+        assert res_data["message"] == (
+            f"User {mock_enabled_user.id} ({mock_enabled_user.username}) retrieved."
+        )
+
+        data = res_data["data"]
+
+        assert data["id"] == str(mock_enabled_user.id)
+        assert data["username"] == mock_enabled_user.username
+        assert data["name"] == mock_enabled_user.name
+        assert data["email"] == mock_enabled_user.email
+        assert data["staff"] == mock_enabled_user.staff
+        assert data["admin"] == mock_enabled_user.admin
+        assert data["enabled"] == mock_enabled_user.enabled
+        assert parse(res_data["data"]["created_at"]) == mock_enabled_user.created_at
+        assert parse(res_data["data"]["updated_at"]) == mock_enabled_user.updated_at
 
     app.dependency_overrides.clear()
