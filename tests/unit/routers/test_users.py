@@ -16,7 +16,7 @@ def test_get_all_users(
     mock_admin_user: User,
     mock_db_users: list[User],
 ):
-    """Test the get_all_users endpoint.
+    """Test the "get_all_users" endpoint.
 
     Args:
         app (FastAPI): FastAPI application.
@@ -54,8 +54,8 @@ def test_get_all_users(
     app.dependency_overrides.clear()
 
 
-def test_get_all_users_unauthicated_user(test_client: TestClient):
-    """Test the get_all_users endpoint for an unauthenticated user.
+def test_get_all_users_unauthicated(test_client: TestClient):
+    """Test the "get_all_users" endpoint for an unauthenticated user.
 
     Args:
         app (FastAPI): FastAPI application.
@@ -72,8 +72,8 @@ def test_get_all_users_unauthicated_user(test_client: TestClient):
     assert data["error"] == "Not authenticated"
 
 
-def test_get_all_users_unauthorized_user(test_client: TestClient):
-    """Test the get_all_users endpoint for an unauthorized (disabled or not
+def test_get_all_users_unauthorized(test_client: TestClient):
+    """Test the "get_all_users" endpoint for an unauthorized (disabled or not
     administrator) user.
 
     Args:
@@ -101,7 +101,7 @@ def test_get_current_user(
     test_client: TestClient,
     mock_enabled_user: User,
 ):
-    """Test the get_current_user endpoint.
+    """Test the "get_current_user" endpoint.
 
     Args:
         app (FastAPI): FastAPI application.
@@ -134,3 +134,26 @@ def test_get_current_user(
         assert parse(res_data["data"]["updated_at"]) == mock_enabled_user.updated_at
 
     app.dependency_overrides.clear()
+
+
+def test_get_current_user_unauthorized(test_client: TestClient):
+    """Test the "get_current_user" endpoint for an unauthorized (disabled) user.
+
+    Args:
+        test_client (TestClient): FastAPI test client.
+    """
+    with patch("team_copilot.routers.users.get_enabled_user") as mock_get_enabled_user:
+        mock_get_enabled_user.side_effect = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    response = test_client.get("/users/me")
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    res_data = response.json()
+    assert len(res_data) == 2
+    assert res_data["message"] == "An error occurred."
+
+    data = res_data["data"]
+    assert data["error"] == "Not authenticated"
