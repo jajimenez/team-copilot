@@ -3,16 +3,18 @@
 from uuid import uuid4
 from datetime import datetime, timezone
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from typing import Generator
 
 import pytest
+from pytest import MonkeyPatch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from team_copilot.main import app as _app
 from team_copilot.models.data import User, Document, DocumentStatus
+from team_copilot.agent.agent import Agent
 
 
 @pytest.fixture
@@ -188,3 +190,44 @@ def documents_mock() -> list[Document]:
             updated_at=now,
         ),
     ]
+
+
+@pytest.fixture
+def agent_mock(monkeypatch: MonkeyPatch) -> Agent:
+    """Agent mock for testing endpoints.
+
+    Args:
+        monkeypatch (MonkeyPatch): MonkeyPatch PyTest built-in fixture.
+
+    Returns:
+        Agent: Agent instance with the "query" method mocked.
+    """
+    def side_effect(text: str) -> Generator[str, None, None]:
+        """Simulate an agent query.
+
+        Args:
+            text (str): Query text.
+
+        Yields:
+            str: Response token mocks.
+        """
+        response = "This is a test response."
+
+        tokens = response.split(" ")
+        token_count = len(tokens)
+
+        tokens = [
+            f"{t} " if i < (token_count - 1) else t
+            for i, t in enumerate(tokens)
+        ]
+
+        for t in tokens:
+            yield t
+
+    query_mock = MagicMock(side_effect=side_effect)
+
+    # Replace the agent query method with the mock. Any Agent instance created after
+    # this will use the mock.
+    monkeypatch.setattr("team_copilot.agent.agent.Agent.query", query_mock)
+
+    return Agent()
