@@ -13,16 +13,16 @@ from team_copilot.models.data import User, Document, DocumentStatus
 from tests.integration import raise_not_authorized_exc
 
 
-def test_delete_document(app: FastAPI, test_client: TestClient, staff_user_mock: User):
+def test_delete_document(app: FastAPI, test_client: TestClient, test_staff_user: User):
     """Test the "delete_document" endpoint.
     
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        staff_user_mock (User): Enabled staff user mock.
+        test_staff_user (User): Mock enabled staff user.
     """
     # Simulate the injected dependency
-    app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
+    app.dependency_overrides[get_staff_user] = lambda: test_staff_user
 
     doc_id = uuid4()
     now = datetime.now(timezone.utc)
@@ -40,8 +40,8 @@ def test_delete_document(app: FastAPI, test_client: TestClient, staff_user_mock:
         patch(
             "team_copilot.routers.documents.get_doc",
             return_value=doc,
-        ) as get_doc_mock,
-        patch("team_copilot.routers.documents.del_doc") as del_doc_mock,
+        ) as mock_get_doc,
+        patch("team_copilot.routers.documents.del_doc") as mock_del_doc,
     ):
         # Make request
         response = test_client.delete(f"/documents/{doc_id}")
@@ -54,8 +54,8 @@ def test_delete_document(app: FastAPI, test_client: TestClient, staff_user_mock:
         assert res_data["message"] == f"Document {doc.id} ({doc.name}) deleted."
 
         # Check function calls
-        get_doc_mock.assert_called_once_with(id=doc_id)
-        del_doc_mock.assert_called_once_with(doc_id)
+        mock_get_doc.assert_called_once_with(id=doc_id)
+        mock_del_doc.assert_called_once_with(doc_id)
 
     app.dependency_overrides.clear()
 
@@ -122,24 +122,24 @@ def test_delete_document_unauthorized(app: FastAPI, test_client: TestClient):
 def test_delete_document_not_found(
     app: FastAPI,
     test_client: TestClient,
-    staff_user_mock: User,
+    test_staff_user: User,
 ):
     """Test the "delete_document" endpoint with a non-existing document.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        staff_user_mock (User): Enabled staff user mock.
+        test_staff_user (User): Mock enabled staff user.
     """
     # Simulate the injected dependency
-    app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
+    app.dependency_overrides[get_staff_user] = lambda: test_staff_user
 
     doc_id = uuid4()
 
     with patch(
         "team_copilot.routers.documents.get_doc",
         return_value=None,
-    ) as get_doc_mock:
+    ) as mock_get_doc:
         # Make HTTP request
         response = test_client.delete(f"/documents/{doc_id}")
         
@@ -155,6 +155,6 @@ def test_delete_document_not_found(
         assert res_data["data"][0]["message"] == f"Document {doc_id} not found."
 
         # Check function calls
-        get_doc_mock.assert_called_once_with(id=doc_id)
+        mock_get_doc.assert_called_once_with(id=doc_id)
 
     app.dependency_overrides.clear()

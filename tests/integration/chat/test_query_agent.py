@@ -22,19 +22,19 @@ CONT_TYPE = f"{TEXT_EV_STR}; charset={UTF_8}"
 def test_query_agent(
     app: FastAPI,
     test_client: TestClient,
-    enabled_user_mock: User,
-    agent_mock: Agent,
+    test_enabled_user: User,
+    test_agent: Agent,
 ):
     """Test the "query_agent" endpoint.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        enabled_user_mock (User): Enabled user mock.
-        agent_mock (Agent): Agent mock.
+        test_enabled_user (User): Mock enabled user.
+        test_agent (Agent): Agent mock.
     """
     # Simulate the injected dependency
-    app.dependency_overrides[get_enabled_user] = lambda: enabled_user_mock
+    app.dependency_overrides[get_enabled_user] = lambda: test_enabled_user
 
     # Request headers
     headers = {"accept": TEXT_EV_STR}
@@ -70,7 +70,7 @@ def test_query_agent(
                 break
 
     # Check function calls
-    agent_mock.query.assert_called_once_with(text)
+    test_agent.query.assert_called_once_with(text)
 
     app.dependency_overrides.clear()
 

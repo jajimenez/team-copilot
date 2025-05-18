@@ -16,7 +16,7 @@ def test_get_db_status(test_client: TestClient):
     """
     with (
         patch("team_copilot.routers.health.check_status", return_value=True)
-        as check_status_mock,
+        as mock_check_status,
     ):
         # Make HTTP request
         response = test_client.get("/health/db")
@@ -33,7 +33,7 @@ def test_get_db_status(test_client: TestClient):
         assert data["status"] == DbStatus.AVAILABLE
 
         # Check function calls
-        check_status_mock.assert_called_once()
+        mock_check_status.assert_called_once()
 
 
 def test_get_db_status_unavailable(test_client: TestClient):
@@ -44,7 +44,7 @@ def test_get_db_status_unavailable(test_client: TestClient):
     """
     with (
         patch("team_copilot.routers.health.check_status", return_value=False)
-        as check_status_mock,
+        as mock_check_status,
     ):
         # Make HTTP request
         response = test_client.get("/health/db")
@@ -61,4 +61,4 @@ def test_get_db_status_unavailable(test_client: TestClient):
         assert data["status"] == DbStatus.UNAVAILABLE
 
         # Check function calls
-        check_status_mock.assert_called_once()
+        mock_check_status.assert_called_once()

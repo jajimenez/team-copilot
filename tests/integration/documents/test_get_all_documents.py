@@ -16,32 +16,32 @@ from tests.integration import raise_not_authorized_exc
 def test_get_all_documents(
     app: FastAPI,
     test_client: TestClient, 
-    staff_user_mock: User,
-    documents_mock: list[Document],
+    test_staff_user: User,
+    mock_documents: list[Document],
 ):
     """Test the "get_all_documents" endpoint.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        staff_user_mock (User): Enabled staff user mock.
-        documents_mock (list[Document]): Documents mock.
+        test_staff_user (User): Mock enabled staff user.
+        mock_documents (list[Document]): Documents mock.
     """
     # Simulate the injected dependency
-    app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
+    app.dependency_overrides[get_staff_user] = lambda: test_staff_user
 
     # Mock the get_all_documents service function
     with patch(
         "team_copilot.routers.documents.get_all_docs",
-        return_value=documents_mock,
-    ) as get_all_docs_mock:
+        return_value=mock_documents,
+    ) as mock_get_all_docs:
         # Make HTTP request
         response = test_client.get("/documents")
 
         # Check response
         assert response.status_code == status.HTTP_200_OK
 
-        doc_count = len(documents_mock)
+        doc_count = len(mock_documents)
         res_data = response.json()
 
         assert len(res_data) == 3
@@ -52,14 +52,14 @@ def test_get_all_documents(
         assert len(data) == doc_count
 
         for i, d in enumerate(data):
-            assert d["id"] == str(documents_mock[i].id)
-            assert d["name"] == documents_mock[i].name
-            assert d["status"] == documents_mock[i].status
-            assert parse(d["created_at"]) == documents_mock[i].created_at
-            assert parse(d["updated_at"]) == documents_mock[i].updated_at
+            assert d["id"] == str(mock_documents[i].id)
+            assert d["name"] == mock_documents[i].name
+            assert d["status"] == mock_documents[i].status
+            assert parse(d["created_at"]) == mock_documents[i].created_at
+            assert parse(d["updated_at"]) == mock_documents[i].updated_at
 
         # Check functions call
-        get_all_docs_mock.assert_called_once()
+        mock_get_all_docs.assert_called_once()
 
     # Clear dependency overrides
     app.dependency_overrides.clear()

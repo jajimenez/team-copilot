@@ -17,23 +17,23 @@ from tests.integration import raise_not_authorized_exc
 def test_get_user(
     app: FastAPI,
     test_client: TestClient, 
-    admin_user_mock: User,
-    users_mock: list[User],
+    test_admin_user: User,
+    test_users: list[User],
 ):
     """Test the "get_user" endpoint.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        admin_user_mock (User): Enabled administrator user mock.
-        users_mock (list[User]): Users mock.
+        test_admin_user (User): Mock enabled administrator user.
+        test_users (list[User]): Test users.
     """
     # Simulate the injected dependency
-    app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
+    app.dependency_overrides[get_admin_user] = lambda: test_admin_user
 
-    user = users_mock[0]
+    user = test_users[0]
 
-    with patch("team_copilot.routers.users.get_us", return_value=user) as get_user_mock:
+    with patch("team_copilot.routers.users.get_us", return_value=user) as mock_get_user:
         # Make HTTP request
         response = test_client.get(f"/users/{user.id}")
 
@@ -58,7 +58,7 @@ def test_get_user(
         assert parse(data["updated_at"]) == user.updated_at
 
         # Check functions call
-        get_user_mock.assert_called_once_with(id=user.id)
+        mock_get_user.assert_called_once_with(id=user.id)
 
     # Clear dependency overrides
     app.dependency_overrides.clear()
@@ -130,17 +130,17 @@ def test_get_user_unauthorized(app: FastAPI, test_client: TestClient):
 def test_get_user_not_found(
     app: FastAPI,
     test_client: TestClient,
-    admin_user_mock: User,
+    test_admin_user: User,
 ):
     """Test the "get_document" endpoint for a non-existing document.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        admin_user_mock (User): Enabled staff user mock.
+        test_admin_user (User): Mock enabled staff user.
     """
     # Simulate the injected dependency
-    app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
+    app.dependency_overrides[get_admin_user] = lambda: test_admin_user
 
     # Simulate a user ID
     user_id = uuid4()

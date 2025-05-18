@@ -9,20 +9,20 @@ from team_copilot.core.auth import get_enabled_user
 from team_copilot.models.data import User
 
 
-def test_login(test_client: TestClient, users_mock: list[User]):
+def test_login(test_client: TestClient, test_users: list[User]):
     """Test the "login" endpoint.
 
     Args:
         test_client (TestClient): FastAPI test client.
-        users_mock (list[User]): Users mock.
+        test_users (list[User]): Test users.
     """
     # Request data
     req_data = {"username": "user", "password": "password"}
 
     with patch(
         "team_copilot.routers.auth.authenticate_user",
-        return_value=users_mock[0],
-    ) as auth_user_mock:
+        return_value=test_users[0],
+    ) as mock_auth_user:
         # Make HTTP request
         response = test_client.post("/auth/login", data=req_data)
 
@@ -35,7 +35,7 @@ def test_login(test_client: TestClient, users_mock: list[User]):
         assert res_data["token_type"] == "bearer"
 
         # Check functions call
-        auth_user_mock.assert_called_once_with(
+        mock_auth_user.assert_called_once_with(
             req_data["username"],
             req_data["password"],
         )
@@ -54,7 +54,7 @@ def test_login_invalid_credentials(test_client: TestClient):
     with patch(
         "team_copilot.routers.auth.authenticate_user",
         return_value=None,
-    ) as auth_user_mock:
+    ) as mock_auth_user:
         # Make HTTP request
         response = test_client.post("/auth/login", data=req_data)
 
@@ -73,7 +73,7 @@ def test_login_invalid_credentials(test_client: TestClient):
         assert data[0]["message"] == "Invalid credentials"
 
         # Check functions call
-        auth_user_mock.assert_called_once_with(
+        mock_auth_user.assert_called_once_with(
             req_data["username"],
             req_data["password"],
         )

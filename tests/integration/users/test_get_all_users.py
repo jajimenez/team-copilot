@@ -16,31 +16,31 @@ from tests.integration import raise_not_authorized_exc
 def test_get_all_users(
     app: FastAPI,
     test_client: TestClient,
-    admin_user_mock: User,
-    users_mock: list[User],
+    test_admin_user: User,
+    test_users: list[User],
 ):
     """Test the "get_all_users" endpoint.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        admin_user_mock (User): Enabled administrator user mock.
-        users_mock (list[User]): Users mock.
+        test_admin_user (User): Mock enabled administrator user.
+        test_users (list[User]): Test users.
     """
     # Simulate the injected dependency
-    app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
+    app.dependency_overrides[get_admin_user] = lambda: test_admin_user
 
     with patch(
         "team_copilot.routers.users.get_all_us",
-        return_value=users_mock,
-    ) as get_all_us_mock:
+        return_value=test_users,
+    ) as mock_get_all_users:
         # Make HTTP request
         response = test_client.get("/users")
 
         # Check response
         assert response.status_code == status.HTTP_200_OK
 
-        user_count = len(users_mock)
+        user_count = len(test_users)
         res_data = response.json()
 
         assert len(res_data) == 3
@@ -51,18 +51,18 @@ def test_get_all_users(
         assert len(data) == user_count
 
         for i, u in enumerate(data):
-            assert u["id"] == str(users_mock[i].id)
-            assert u["username"] == users_mock[i].username
-            assert u["name"] == users_mock[i].name
-            assert u["email"] == users_mock[i].email
-            assert u["staff"] == users_mock[i].staff
-            assert u["admin"] == users_mock[i].admin
-            assert u["enabled"] == users_mock[i].enabled
-            assert parse(u["created_at"]) == users_mock[i].created_at
-            assert parse(u["updated_at"]) == users_mock[i].updated_at
+            assert u["id"] == str(test_users[i].id)
+            assert u["username"] == test_users[i].username
+            assert u["name"] == test_users[i].name
+            assert u["email"] == test_users[i].email
+            assert u["staff"] == test_users[i].staff
+            assert u["admin"] == test_users[i].admin
+            assert u["enabled"] == test_users[i].enabled
+            assert parse(u["created_at"]) == test_users[i].created_at
+            assert parse(u["updated_at"]) == test_users[i].updated_at
 
         # Check function calls
-        get_all_us_mock.assert_called_once()
+        mock_get_all_users.assert_called_once()
 
     app.dependency_overrides.clear()
 

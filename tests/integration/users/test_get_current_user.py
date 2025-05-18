@@ -16,19 +16,19 @@ from tests.integration import raise_not_authorized_exc
 def test_get_current_user(
     app: FastAPI,
     test_client: TestClient,
-    enabled_user_mock: User,
+    test_enabled_user: User,
 ):
     """Test the "get_current_user" endpoint.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        enabled_user_mock (User): Enabled user mock.
+        test_enabled_user (User): Mock enabled user.
     """
     # Simulate the injected dependency
-    app.dependency_overrides[get_enabled_user] = lambda: enabled_user_mock
+    app.dependency_overrides[get_enabled_user] = lambda: test_enabled_user
 
-    with patch("team_copilot.routers.users.get_us", return_value=enabled_user_mock):
+    with patch("team_copilot.routers.users.get_us", return_value=test_enabled_user):
         # Make HTTP request
         response = test_client.get("/users/me")
 
@@ -39,20 +39,20 @@ def test_get_current_user(
         assert len(res_data) == 2
 
         assert res_data["message"] == (
-            f"User {enabled_user_mock.id} ({enabled_user_mock.username}) retrieved."
+            f"User {test_enabled_user.id} ({test_enabled_user.username}) retrieved."
         )
 
         data = res_data["data"]
 
-        assert data["id"] == str(enabled_user_mock.id)
-        assert data["username"] == enabled_user_mock.username
-        assert data["name"] == enabled_user_mock.name
-        assert data["email"] == enabled_user_mock.email
-        assert data["staff"] == enabled_user_mock.staff
-        assert data["admin"] == enabled_user_mock.admin
-        assert data["enabled"] == enabled_user_mock.enabled
-        assert parse(res_data["data"]["created_at"]) == enabled_user_mock.created_at
-        assert parse(res_data["data"]["updated_at"]) == enabled_user_mock.updated_at
+        assert data["id"] == str(test_enabled_user.id)
+        assert data["username"] == test_enabled_user.username
+        assert data["name"] == test_enabled_user.name
+        assert data["email"] == test_enabled_user.email
+        assert data["staff"] == test_enabled_user.staff
+        assert data["admin"] == test_enabled_user.admin
+        assert data["enabled"] == test_enabled_user.enabled
+        assert parse(res_data["data"]["created_at"]) == test_enabled_user.created_at
+        assert parse(res_data["data"]["updated_at"]) == test_enabled_user.updated_at
 
     app.dependency_overrides.clear()
 

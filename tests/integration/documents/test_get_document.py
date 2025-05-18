@@ -17,26 +17,26 @@ from tests.integration import raise_not_authorized_exc
 def test_get_document(
     app: FastAPI,
     test_client: TestClient, 
-    staff_user_mock: User,
-    documents_mock: list[Document],
+    test_staff_user: User,
+    mock_documents: list[Document],
 ):
     """Test the "get_document" endpoint.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        staff_user_mock (User): Enabled staff user mock.
-        documents_mock (list[Document]): Documents mock.
+        test_staff_user (User): Mock enabled staff user.
+        mock_documents (list[Document]): Documents mock.
     """
     # Simulate the injected dependency
-    app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
+    app.dependency_overrides[get_staff_user] = lambda: test_staff_user
 
-    doc = documents_mock[0]
+    doc = mock_documents[0]
 
     with patch(
         "team_copilot.routers.documents.get_doc",
         return_value=doc,
-    ) as get_doc_mock:
+    ) as mock_get_doc:
         # Make HTTP request
         response = test_client.get(f"/documents/{doc.id}")
 
@@ -57,7 +57,7 @@ def test_get_document(
         assert parse(data["updated_at"]) == doc.updated_at
 
         # Check functions call
-        get_doc_mock.assert_called_once_with(id=doc.id)
+        mock_get_doc.assert_called_once_with(id=doc.id)
 
     # Clear dependency overrides
     app.dependency_overrides.clear()
@@ -129,17 +129,17 @@ def test_get_document_unauthorized(app: FastAPI, test_client: TestClient):
 def test_get_document_not_found(
     app: FastAPI,
     test_client: TestClient,
-    staff_user_mock: User,
+    test_staff_user: User,
 ):
     """Test the "get_document" endpoint for a non-existing document.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        staff_user_mock (User): Enabled staff user mock.
+        test_staff_user (User): Mock enabled staff user.
     """
     # Simulate the injected dependency
-    app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
+    app.dependency_overrides[get_staff_user] = lambda: test_staff_user
 
     # Simulate a document ID
     doc_id = uuid4()

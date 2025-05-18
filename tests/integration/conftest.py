@@ -1,4 +1,4 @@
-"""Team Copilot Tests - Configuration."""
+"""Team Copilot Tests - Integration Tests - Configuration."""
 
 from uuid import uuid4
 from datetime import datetime, timezone
@@ -38,11 +38,11 @@ def test_client(app) -> TestClient:
 
 
 @pytest.fixture
-def users_mock() -> list[User]:
-    """Users mock for testing endpoints.
+def test_users() -> list[User]:
+    """Get test users.
 
     Returns:
-        list[User]: Users mock.
+        list[User]: Test users.
     """
     now = datetime.now(timezone.utc)
 
@@ -75,11 +75,11 @@ def users_mock() -> list[User]:
 
 
 @pytest.fixture
-def enabled_user_mock() -> Generator[User, None, None]:
-    """Enabled user mock for testing endpoints.
+def test_enabled_user() -> Generator[User, None, None]:
+    """Get a test enabled user.
 
     Returns:
-        Generator[User, None, None]: User mock.
+        Generator[User, None, None]: Test user.
     """
     now = datetime.now(timezone.utc)
 
@@ -101,11 +101,11 @@ def enabled_user_mock() -> Generator[User, None, None]:
 
 
 @pytest.fixture
-def staff_user_mock() -> Generator[User, None, None]:
-    """Enabled staff user mock for testing endpoints.
+def test_staff_user() -> Generator[User, None, None]:
+    """Get a test enabled staff user mock.
 
     Returns:
-        Generator[User, None, None]: User mock.
+        Generator[User, None, None]: Test user.
     """
     now = datetime.now(timezone.utc)
 
@@ -127,11 +127,11 @@ def staff_user_mock() -> Generator[User, None, None]:
 
 
 @pytest.fixture
-def admin_user_mock() -> Generator[User, None, None]:
-    """Enabled administrator user mock for testing endpoints.
+def test_admin_user() -> Generator[User, None, None]:
+    """Get a test enabled administrator user.
 
     Returns:
-        Generator[User, None, None]: User mock.
+        Generator[User, None, None]: Test user.
     """
     now = datetime.now(timezone.utc)
 
@@ -153,11 +153,11 @@ def admin_user_mock() -> Generator[User, None, None]:
 
 
 @pytest.fixture
-def pdf_file_mock() -> BytesIO:
-    """PDF file mock for testing endpoints.
+def test_pdf_file() -> BytesIO:
+    """Get a test PDF file.
 
     Returns:
-        BytesIO: PDF file mock.
+        BytesIO: Test PDF file.
     """
     file = BytesIO(b"%PDF-1.5\nTest PDF.")
     file.name = "test.pdf"
@@ -166,11 +166,11 @@ def pdf_file_mock() -> BytesIO:
 
 
 @pytest.fixture
-def documents_mock() -> list[Document]:
-    """Documents mock for testing endpoints.
+def mock_documents() -> list[Document]:
+    """Get mock documents.
 
     Returns:
-        list[Document]: Documents mock.
+        list[Document]: Mock documents.
     """
     now = datetime.now(timezone.utc)
 
@@ -193,14 +193,14 @@ def documents_mock() -> list[Document]:
 
 
 @pytest.fixture
-def agent_mock(monkeypatch: MonkeyPatch) -> Agent:
-    """Agent mock for testing endpoints.
+def test_agent(monkeypatch: MonkeyPatch) -> Agent:
+    """Get a test agent with a mock query method.
 
     Args:
         monkeypatch (MonkeyPatch): MonkeyPatch PyTest built-in fixture.
 
     Returns:
-        Agent: Agent instance with the "query" method mocked.
+        Agent: Test agent instance with a mock "query" method.
     """
     def side_effect(text: str) -> Generator[str, None, None]:
         """Simulate an agent query.
@@ -224,10 +224,10 @@ def agent_mock(monkeypatch: MonkeyPatch) -> Agent:
         for t in tokens:
             yield t
 
-    query_mock = MagicMock(side_effect=side_effect)
+    mock_query = MagicMock(side_effect=side_effect)
 
-    # Replace the agent query method with the mock. Any Agent instance created after
-    # this will use the mock.
-    monkeypatch.setattr("team_copilot.agent.agent.Agent.query", query_mock)
+    # Replace the Agent "query" method with the mock. Any Agent instance created after
+    # this will use the mock instead of the original method.
+    monkeypatch.setattr("team_copilot.agent.agent.Agent.query", mock_query)
 
     return Agent()
