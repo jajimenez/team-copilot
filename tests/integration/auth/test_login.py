@@ -2,10 +2,9 @@
 
 from unittest.mock import patch
 
-from fastapi import FastAPI, status
+from fastapi import status
 from fastapi.testclient import TestClient
 
-from team_copilot.core.auth import get_enabled_user
 from team_copilot.models.data import User
 
 

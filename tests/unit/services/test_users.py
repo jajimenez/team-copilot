@@ -37,7 +37,7 @@ class TestGetAllUsers:
 
             # Call the function being tested
             result = get_all_users()
-            
+
             # Check result
             assert result == test_users
 
@@ -57,7 +57,7 @@ class TestGetUser:
         """
         # Test user
         user = test_users[0]
-        
+
         # Create a mock session and configure it to return our test user
         mock_session = MagicMock()
         mock_session.exec.return_value.first.return_value = user
@@ -65,13 +65,13 @@ class TestGetUser:
         # Mock the open_session context manager
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
-            
+
             # Call the function being tested
             result = get_user(id=user.id)
 
             # Check result
             assert result == user
-    
+
     def test_get_by_username(self, test_users: list[User]):
         """Test getting a user by its username.
 
@@ -80,7 +80,7 @@ class TestGetUser:
         """
         # Test user
         user = test_users[0]
-        
+
         # Create a mock session and configure it to return our test user
         mock_session = MagicMock()
         mock_session.exec.return_value.first.return_value = user
@@ -199,11 +199,10 @@ class TestSaveUser:
 
     def test_save_existing_user(self):
         """Test saving an existing user to the database."""
-        # Create a test existing user (with ID)
         user_id = uuid4()
-
         now = datetime.now(timezone.utc)
 
+        # Create a test existing user (with ID)
         user = User(
             id=user_id,
             username="user",
@@ -232,9 +231,13 @@ class TestSaveUser:
 
 class TestDeleteUser:
     """Tests for the `team_copilot.services.users.delete_user` function."""
-    
+
     def test_delete_user(self, test_users: list[User]):
-        """Test deleting a user."""
+        """Test deleting a user.
+
+        Args:
+            test_users (list[User]): Test users.
+        """
         # Test user
         user = test_users[0]
 
