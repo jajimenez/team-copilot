@@ -116,6 +116,36 @@ async def get_all_users() -> UserListResponse:
 
 
 @router.get(
+    "/me",
+    operation_id="get_current_user",
+    summary=GET_CUR_USER_SUM,
+    description=GET_CUR_USER_DESC,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": CUR_USER,
+            "model": UserResponse,
+        }
+    },
+)
+async def get_current_user(
+    user: Annotated[User, Depends(get_enabled_user)],
+) -> UserResponse:
+    """Get the current authenticated user.
+
+    The user must be authenticated and enabled.
+
+    Args:
+        user (User): Current user.
+
+    Returns:
+        UserResponse: Message and current user.
+    """
+    message = USER_RET.format(user.id, user.username)
+    return UserResponse.create(message=message, user=user)
+
+
+@router.get(
     "/{id}",
     operation_id="get_user",
     summary=GET_USER_SUM,
@@ -156,36 +186,6 @@ async def get_user(id: Annotated[UUID, Path(description=USER_ID)]) -> UserRespon
         )
 
     # Return message and user
-    message = USER_RET.format(user.id, user.username)
-    return UserResponse.create(message=message, user=user)
-
-
-@router.get(
-    "/me",
-    operation_id="get_current_user",
-    summary=GET_CUR_USER_SUM,
-    description=GET_CUR_USER_DESC,
-    status_code=status.HTTP_200_OK,
-    responses={
-        status.HTTP_200_OK: {
-            "description": CUR_USER,
-            "model": UserResponse,
-        }
-    },
-)
-async def get_current_user(
-    user: Annotated[User, Depends(get_enabled_user)],
-) -> UserResponse:
-    """Get the current authenticated user.
-
-    The user must be authenticated and enabled.
-
-    Args:
-        user (User): Current user.
-
-    Returns:
-        UserResponse: Message and current user.
-    """
     message = USER_RET.format(user.id, user.username)
     return UserResponse.create(message=message, user=user)
 
