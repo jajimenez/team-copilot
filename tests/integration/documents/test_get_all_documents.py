@@ -27,6 +27,7 @@ def test_get_all_documents(
         staff_user_mock (User): Enabled staff user mock.
         documents_mock (list[Document]): Documents mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
 
     # Mock the get_all_documents service function
@@ -97,6 +98,7 @@ def test_get_all_documents_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = raise_not_authorized_exc
 
     # Make HTTP request

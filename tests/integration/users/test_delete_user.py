@@ -23,6 +23,7 @@ def test_delete_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
         test_client (TestClient): FastAPI test client.
         admin_user_mock (User): Enabled administrator user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
 
     user_id = uuid4()
@@ -96,7 +97,9 @@ def test_delete_user_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = raise_not_authorized_exc
+
     user_id = uuid4()
 
     # Make HTTP request
@@ -131,7 +134,9 @@ def test_delete_user_not_found(
         test_client (TestClient): FastAPI test client.
         admin_user_mock (User): Enabled administrator user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
+
     user_id = uuid4()
 
     with patch("team_copilot.routers.users.get_us", return_value=None) as get_user_mock:

@@ -23,6 +23,7 @@ def test_update_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
         test_client (TestClient): FastAPI test client.
         admin_user_mock (User): Enabled administrator user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
 
     user_id = uuid4()
@@ -128,7 +129,9 @@ def test_update_user_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = raise_not_authorized_exc
+
     user_id = uuid4()
 
     # Request data 
@@ -165,7 +168,9 @@ def test_update_user_not_found(
         test_client (TestClient): FastAPI test client.
         admin_user_mock (User): Enabled administrator user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
+
     user_id = uuid4()
 
     # Request data
@@ -205,6 +210,7 @@ def test_update_user_exists_username(
         test_client (TestClient): FastAPI test client.
         admin_user_mock (User): Enabled administrator user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
 
     user_id = uuid4()
@@ -293,6 +299,7 @@ def test_update_user_exists_email(
         test_client (TestClient): FastAPI test client.
         admin_user_mock (User): Enabled administrator user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
 
     user_id = uuid4()

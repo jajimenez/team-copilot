@@ -25,6 +25,7 @@ def test_get_current_user(
         test_client (TestClient): FastAPI test client.
         enabled_user_mock (User): Enabled user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_enabled_user] = lambda: enabled_user_mock
 
     with patch("team_copilot.routers.users.get_us", return_value=enabled_user_mock):
@@ -87,6 +88,7 @@ def test_get_current_user_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_enabled_user] = raise_not_authorized_exc
 
     # Make HTTP request

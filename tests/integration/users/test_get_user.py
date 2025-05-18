@@ -28,7 +28,9 @@ def test_get_user(
         admin_user_mock (User): Enabled administrator user mock.
         users_mock (list[User]): Users mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
+
     user = users_mock[0]
 
     with patch("team_copilot.routers.users.get_us", return_value=user) as get_user_mock:
@@ -98,6 +100,7 @@ def test_get_user_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = raise_not_authorized_exc
 
     # Simulate a user ID
@@ -136,6 +139,7 @@ def test_get_user_not_found(
         test_client (TestClient): FastAPI test client.
         admin_user_mock (User): Enabled staff user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
 
     # Simulate a user ID

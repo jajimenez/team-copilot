@@ -21,6 +21,7 @@ def test_delete_document(app: FastAPI, test_client: TestClient, staff_user_mock:
         test_client (TestClient): FastAPI test client.
         staff_user_mock (User): Enabled staff user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
 
     doc_id = uuid4()
@@ -93,7 +94,9 @@ def test_delete_document_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = raise_not_authorized_exc
+
     doc_id = uuid4()
 
     # Make request
@@ -128,7 +131,9 @@ def test_delete_document_not_found(
         test_client (TestClient): FastAPI test client.
         staff_user_mock (User): Enabled staff user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
+
     doc_id = uuid4()
 
     with patch(

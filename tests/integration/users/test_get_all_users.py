@@ -27,6 +27,7 @@ def test_get_all_users(
         admin_user_mock (User): Enabled administrator user mock.
         users_mock (list[User]): Users mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
 
     with patch(
@@ -99,6 +100,7 @@ def test_get_all_users_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_admin_user] = raise_not_authorized_exc
 
     # Make HTTP request

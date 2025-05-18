@@ -28,6 +28,7 @@ def test_create_document(
         staff_user_mock (User): Enabled staff user mock.
         pdf_file_mock (BytesIO): PDF file mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
 
     doc_id = uuid4()
@@ -137,6 +138,7 @@ def test_create_document_unauthorized(
         test_client (TestClient): FastAPI test client.
         pdf_file_mock (BytesIO): PDF file mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = raise_not_authorized_exc
 
     # Request data
@@ -179,6 +181,7 @@ def test_create_document_exists(
         staff_user_mock (User): Enabled staff user mock.
         pdf_file_mock (BytesIO): PDF file mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
 
     doc_name = "Document"

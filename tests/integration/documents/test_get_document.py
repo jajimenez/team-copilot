@@ -28,7 +28,9 @@ def test_get_document(
         staff_user_mock (User): Enabled staff user mock.
         documents_mock (list[Document]): Documents mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
+
     doc = documents_mock[0]
 
     with patch(
@@ -97,6 +99,7 @@ def test_get_document_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = raise_not_authorized_exc
 
     # Simulate a document ID
@@ -135,6 +138,7 @@ def test_get_document_not_found(
         test_client (TestClient): FastAPI test client.
         staff_user_mock (User): Enabled staff user mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
 
     # Simulate a document ID

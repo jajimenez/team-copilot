@@ -30,6 +30,7 @@ def test_update_documnt(
         staff_user_mock (User): Enabled staff user mock.
         pdf_file_mock (BytesIO): PDF file mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
 
     doc_id = uuid4()
@@ -153,7 +154,9 @@ def test_update_document_unauthorized(
         test_client (TestClient): FastAPI test client.
         pdf_file_mock (BytesIO): PDF file mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = raise_not_authorized_exc
+
     doc_id = uuid4()
 
     # Request data
@@ -193,7 +196,9 @@ def test_update_document_not_found(
         staff_user_mock (User): Enabled staff user mock.
         pdf_file_mock (BytesIO): PDF file mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
+
     doc_id = uuid4()
 
     # Request data
@@ -239,6 +244,7 @@ def test_update_document_exists(
         staff_user_mock (User): Enabled staff user mock.
         pdf_file_mock (BytesIO): PDF file mock.
     """
+    # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
 
     doc_id = uuid4()
