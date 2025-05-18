@@ -37,7 +37,7 @@ from team_copilot.services.documents import (
     get_document_file_path,
     save_document,
     process_document,
-    delete_document as delete_doc,
+    delete_document as del_doc,
 )
 
 from team_copilot.routers import BAD_REQ, VAL_ERROR, NOT_AUTHENTICATED, NOT_AUTHORIZED
@@ -532,7 +532,7 @@ async def delete_document(id: Annotated[UUID, Path(description=DOC_ID)]) -> Resp
         # Delete the document. A ValueError will be raised if the document doesn't
         # exist, although this should never happen because we already checked that the
         # document exists.
-        delete_doc(id)
+        del_doc(id)
     except ValueError:
         # Re-raise exception as HTTPException
         raise HTTPException(
