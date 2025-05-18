@@ -66,6 +66,8 @@ def test_get_current_user_unauthenticated(test_client: TestClient):
     """
     # Make HTTP request
     response = test_client.get("/users/me")
+
+    # Check response
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     res_data = response.json()
@@ -93,6 +95,8 @@ def test_get_current_user_unauthorized(app: FastAPI, test_client: TestClient):
 
     # Make HTTP request
     response = test_client.get("/users/me")
+
+    # Check response
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     res_data = response.json()
