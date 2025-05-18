@@ -285,13 +285,14 @@ async def get_document(
     # Get the document from the database
     doc = get_doc(id=id)
 
+    # Check that the document exists
     if not doc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=DOC_NF_2.format(id),
         )
 
-    # Return a message and the document
+    # Return message and document
     return DocumentResponse.create(message=DOC_RET, document=doc)
 
 
@@ -540,5 +541,5 @@ async def delete_document(id: Annotated[UUID, Path(description=DOC_ID)]) -> Resp
             detail=DOC_NF_2.format(id),
         )
 
-    # Return a message
+    # Return message
     return Response(message=DOC_DEL_2.format(id, name))

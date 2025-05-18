@@ -36,8 +36,10 @@ DEL_USER_DESC = "Delete a user. Only staff users are authorized."
 DEL_USER_SUM = "Delete a user"
 GET_ALL_USERS_DESC = "Get all users. Only administrator users are authorized."
 GET_ALL_USERS_SUM = "Get all users"
-GET_CUR_USER_DESC = "Get the current authenticated user."
-GET_CUR_USER_SUM = "Get the current authenticated user"
+GET_CUR_USER_DESC = "Get the current user."
+GET_CUR_USER_SUM = "Get the current user"
+GET_USER_DESC = "Get a user. Only administrator users are authorized."
+GET_USER_SUM = "Get a user"
 
 UPD_USER_DESC = (
     "Update a user (some or all fields). Only administrator users are authorized."
@@ -46,7 +48,7 @@ UPD_USER_DESC = (
 UPD_USER_SUM = "Update a user"
 USER_CRE_1 = "User created"
 USER_CRE_2 = "User {} ({}) created."
-USER_DATA = "User data"
+USER_DAT = "User data"
 USER_DEL_1 = "User deleted"
 USER_DEL_2 = "User {} ({}) deleted."
 USER_EXISTS_1 = "A user with the same username or e-mail address already exists"
@@ -114,6 +116,51 @@ async def get_all_users() -> UserListResponse:
 
 
 @router.get(
+    "/{id}",
+    operation_id="get_user",
+    summary=GET_USER_SUM,
+    description=GET_USER_DESC,
+    dependencies=[Depends(get_admin_user)],
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "description": USER_DAT,
+            "model": UserResponse,
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "description": USER_NF_1,
+            "model": ErrorResponse,
+        },
+    },
+)
+async def get_user(id: Annotated[UUID, Path(description=USER_ID)]) -> UserResponse:
+    """Get a user.
+
+    Args:
+        id (UUID): User ID.
+
+    Raises:
+        HTTPException: If the user is not found.
+
+    Returns:
+        UserResponse: Message and user.
+    """
+    # Get the user from the database
+    user = get_us(id=id)
+
+    # Check that the user exists
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=USER_NF_2.format(id),
+        )
+
+    # Return message and user
+    message = USER_RET.format(user.id, user.username)
+    return UserResponse.create(message=message, user=user)
+
+
+@router.get(
     "/me",
     operation_id="get_current_user",
     summary=GET_CUR_USER_SUM,
@@ -162,7 +209,7 @@ async def get_current_user(
     },
 )
 async def create_user(
-    user: Annotated[CreateUserRequest, Body(description=USER_DATA)],
+    user: Annotated[CreateUserRequest, Body(description=USER_DAT)],
 ) -> UserCreatedResponse:
     """Create a user.
 
@@ -216,7 +263,7 @@ async def create_user(
 )
 async def update_user(
     id: Annotated[UUID, Path(description=USER_ID)],
-    user: Annotated[UpdateUserRequest, Body(description=USER_DATA)],
+    user: Annotated[UpdateUserRequest, Body(description=USER_DAT)],
 ) -> UserResponse:
     """Update a user.
 
