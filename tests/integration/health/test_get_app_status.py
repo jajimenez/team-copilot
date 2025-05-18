@@ -3,6 +3,8 @@
 from fastapi import status
 from fastapi.testclient import TestClient
 
+from team_copilot.models.data import AppStatus
+
 
 def test_get_app_status(test_client: TestClient):
     """Test the "get_app_status" endpoint.
@@ -22,4 +24,4 @@ def test_get_app_status(test_client: TestClient):
 
     data = res_data["data"]
     assert len(data) == 1
-    assert data["status"] == "available"
+    assert data["status"] == AppStatus.AVAILABLE
