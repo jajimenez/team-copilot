@@ -135,7 +135,7 @@ def process_document(id: UUID):
             processed.
     """
     # Temporary PDF file path
-    file_path = get_doc_temp_file_path(id)
+    file_path = get_document_file_path(id)
 
     with open_session(settings.db_url) as session:
         try:
@@ -234,7 +234,7 @@ def delete_document(id: UUID):
             logger.info(DOC_DEL.format(doc.id, doc.name))
 
             # Delete the temporary PDF file if it exists
-            file_path = get_doc_temp_file_path(doc.id)
+            file_path = get_document_file_path(doc.id)
 
             if exists(file_path):
                 remove(file_path)
