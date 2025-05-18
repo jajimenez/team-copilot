@@ -67,7 +67,7 @@ def test_update_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
 
         res_data = response.json()
         assert len(res_data) == 2
-        assert res_data["message"] == f"User {user_id} ({user.username}) updated."
+        assert res_data["message"] == f"User {user.id} ({user.username}) updated."
 
         data = res_data["data"]
         assert len(data) == 9
@@ -107,6 +107,7 @@ def test_update_user_unauthenticated(test_client: TestClient):
     # Make HTTP request
     response = test_client.put(f"/users/{user_id}", json=data)
 
+    # Check response
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     res_data = response.json()
 
@@ -157,7 +158,7 @@ def test_update_user_not_found(
     test_client: TestClient,
     admin_user_mock: User,
 ):
-    """Test the "update_user" endpoint with a non-existing user.
+    """Test the "update_user" endpoint for a non-existing user.
 
     Args:
         app (FastAPI): FastAPI application.
@@ -276,6 +277,8 @@ def test_update_user_exists_username(
             call(username=req_data["username"], email=req_data["email"]),
         ])
 
+    app.dependency_overrides.clear()
+
 
 def test_update_user_exists_email(
     app: FastAPI,
@@ -361,3 +364,5 @@ def test_update_user_exists_email(
             call(id=user_id),
             call(username=req_data["username"], email=req_data["email"]),
         ])
+
+    app.dependency_overrides.clear()
