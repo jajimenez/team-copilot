@@ -43,8 +43,8 @@ def test_delete_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
     )
 
     with (
-        patch("team_copilot.routers.users.get_us", return_value=user) as mock_get_us,
-        patch("team_copilot.routers.users.del_user") as mock_del_user,
+        patch("team_copilot.routers.users.get_us", return_value=user) as get_us_mock,
+        patch("team_copilot.routers.users.del_user") as del_user_mock,
     ):
         # Make request
         response = test_client.delete(f"/users/{user_id}")
@@ -57,8 +57,8 @@ def test_delete_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
         assert res_data["message"] == f"User {user_id} ({user.username}) deleted."
 
         # Check function calls
-        mock_get_us.assert_called_once_with(id=user_id)
-        mock_del_user.assert_called_once_with(user_id)
+        get_us_mock.assert_called_once_with(id=user_id)
+        del_user_mock.assert_called_once_with(user_id)
 
     app.dependency_overrides.clear()
 
@@ -134,7 +134,7 @@ def test_delete_user_not_found(
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
     user_id = uuid4()
 
-    with patch("team_copilot.routers.users.get_us", return_value=None) as get_us_mock:
+    with patch("team_copilot.routers.users.get_us", return_value=None) as get_user_mock:
         # Make HTTP request
         response = test_client.delete(f"/users/{user_id}")
         
@@ -150,6 +150,6 @@ def test_delete_user_not_found(
         assert res_data["data"][0]["message"] == f"User {user_id} not found."
 
         # Check function calls
-        get_us_mock.assert_called_once_with(id=user_id)
+        get_user_mock.assert_called_once_with(id=user_id)
 
     app.dependency_overrides.clear()

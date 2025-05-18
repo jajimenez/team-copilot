@@ -2,6 +2,7 @@
 
 from uuid import uuid4
 from datetime import datetime, timezone
+from io import BytesIO
 from unittest.mock import patch
 from typing import Generator
 
@@ -11,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from team_copilot.main import app as _app
-from team_copilot.models.data import User
+from team_copilot.models.data import User, Document, DocumentStatus
 
 
 @pytest.fixture
@@ -147,3 +148,43 @@ def admin_user_mock() -> Generator[User, None, None]:
 
     with patch("team_copilot.core.auth.get_admin_user", return_value=user):
         yield user
+
+
+@pytest.fixture
+def pdf_file_mock() -> BytesIO:
+    """PDF file mock for testing endpoints.
+
+    Returns:
+        BytesIO: PDF file mock.
+    """
+    file = BytesIO(b"%PDF-1.5\nTest PDF.")
+    file.name = "test.pdf"
+
+    return file
+
+
+@pytest.fixture
+def documents_mock() -> list[Document]:
+    """Documents mock for testing endpoints.
+
+    Returns:
+        list[Document]: Documents mock.
+    """
+    now = datetime.now(timezone.utc)
+
+    return [
+        Document(
+            id=uuid4(),
+            name="Document 1",
+            status=DocumentStatus.PENDING,
+            created_at=now,
+            updated_at=now,
+        ),
+        Document(
+            id=uuid4(),
+            name="Document 2",
+            status=DocumentStatus.PENDING,
+            created_at=now,
+            updated_at=now,
+        ),
+    ]

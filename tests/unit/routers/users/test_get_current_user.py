@@ -30,6 +30,8 @@ def test_get_current_user(
     with patch("team_copilot.routers.users.get_us", return_value=enabled_user_mock):
         # Make HTTP request
         response = test_client.get("/users/me")
+
+        # Check response
         assert response.status_code == status.HTTP_200_OK
 
         res_data = response.json()

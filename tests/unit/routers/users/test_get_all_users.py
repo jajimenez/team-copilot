@@ -29,14 +29,19 @@ def test_get_all_users(
     """
     app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
 
-    with patch("team_copilot.routers.users.get_all_us", return_value=users_mock):
+    with patch(
+        "team_copilot.routers.users.get_all_us",
+        return_value=users_mock,
+    ) as get_all_us_mock:
         # Make HTTP request
         response = test_client.get("/users")
+
+        # Check response
         assert response.status_code == status.HTTP_200_OK
 
         user_count = len(users_mock)
-
         res_data = response.json()
+
         assert len(res_data) == 3
         assert res_data["message"] == f"{user_count} users retrieved."
         assert res_data["count"] == user_count
@@ -55,6 +60,9 @@ def test_get_all_users(
             assert parse(u["created_at"]) == users_mock[i].created_at
             assert parse(u["updated_at"]) == users_mock[i].updated_at
 
+        # Check function calls
+        get_all_us_mock.assert_called_once()
+
     app.dependency_overrides.clear()
 
 
@@ -66,6 +74,8 @@ def test_get_all_users_unauthenticated(test_client: TestClient):
     """
     # Make HTTP request
     response = test_client.get("/users")
+
+    # Check response
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     res_data = response.json()
@@ -93,6 +103,8 @@ def test_get_all_users_unauthorized(app: FastAPI, test_client: TestClient):
 
     # Make HTTP request
     response = test_client.get("/users")
+
+    # Check response
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     res_data = response.json()
