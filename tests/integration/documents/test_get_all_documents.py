@@ -1,4 +1,4 @@
-"""Team Copilot Tests - Unit Tests - Routers - Documents - Get All Documents."""
+"""Team Copilot Tests - Integration Tests - Documents - Get All Documents."""
 
 from unittest.mock import patch
 
@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from team_copilot.core.auth import get_staff_user
 from team_copilot.models.data import User, Document
 
-from tests.unit.routers import raise_not_authorized_exc
+from tests.integration import raise_not_authorized_exc
 
 
 def test_get_all_documents(

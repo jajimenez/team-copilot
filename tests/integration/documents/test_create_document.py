@@ -1,4 +1,4 @@
-"""Team Copilot Tests - Unit Tests - Routers - Documents - Create Document."""
+"""Team Copilot Tests - Integration Tests - Documents - Create Document."""
 
 from uuid import uuid4
 from datetime import datetime, timezone
@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from team_copilot.core.auth import get_staff_user
 from team_copilot.models.data import User, Document, DocumentStatus
 
-from tests.unit.routers import raise_not_authorized_exc
+from tests.integration import raise_not_authorized_exc
 
 
 def test_create_document(

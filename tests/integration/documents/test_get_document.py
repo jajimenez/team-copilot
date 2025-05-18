@@ -1,4 +1,4 @@
-"""Team Copilot Tests - Unit Tests - Routers - Users - Get User."""
+"""Team Copilot Tests - Integration Tests - Documents - Get Document."""
 
 from uuid import uuid4
 from unittest.mock import patch
@@ -8,71 +8,70 @@ from dateutil.parser import parse
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 
-from team_copilot.core.auth import get_admin_user
-from team_copilot.models.data import User
+from team_copilot.core.auth import get_staff_user
+from team_copilot.models.data import User, Document
 
-from tests.unit.routers import raise_not_authorized_exc
+from tests.integration import raise_not_authorized_exc
 
 
-def test_get_user(
+def test_get_document(
     app: FastAPI,
     test_client: TestClient, 
-    admin_user_mock: User,
-    users_mock: list[User],
+    staff_user_mock: User,
+    documents_mock: list[Document],
 ):
-    """Test the "get_user" endpoint.
+    """Test the "get_document" endpoint.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        admin_user_mock (User): Enabled administrator user mock.
-        users_mock (list[User]): Users mock.
+        staff_user_mock (User): Enabled staff user mock.
+        documents_mock (list[Document]): Documents mock.
     """
-    app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
-    user = users_mock[0]
+    app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
+    doc = documents_mock[0]
 
-    with patch("team_copilot.routers.users.get_us", return_value=user) as get_user_mock:
+    with patch(
+        "team_copilot.routers.documents.get_doc",
+        return_value=doc,
+    ) as get_doc_mock:
         # Make HTTP request
-        response = test_client.get(f"/users/{user.id}")
+        response = test_client.get(f"/documents/{doc.id}")
 
         # Check response
         assert response.status_code == status.HTTP_200_OK
         res_data = response.json()
 
         assert len(res_data) == 2
-        assert res_data["message"] == "User retrieved."
+        assert res_data["message"] == f"Document {doc.id} ({doc.name}) retrieved."
 
         data = res_data["data"]
-        assert len(data) == 9
+        assert len(data) == 5
 
-        assert data["id"] == str(user.id)
-        assert data["username"] == user.username
-        assert data["name"] == user.name
-        assert data["email"] == user.email
-        assert data["staff"] == user.staff
-        assert data["admin"] == user.admin
-        assert data["enabled"] == user.enabled
-        assert parse(data["created_at"]) == user.created_at
-        assert parse(data["updated_at"]) == user.updated_at
+        assert data["id"] == str(doc.id)
+        assert data["name"] == doc.name
+        assert data["status"] == doc.status
+        assert parse(data["created_at"]) == doc.created_at
+        assert parse(data["updated_at"]) == doc.updated_at
 
         # Check functions call
-        get_user_mock.assert_called_once_with(id=user.id)
+        get_doc_mock.assert_called_once_with(id=doc.id)
 
     # Clear dependency overrides
     app.dependency_overrides.clear()
 
 
-def test_get_user_unauthenticated(test_client: TestClient):
-    """Test the "get_user" endpoint for an unauthenticated user.
+def test_get_document_unauthenticated(test_client: TestClient):
+    """Test the "get_document" endpoint for an unauthenticated user.
 
     Args:
         test_client (TestClient): FastAPI test client.
     """
-    # Simulate a user ID
-    user_id = uuid4()
+    # Simulate a document ID
+    doc_id = uuid4()
 
     # Make HTTP request
-    response = test_client.get(f"/users/{user_id}")
+    response = test_client.get(f"/documents/{doc_id}")
 
     # Check response
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -90,21 +89,21 @@ def test_get_user_unauthenticated(test_client: TestClient):
     assert data[0]["message"] == "Not authenticated"
 
 
-def test_get_user_unauthorized(app: FastAPI, test_client: TestClient):
-    """Test the "get_user" endpoint for an unauthorized (disabled or not administrator)
+def test_get_document_unauthorized(app: FastAPI, test_client: TestClient):
+    """Test the "get_document" endpoint for an unauthorized (disabled or not staff)
     user.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
-    app.dependency_overrides[get_admin_user] = raise_not_authorized_exc
+    app.dependency_overrides[get_staff_user] = raise_not_authorized_exc
 
-    # Simulate a user ID
-    user_id = uuid4()
+    # Simulate a document ID
+    doc_id = uuid4()
 
     # Make HTTP request
-    response = test_client.get(f"/users/{user_id}")
+    response = test_client.get(f"/documents/{doc_id}")
 
     # Check response
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -124,25 +123,25 @@ def test_get_user_unauthorized(app: FastAPI, test_client: TestClient):
     app.dependency_overrides.clear()
 
 
-def test_get_user_not_found(
+def test_get_document_not_found(
     app: FastAPI,
     test_client: TestClient,
-    admin_user_mock: User,
+    staff_user_mock: User,
 ):
     """Test the "get_document" endpoint for a non-existing document.
 
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        admin_user_mock (User): Enabled staff user mock.
+        staff_user_mock (User): Enabled staff user mock.
     """
-    app.dependency_overrides[get_admin_user] = lambda: admin_user_mock
+    app.dependency_overrides[get_staff_user] = lambda: staff_user_mock
 
-    # Simulate a user ID
-    user_id = uuid4()
+    # Simulate a document ID
+    doc_id = uuid4()
 
     # Make HTTP request
-    response = test_client.get(f"/users/{user_id}")
+    response = test_client.get(f"/documents/{doc_id}")
 
     # Check response
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -157,7 +156,7 @@ def test_get_user_not_found(
     assert len(data) == 1
 
     assert data[0]["id"] == "error"
-    assert data[0]["message"] == f"User {user_id} not found."
+    assert data[0]["message"] == f"Document {doc_id} not found."
 
     # Clear dependency overrides
     app.dependency_overrides.clear()

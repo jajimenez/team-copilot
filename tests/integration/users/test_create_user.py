@@ -1,4 +1,4 @@
-"""Team Copilot Tests - Unit Tests - Routers - Users - Create User."""
+"""Team Copilot Tests - Integration Tests - Users - Create User."""
 
 from uuid import uuid4
 from datetime import datetime, timezone
@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from team_copilot.core.auth import get_admin_user
 from team_copilot.models.data import User
 
-from tests.unit.routers import raise_not_authorized_exc
+from tests.integration import raise_not_authorized_exc
 
 
 def test_create_user(app: FastAPI, test_client: TestClient, admin_user_mock: User):

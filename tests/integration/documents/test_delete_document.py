@@ -1,4 +1,4 @@
-"""Team Copilot Tests - Unit Tests - Routers - Users - Delete Document."""
+"""Team Copilot Tests - Integration Tests - Documents - Delete Document."""
 
 from uuid import uuid4
 from datetime import datetime, timezone
@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from team_copilot.core.auth import get_staff_user
 from team_copilot.models.data import User, Document, DocumentStatus
 
-from tests.unit.routers import raise_not_authorized_exc
+from tests.integration import raise_not_authorized_exc
 
 
 def test_delete_document(app: FastAPI, test_client: TestClient, staff_user_mock: User):

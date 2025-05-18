@@ -1,4 +1,4 @@
-"""Team Copilot Tests - Unit Tests - Routers."""
+"""Team Copilot Tests - Integration Tests."""
 
 from fastapi import status, HTTPException
 

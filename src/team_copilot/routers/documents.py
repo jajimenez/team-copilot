@@ -62,7 +62,7 @@ DOC_ID = "Document ID"
 DOC_NAME = "Document name"
 DOC_NF_1 = "Document not found"
 DOC_NF_2 = "Document {} not found."
-DOC_RET = "Document retrieved."
+DOC_RET = "Document {} ({}) retrieved."
 DOC_UPD_SCH = "Document {} ({}) updated and scheduled for processing."
 DOCS_DAT = "Documents data"
 DOCS_RET_1 = "1 document retrieved."
@@ -293,7 +293,8 @@ async def get_document(
         )
 
     # Return message and document
-    return DocumentResponse.create(message=DOC_RET, document=doc)
+    message = DOC_RET.format(doc.id, doc.name)
+    return DocumentResponse.create(message=message, document=doc)
 
 
 @router.post(

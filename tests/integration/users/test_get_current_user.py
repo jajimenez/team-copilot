@@ -1,4 +1,4 @@
-"""Team Copilot Tests - Unit Tests - Routers - Users - Get Current User."""
+"""Team Copilot Tests - Integration Tests - Users - Get Current User."""
 
 from unittest.mock import patch
 
@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from team_copilot.core.auth import get_enabled_user
 from team_copilot.models.data import User
 
-from tests.unit.routers import raise_not_authorized_exc
+from tests.integration import raise_not_authorized_exc
 
 
 def test_get_current_user(
