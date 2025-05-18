@@ -43,7 +43,7 @@ def test_delete_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
     )
 
     with (
-        patch("team_copilot.routers.users.get_us", return_value=user) as get_us_mock,
+        patch("team_copilot.routers.users.get_us", return_value=user) as get_user_mock,
         patch("team_copilot.routers.users.del_user") as del_user_mock,
     ):
         # Make request
@@ -57,7 +57,7 @@ def test_delete_user(app: FastAPI, test_client: TestClient, admin_user_mock: Use
         assert res_data["message"] == f"User {user.id} ({user.username}) deleted."
 
         # Check function calls
-        get_us_mock.assert_called_once_with(id=user_id)
+        get_user_mock.assert_called_once_with(id=user_id)
         del_user_mock.assert_called_once_with(user_id)
 
     app.dependency_overrides.clear()
