@@ -31,7 +31,7 @@ class TestGetAllUsers:
         mock_session = MagicMock()
         mock_session.exec.return_value.all.return_value = test_users
 
-        # Mock the open_session context manager
+        # Mock the open_session function
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
 
@@ -62,7 +62,7 @@ class TestGetUser:
         mock_session = MagicMock()
         mock_session.exec.return_value.first.return_value = user
 
-        # Mock the open_session context manager
+        # Mock the open_session function
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
 
@@ -85,7 +85,7 @@ class TestGetUser:
         mock_session = MagicMock()
         mock_session.exec.return_value.first.return_value = user
 
-        # Mock the open_session context manager
+        # Mock the open_session function
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
   
@@ -108,7 +108,7 @@ class TestGetUser:
         mock_session = MagicMock()
         mock_session.exec.return_value.first.return_value = user
         
-        # Mock the open_session context manager
+        # Mock the open_session function
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
             
@@ -131,7 +131,7 @@ class TestGetUser:
         mock_session = MagicMock()
         mock_session.exec.return_value.first.return_value = user
         
-        # Mock the open_session context manager
+        # Mock the open_session function
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
             
@@ -143,10 +143,12 @@ class TestGetUser:
 
     def test_no_parameters(self):
         """Test getting a user without any parameters."""
-        with pytest.raises(ValueError) as excinfo:
+        # Call the function being tested and check that it raises a ValueError exception
+        with pytest.raises(ValueError) as exc:
             get_user()
 
-        assert str(excinfo.value) == GET_USER_ARG
+        # Check the error message
+        assert str(exc.value) == GET_USER_ARG
 
     def test_non_existing_user(self):
         """Test getting a user that doesn't exist."""
@@ -158,7 +160,7 @@ class TestGetUser:
         mock_session = MagicMock()
         mock_session.exec.return_value.first.return_value = None
 
-        # Mock the open_session context manager
+        # Mock the open_session function
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
 
@@ -185,7 +187,7 @@ class TestSaveUser:
         # Create mock session
         mock_session = MagicMock()
         
-        # Mock the open_session context manager
+        # Mock the open_session function
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
 
@@ -216,7 +218,7 @@ class TestSaveUser:
         # Create mock session
         mock_session = MagicMock()
 
-        # Mock the open_session context manager and datetime
+        # Mock the open_session function and datetime
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
             
@@ -245,7 +247,7 @@ class TestDeleteUser:
         mock_session = MagicMock()
         mock_session.get.return_value = user
 
-        # Mock the open_session context manager
+        # Mock the open_session function
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
 
@@ -267,16 +269,17 @@ class TestDeleteUser:
         mock_session = MagicMock()
         mock_session.get.return_value = None
         
-        # Mock the open_session context manager
+        # Mock the open_session function
         with patch("team_copilot.services.users.open_session") as mock_os:
             mock_os.return_value.__enter__.return_value = mock_session
 
-            # Call the function being tested
-            with pytest.raises(ValueError) as excinfo:
+            # Call the function being tested and check that it raises a ValueError
+            # exception.
+            with pytest.raises(ValueError) as exc:
                 delete_user(user_id)
 
             # Check the error message
-            assert str(excinfo.value) == USER_NF.format(user_id)
+            assert str(exc.value) == USER_NF.format(user_id)
 
             # Check that the session was used correctly
             mock_session.get.assert_called_once_with(User, user_id)
