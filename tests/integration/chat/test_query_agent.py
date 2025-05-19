@@ -30,10 +30,10 @@ def test_query_agent(
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        test_enabled_user (User): Mock enabled user.
-        test_agent (Agent): Agent mock.
+        test_enabled_user (User): Test enabled user.
+        test_agent (Agent): Test Agent class with the "query" method mocked.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_enabled_user] = lambda: test_enabled_user
 
     # Request headers
@@ -72,6 +72,7 @@ def test_query_agent(
     # Check function calls
     test_agent.query.assert_called_once_with(text)
 
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()
 
 
@@ -113,7 +114,7 @@ def test_query_agent_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_enabled_user] = raise_not_authorized_exc
 
     # Request headers
@@ -140,4 +141,5 @@ def test_query_agent_unauthorized(app: FastAPI, test_client: TestClient):
     assert data[0]["id"] == "authorization"
     assert data[0]["message"] == "Not authorized"
 
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()

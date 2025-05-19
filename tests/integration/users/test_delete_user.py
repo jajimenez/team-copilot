@@ -2,9 +2,7 @@
 
 from uuid import uuid4
 from datetime import datetime, timezone
-from unittest.mock import patch
-
-from dateutil.parser import parse
+from unittest.mock import patch, MagicMock
 
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
@@ -15,21 +13,31 @@ from team_copilot.models.data import User
 from tests.integration import raise_not_authorized_exc
 
 
-def test_delete_user(app: FastAPI, test_client: TestClient, test_admin_user: User):
+@patch("team_copilot.routers.users.get_us")
+@patch("team_copilot.routers.users.del_user")
+def test_delete_user(
+    mock_del_user: MagicMock,
+    mock_get_us: MagicMock,
+    app: FastAPI,
+    test_client: TestClient,
+    test_admin_user: User,
+):
     """Test the "delete_user" endpoint.
     
     Args:
+        mock_del_user (MagicMock): Mock object for the "del_user" function.
+        mock_get_us (MagicMock): Mock object for the "get_us" function.
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        test_admin_user (User): Mock enabled administrator user.
+        test_admin_user (User): Test enabled administrator user.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_admin_user] = lambda: test_admin_user
 
+    # Simulate an existing user
     user_id = uuid4()
     now = datetime.now(timezone.utc)
 
-    # Simulate an existing user
     user = User(
         id=user_id,
         username="user",
@@ -43,24 +51,24 @@ def test_delete_user(app: FastAPI, test_client: TestClient, test_admin_user: Use
         updated_at=now,
     )
 
-    with (
-        patch("team_copilot.routers.users.get_us", return_value=user) as mock_get_user,
-        patch("team_copilot.routers.users.del_user") as mock_del_user,
-    ):
-        # Make request
-        response = test_client.delete(f"/users/{user_id}")
+    # Mock the returned value of the "get_us" function
+    mock_get_us.return_value = user
 
-        # Check response
-        assert response.status_code == status.HTTP_200_OK
+    # Make request
+    response = test_client.delete(f"/users/{user_id}")
 
-        res_data = response.json()
-        assert len(res_data) == 1
-        assert res_data["message"] == f"User {user.id} ({user.username}) deleted."
+    # Check response
+    assert response.status_code == status.HTTP_200_OK
 
-        # Check function calls
-        mock_get_user.assert_called_once_with(id=user_id)
-        mock_del_user.assert_called_once_with(user_id)
+    res_data = response.json()
+    assert len(res_data) == 1
+    assert res_data["message"] == f"User {user.id} ({user.username}) deleted."
 
+    # Check function calls
+    mock_get_us.assert_called_once_with(id=user_id)
+    mock_del_user.assert_called_once_with(user_id)
+
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()
 
 
@@ -92,14 +100,15 @@ def test_delete_user_unauthenticated(test_client: TestClient):
 
 def test_delete_user_unauthorized(app: FastAPI, test_client: TestClient):
     """Test the "delete_user" endpoint for an unauthorized user.
-    
+
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_admin_user] = raise_not_authorized_exc
 
+    # Simulate the ID of an existing user
     user_id = uuid4()
 
     # Make HTTP request
@@ -119,10 +128,13 @@ def test_delete_user_unauthorized(app: FastAPI, test_client: TestClient):
     assert data[0]["id"] == "authorization"
     assert data[0]["message"] == "Not authorized"
 
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()
 
 
+@patch("team_copilot.routers.users.get_us", return_value=None)
 def test_delete_user_not_found(
+    mock_get_user: MagicMock,
     app: FastAPI,
     test_client: TestClient,
     test_admin_user: User,
@@ -130,31 +142,33 @@ def test_delete_user_not_found(
     """Test the "delete_user" endpoint with a non-existing user.
 
     Args:
+        mock_get_user (MagicMock): Mock object for the "get_us" function.
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        test_admin_user (User): Mock enabled administrator user.
+        test_admin_user (User): Test enabled administrator user.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_admin_user] = lambda: test_admin_user
 
+    # Simulate the ID of a non-existing user
     user_id = uuid4()
 
-    with patch("team_copilot.routers.users.get_us", return_value=None) as mock_get_user:
-        # Make HTTP request
-        response = test_client.delete(f"/users/{user_id}")
-        
-        # Check response
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-        
-        res_data = response.json()
-        assert len(res_data) == 3
+    # Make HTTP request
+    response = test_client.delete(f"/users/{user_id}")
 
-        assert res_data["message"] == "Error."
-        assert res_data["count"] == 1
-        assert res_data["data"][0]["id"] == "error"
-        assert res_data["data"][0]["message"] == f"User {user_id} not found."
+    # Check response
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
-        # Check function calls
-        mock_get_user.assert_called_once_with(id=user_id)
+    res_data = response.json()
+    assert len(res_data) == 3
 
+    assert res_data["message"] == "Error."
+    assert res_data["count"] == 1
+    assert res_data["data"][0]["id"] == "error"
+    assert res_data["data"][0]["message"] == f"User {user_id} not found."
+
+    # Check function calls
+    mock_get_user.assert_called_once_with(id=user_id)
+
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()

@@ -1,6 +1,6 @@
 """Team Copilot Tests - Integration Tests - Users - Get All Users."""
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from dateutil.parser import parse
 
@@ -13,7 +13,9 @@ from team_copilot.models.data import User
 from tests.integration import raise_not_authorized_exc
 
 
+@patch("team_copilot.routers.users.get_all_us")
 def test_get_all_users(
+    mock_get_all_us: MagicMock,
     app: FastAPI,
     test_client: TestClient,
     test_admin_user: User,
@@ -22,48 +24,49 @@ def test_get_all_users(
     """Test the "get_all_users" endpoint.
 
     Args:
+        mock_get_all_us (MagicMock): Mock object for the "get_all_us" function.
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        test_admin_user (User): Mock enabled administrator user.
+        test_admin_user (User): Test enabled administrator user.
         test_users (list[User]): Test users.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_admin_user] = lambda: test_admin_user
 
-    with patch(
-        "team_copilot.routers.users.get_all_us",
-        return_value=test_users,
-    ) as mock_get_all_users:
-        # Make HTTP request
-        response = test_client.get("/users")
+    # Simulate the returned value of the "get_all_us" function
+    mock_get_all_us.return_value = test_users
 
-        # Check response
-        assert response.status_code == status.HTTP_200_OK
+    # Make HTTP request
+    response = test_client.get("/users")
 
-        user_count = len(test_users)
-        res_data = response.json()
+    # Check response
+    assert response.status_code == status.HTTP_200_OK
 
-        assert len(res_data) == 3
-        assert res_data["message"] == f"{user_count} users retrieved."
-        assert res_data["count"] == user_count
+    user_count = len(test_users)
+    res_data = response.json()
 
-        data = res_data["data"]
-        assert len(data) == user_count
+    assert len(res_data) == 3
+    assert res_data["message"] == f"{user_count} users retrieved."
+    assert res_data["count"] == user_count
 
-        for i, u in enumerate(data):
-            assert u["id"] == str(test_users[i].id)
-            assert u["username"] == test_users[i].username
-            assert u["name"] == test_users[i].name
-            assert u["email"] == test_users[i].email
-            assert u["staff"] == test_users[i].staff
-            assert u["admin"] == test_users[i].admin
-            assert u["enabled"] == test_users[i].enabled
-            assert parse(u["created_at"]) == test_users[i].created_at
-            assert parse(u["updated_at"]) == test_users[i].updated_at
+    data = res_data["data"]
+    assert len(data) == user_count
 
-        # Check function calls
-        mock_get_all_users.assert_called_once()
+    for i, u in enumerate(data):
+        assert u["id"] == str(test_users[i].id)
+        assert u["username"] == test_users[i].username
+        assert u["name"] == test_users[i].name
+        assert u["email"] == test_users[i].email
+        assert u["staff"] == test_users[i].staff
+        assert u["admin"] == test_users[i].admin
+        assert u["enabled"] == test_users[i].enabled
+        assert parse(u["created_at"]) == test_users[i].created_at
+        assert parse(u["updated_at"]) == test_users[i].updated_at
 
+    # Check function calls
+    mock_get_all_us.assert_called_once()
+
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()
 
 
@@ -100,7 +103,7 @@ def test_get_all_users_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_admin_user] = raise_not_authorized_exc
 
     # Make HTTP request
@@ -121,4 +124,5 @@ def test_get_all_users_unauthorized(app: FastAPI, test_client: TestClient):
     assert data[0]["id"] == "authorization"
     assert data[0]["message"] == "Not authorized"
 
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()

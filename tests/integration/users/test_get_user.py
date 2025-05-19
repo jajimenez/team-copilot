@@ -1,7 +1,7 @@
 """Team Copilot Tests - Integration Tests - Users - Get User."""
 
 from uuid import uuid4
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from dateutil.parser import parse
 
@@ -14,7 +14,9 @@ from team_copilot.models.data import User
 from tests.integration import raise_not_authorized_exc
 
 
+@patch("team_copilot.routers.users.get_us")
 def test_get_user(
+    mock_get_us: MagicMock,
     app: FastAPI,
     test_client: TestClient, 
     test_admin_user: User,
@@ -23,44 +25,48 @@ def test_get_user(
     """Test the "get_user" endpoint.
 
     Args:
+        mock_get_us (MagicMock): Mock object for the "get_us" function.
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        test_admin_user (User): Mock enabled administrator user.
+        test_admin_user (User): Test enabled administrator user.
         test_users (list[User]): Test users.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_admin_user] = lambda: test_admin_user
 
+    # Get a test user
     user = test_users[0]
 
-    with patch("team_copilot.routers.users.get_us", return_value=user) as mock_get_user:
-        # Make HTTP request
-        response = test_client.get(f"/users/{user.id}")
+    # Simulate the returned value of the "get_us" function
+    mock_get_us.return_value = user
 
-        # Check response
-        assert response.status_code == status.HTTP_200_OK
-        res_data = response.json()
+    # Make HTTP request
+    response = test_client.get(f"/users/{user.id}")
 
-        assert len(res_data) == 2
-        assert res_data["message"] == f"User {user.id} ({user.username}) retrieved."
+    # Check response
+    assert response.status_code == status.HTTP_200_OK
+    res_data = response.json()
 
-        data = res_data["data"]
-        assert len(data) == 9
+    assert len(res_data) == 2
+    assert res_data["message"] == f"User {user.id} ({user.username}) retrieved."
 
-        assert data["id"] == str(user.id)
-        assert data["username"] == user.username
-        assert data["name"] == user.name
-        assert data["email"] == user.email
-        assert data["staff"] == user.staff
-        assert data["admin"] == user.admin
-        assert data["enabled"] == user.enabled
-        assert parse(data["created_at"]) == user.created_at
-        assert parse(data["updated_at"]) == user.updated_at
+    data = res_data["data"]
+    assert len(data) == 9
 
-        # Check functions call
-        mock_get_user.assert_called_once_with(id=user.id)
+    assert data["id"] == str(user.id)
+    assert data["username"] == user.username
+    assert data["name"] == user.name
+    assert data["email"] == user.email
+    assert data["staff"] == user.staff
+    assert data["admin"] == user.admin
+    assert data["enabled"] == user.enabled
+    assert parse(data["created_at"]) == user.created_at
+    assert parse(data["updated_at"]) == user.updated_at
 
-    # Clear dependency overrides
+    # Check functions call
+    mock_get_us.assert_called_once_with(id=user.id)
+
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()
 
 
@@ -100,7 +106,7 @@ def test_get_user_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_admin_user] = raise_not_authorized_exc
 
     # Simulate a user ID
@@ -124,6 +130,7 @@ def test_get_user_unauthorized(app: FastAPI, test_client: TestClient):
     assert data[0]["id"] == "authorization"
     assert data[0]["message"] == "Not authorized"
 
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()
 
 
@@ -137,9 +144,9 @@ def test_get_user_not_found(
     Args:
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        test_admin_user (User): Mock enabled staff user.
+        test_admin_user (User): Test enabled staff user.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_admin_user] = lambda: test_admin_user
 
     # Simulate a user ID

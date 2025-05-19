@@ -1,6 +1,6 @@
 """Team Copilot Tests - Integration Tests - Documents - Get All Documents."""
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from dateutil.parser import parse
 
@@ -13,7 +13,9 @@ from team_copilot.models.data import User, Document
 from tests.integration import raise_not_authorized_exc
 
 
+@patch("team_copilot.routers.documents.get_all_docs")
 def test_get_all_documents(
+    mock_get_all_docs: MagicMock,
     app: FastAPI,
     test_client: TestClient, 
     test_staff_user: User,
@@ -22,46 +24,45 @@ def test_get_all_documents(
     """Test the "get_all_documents" endpoint.
 
     Args:
+        mock_get_all_docs (MagicMock): Mock object for the "get_all_docs" function.
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        test_staff_user (User): Mock enabled staff user.
+        test_staff_user (User): Test enabled staff user.
         test_documents (list[Document]): Test documents.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_staff_user] = lambda: test_staff_user
 
-    # Mock the get_all_documents service function
-    with patch(
-        "team_copilot.routers.documents.get_all_docs",
-        return_value=test_documents,
-    ) as mock_get_all_docs:
-        # Make HTTP request
-        response = test_client.get("/documents")
+    # Mock the returned value of the "get_all_docs" function
+    mock_get_all_docs.return_value = test_documents
 
-        # Check response
-        assert response.status_code == status.HTTP_200_OK
+    # Make HTTP request
+    response = test_client.get("/documents")
 
-        doc_count = len(test_documents)
-        res_data = response.json()
+    # Check response
+    assert response.status_code == status.HTTP_200_OK
 
-        assert len(res_data) == 3
-        assert res_data["message"] == f"{doc_count} documents retrieved."
-        assert res_data["count"] == doc_count
+    doc_count = len(test_documents)
+    res_data = response.json()
 
-        data = res_data["data"]
-        assert len(data) == doc_count
+    assert len(res_data) == 3
+    assert res_data["message"] == f"{doc_count} documents retrieved."
+    assert res_data["count"] == doc_count
 
-        for i, d in enumerate(data):
-            assert d["id"] == str(test_documents[i].id)
-            assert d["name"] == test_documents[i].name
-            assert d["status"] == test_documents[i].status
-            assert parse(d["created_at"]) == test_documents[i].created_at
-            assert parse(d["updated_at"]) == test_documents[i].updated_at
+    data = res_data["data"]
+    assert len(data) == doc_count
 
-        # Check functions call
-        mock_get_all_docs.assert_called_once()
+    for i, d in enumerate(data):
+        assert d["id"] == str(test_documents[i].id)
+        assert d["name"] == test_documents[i].name
+        assert d["status"] == test_documents[i].status
+        assert parse(d["created_at"]) == test_documents[i].created_at
+        assert parse(d["updated_at"]) == test_documents[i].updated_at
 
-    # Clear dependency overrides
+    # Check functions call
+    mock_get_all_docs.assert_called_once()
+
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()
 
 
@@ -98,7 +99,7 @@ def test_get_all_documents_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_staff_user] = raise_not_authorized_exc
 
     # Make HTTP request
@@ -119,4 +120,5 @@ def test_get_all_documents_unauthorized(app: FastAPI, test_client: TestClient):
     assert data[0]["id"] == "authorization"
     assert data[0]["message"] == "Not authorized"
 
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()

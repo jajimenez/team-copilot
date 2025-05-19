@@ -1,6 +1,6 @@
 """Team Copilot Tests - Integration Tests - Users - Get Current User."""
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from dateutil.parser import parse
 
@@ -13,7 +13,9 @@ from team_copilot.models.data import User
 from tests.integration import raise_not_authorized_exc
 
 
+@patch("team_copilot.routers.users.get_us")
 def test_get_current_user(
+    mock_get_us: MagicMock,
     app: FastAPI,
     test_client: TestClient,
     test_enabled_user: User,
@@ -21,39 +23,43 @@ def test_get_current_user(
     """Test the "get_current_user" endpoint.
 
     Args:
+        mock_get_us (MagicMock): Mock object for the "get_us" function.
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
-        test_enabled_user (User): Mock enabled user.
+        test_enabled_user (User): Test enabled user.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_enabled_user] = lambda: test_enabled_user
 
-    with patch("team_copilot.routers.users.get_us", return_value=test_enabled_user):
-        # Make HTTP request
-        response = test_client.get("/users/me")
+    # Simulate the returned value of the "get_us" function
+    mock_get_us.return_value = test_enabled_user
 
-        # Check response
-        assert response.status_code == status.HTTP_200_OK
+    # Make HTTP request
+    response = test_client.get("/users/me")
 
-        res_data = response.json()
-        assert len(res_data) == 2
+    # Check response
+    assert response.status_code == status.HTTP_200_OK
 
-        assert res_data["message"] == (
-            f"User {test_enabled_user.id} ({test_enabled_user.username}) retrieved."
-        )
+    res_data = response.json()
+    assert len(res_data) == 2
 
-        data = res_data["data"]
+    assert res_data["message"] == (
+        f"User {test_enabled_user.id} ({test_enabled_user.username}) retrieved."
+    )
 
-        assert data["id"] == str(test_enabled_user.id)
-        assert data["username"] == test_enabled_user.username
-        assert data["name"] == test_enabled_user.name
-        assert data["email"] == test_enabled_user.email
-        assert data["staff"] == test_enabled_user.staff
-        assert data["admin"] == test_enabled_user.admin
-        assert data["enabled"] == test_enabled_user.enabled
-        assert parse(res_data["data"]["created_at"]) == test_enabled_user.created_at
-        assert parse(res_data["data"]["updated_at"]) == test_enabled_user.updated_at
+    data = res_data["data"]
 
+    assert data["id"] == str(test_enabled_user.id)
+    assert data["username"] == test_enabled_user.username
+    assert data["name"] == test_enabled_user.name
+    assert data["email"] == test_enabled_user.email
+    assert data["staff"] == test_enabled_user.staff
+    assert data["admin"] == test_enabled_user.admin
+    assert data["enabled"] == test_enabled_user.enabled
+    assert parse(res_data["data"]["created_at"]) == test_enabled_user.created_at
+    assert parse(res_data["data"]["updated_at"]) == test_enabled_user.updated_at
+
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()
 
 
@@ -90,7 +96,7 @@ def test_get_current_user_unauthorized(app: FastAPI, test_client: TestClient):
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
     """
-    # Simulate the injected dependency
+    # Simulate injected dependencies
     app.dependency_overrides[get_enabled_user] = raise_not_authorized_exc
 
     # Make HTTP request
@@ -111,4 +117,5 @@ def test_get_current_user_unauthorized(app: FastAPI, test_client: TestClient):
     assert data[0]["id"] == "authorization"
     assert data[0]["message"] == "Not authorized"
 
+    # Clear simulated injected dependencies
     app.dependency_overrides.clear()
