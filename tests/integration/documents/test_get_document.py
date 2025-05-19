@@ -18,7 +18,7 @@ def test_get_document(
     app: FastAPI,
     test_client: TestClient, 
     test_staff_user: User,
-    mock_documents: list[Document],
+    test_documents: list[Document],
 ):
     """Test the "get_document" endpoint.
 
@@ -26,12 +26,12 @@ def test_get_document(
         app (FastAPI): FastAPI application.
         test_client (TestClient): FastAPI test client.
         test_staff_user (User): Mock enabled staff user.
-        mock_documents (list[Document]): Documents mock.
+        test_documents (list[Document]): Test documents.
     """
     # Simulate the injected dependency
     app.dependency_overrides[get_staff_user] = lambda: test_staff_user
 
-    doc = mock_documents[0]
+    doc = test_documents[0]
 
     with patch(
         "team_copilot.routers.documents.get_doc",

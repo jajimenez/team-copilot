@@ -166,11 +166,11 @@ def test_pdf_file() -> BytesIO:
 
 
 @pytest.fixture
-def mock_documents() -> list[Document]:
-    """Get mock documents.
+def test_documents() -> list[Document]:
+    """Get test documents.
 
     Returns:
-        list[Document]: Mock documents.
+        list[Document]: Test documents.
     """
     now = datetime.now(timezone.utc)
 
