@@ -32,3 +32,4 @@ class TestGetAllDocuments:
             # Check that the session was used correctly
             mock_os.assert_called_once()
             mock_session.exec.assert_called_once()
+            mock_session.exec.return_value.all.assert_called_once()
