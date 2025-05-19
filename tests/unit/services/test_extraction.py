@@ -12,7 +12,7 @@ from tests.unit.conftest import (
 )
 
 
-class TestGetEmbedding:
+class TestGetText:
     """Tests for the `team_copilot.services.extraction.get_text` function."""
 
     def test_get_text(self, test_pdf_doc_path: str, mock_pdf_doc_1: MagicMock):
