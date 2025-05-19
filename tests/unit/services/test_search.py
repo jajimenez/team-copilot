@@ -31,7 +31,7 @@ class TestGetMostSimilarChunks:
         # Mock embedding function returned value
         mock_get_embedding.return_value = [0.1, 0.2, 0.3]
 
-        # Mock session object. The first call to "exec" returns document chunk IDs. The
+        # Create mock session. The first call to "exec" returns document chunk IDs. The
         # second call, followed by a call to "all", returns DocumentChunk objects.
         mock_ids = [(1,), (2,), (3,)]
         mock_doc_chunks = MagicMock()
@@ -79,7 +79,7 @@ class TestGetMostSimilarChunks:
         # Mock embedding function returned value
         mock_get_embedding.return_value = [0.1, 0.2, 0.3]
 
-        # Mock session object. The first call to "exec" returns document chunk IDs. The
+        # Create mock session. The first call to "exec" returns document chunk IDs. The
         # second call, followed by a call to "all", returns DocumentChunk objects.
         mock_ids = []
 
@@ -141,7 +141,7 @@ class TestGetMostSimilarChunks:
         # Mock embedding function returned value
         mock_get_embedding.return_value = [0.1, 0.2, 0.3]
 
-        # Mock session object. A call to "exec" raises an exception.
+        # Create mock session. A call to "exec" raises an exception.
         mock_session = MagicMock()
         mock_session.exec.side_effect = Exception("Database connection error")
 

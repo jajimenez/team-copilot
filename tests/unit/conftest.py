@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from team_copilot.models.data import User
+from team_copilot.models.data import User, Document, DocumentStatus, DocumentChunk
 
 
 DOC_1_PAG_1_TXT = "a" * 500
@@ -53,6 +53,56 @@ def test_users() -> list[User]:
             updated_at=now,
         ),
     ]
+
+
+@pytest.fixture
+def test_documents() -> list[Document]:
+    """Get test documents.
+
+    Returns:
+        list[Document]: Test documents.
+    """
+    now = datetime.now(timezone.utc)
+
+    docs = [
+        Document(
+            id=uuid4(),
+            name="Document 1",
+            status=DocumentStatus.PENDING,
+            created_at=now,
+            updated_at=now
+        ),
+        Document(
+            id=uuid4(),
+            name="Document 2",
+            status=DocumentStatus.PENDING,
+            created_at=now,
+            updated_at=now,
+        ),
+    ]
+
+    docs[0].chunks = [
+        DocumentChunk(
+            id=uuid4(),
+            document_id=docs[0].id,
+            chunk_index=0,
+            chunk_text="Chunk 1",
+            embedding=[0.1, 0.2, 0.3],
+            created_at=now,
+            updated_at=now,
+        ),
+        DocumentChunk(
+            id=uuid4(),
+            document_id=docs[0].id,
+            chunk_index=1,
+            chunk_text="Chunk 2",
+            embedding=[0.4, 0.5, 0.6],
+            created_at=now,
+            updated_at=now,
+        ),
+    ]
+
+    return docs
 
 
 @pytest.fixture
