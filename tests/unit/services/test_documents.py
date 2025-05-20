@@ -1,7 +1,7 @@
 """Team Copilot Tests - Unit Tests - Services - Documents."""
 
 from os.path import join
-from unittest.mock import patch, call, MagicMock
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -14,6 +14,7 @@ from team_copilot.services.documents import (
     get_document_file_path,
     save_document,
     process_document,
+    delete_document,
 )
 
 
@@ -218,7 +219,6 @@ class TestSaveDocument:
 class TestProcessDocument:
     """Tests for the `team_copilot.services.documents.process_document` function."""
 
-    
     @patch("team_copilot.services.documents.remove")
     @patch("team_copilot.services.documents.get_embedding")
     @patch("team_copilot.services.documents.get_text")
@@ -348,3 +348,86 @@ class TestProcessDocument:
         mock_get_text.assert_called_once_with(file_path)
         mock_exists.assert_called_once_with(file_path)
         mock_remove.assert_called_once_with(file_path)
+
+
+class TestDeleteDocument:
+    """Tests for the `team_copilot.services.documents.delete_document` function."""
+
+    @patch("team_copilot.services.documents.remove")
+    @patch("team_copilot.services.documents.exists", return_value=True)
+    @patch("team_copilot.services.documents.get_document_file_path")
+    @patch("team_copilot.services.documents.open_session")
+    def test_delete_document(
+        self,
+        mock_open_session: MagicMock,
+        mock_get_document_file_path: MagicMock,
+        mock_exists: MagicMock,
+        mock_remove: MagicMock,
+        test_documents: list[Document],
+    ):
+        """Test deleting a document.
+
+        Args:
+            mock_open_session (MagicMock): Mock object for the "open_session" function.
+            mock_get_document_file_path (MagicMock): Mock object for the
+                "get_document_file_path" function.
+            mock_exists (MagicMock): Mock object for the "exists" function.
+            mock_remove (MagicMock): Mock object for the "remove" function.
+            test_documents (list[Document]): Test documents.
+        """
+        # Get a test document
+        doc = test_documents[0]
+
+        # Test values
+        file_path = "/tmp/document.pdf"
+
+        # Simulate the returned value of the "get_document_file_path" function
+        mock_get_document_file_path.return_value = file_path
+
+        # Create mock session and configure it to return the test document
+        mock_session = MagicMock()
+        mock_session.get.return_value = doc
+
+        # Simulate the returned value of the "open_session" function
+        mock_open_session.return_value.__enter__.return_value = mock_session
+
+        # Call the function being tested
+        delete_document(doc.id)
+
+        # Check function calls
+        mock_open_session.assert_called_once()
+        mock_session.get.assert_called_once_with(Document, doc.id)
+        mock_session.delete.assert_called_once_with(doc)
+        mock_session.commit.assert_called_once()
+        mock_exists.assert_called_once_with(file_path)
+        mock_remove.assert_called_once_with(file_path)
+
+    @patch("team_copilot.services.documents.open_session")
+    def test_not_found(
+        self, mock_open_session: MagicMock,
+        test_documents: list[Document],
+    ):
+        """Test deleting a document that does not exist.
+
+        Args:
+            mock_open_session (MagicMock): Mock object for the "open_session" function.
+            test_documents (list[Document]): Test documents.
+        """
+        # Get a test document
+        doc = test_documents[0]
+
+        # Create mock session and configure it to return None (i.e. no document was
+        # found).
+        mock_session = MagicMock()
+        mock_session.get.return_value = None
+
+        # Simulate the returned value of the "open_session" function
+        mock_open_session.return_value.__enter__.return_value = mock_session
+
+        # Call the function being tested and check that a ValueError exception is raised
+        with pytest.raises(ValueError, match=f"Document {doc.id} not found."):
+            delete_document(doc.id)
+
+        # Check function calls
+        mock_open_session.assert_called_once()
+        mock_session.get.assert_called_once_with(Document, doc.id)
