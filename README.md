@@ -17,6 +17,45 @@ PyTesseract is used to extract text from the previously extracted images through
 **PostgreSQL** database configured as a vector database with the **PgVector** PostgreSQL
 extension.
 
+## Data Flow Diagram
+
+```mermaid
+flowchart TD
+    User([User]) <--> API[FastAPI API]
+    
+    API --> DocUpload[Document Upload]
+    API --> ChatQuestion[Chat Question]
+
+    DocUpload --> |PDF file| TextExt[Direct Text Extraction with PyMuPDF]
+    DocUpload --> |PDF file| ImgTextExt[OCR Text Extraction with PyTesseract]
+
+    TextExt --> |Text| TextConcat[Text Concatenation]
+    ImgTextExt --> |Text| TextConcat
+
+    TextConcat --> |Text| TextSplit[Text Split into Chunks]
+
+    TextSplit --> |Text chunks| TextEmb[Voyage AI API]
+    TextEmb --> |Document information| Db[(PostgreSQL with PgVector)]
+    TextEmb --> |Chunk texts| Db
+    TextEmb --> |Chunk embeddings | Db
+    
+    ChatQuestion --> |Question text| Agent[LangGraph Agent]
+    Agent --> |Question text| TextEmb
+    TextEmb --> |Question embedding| Agent
+    
+
+    Agent --> |Question embedding|VecSearch[Search for Most Similar Chunks]
+    VecSearch --> |Question embedding| Db
+    Db --> |Most similar chunk texts| VecSearch
+    VecSearch --> |Most similar chunk texts| Agent
+
+    Agent --> |Question text with most similar chunk texts as context| Llm[Anthropic API]
+    Llm --> |Streaming AI-generated answer text| Agent
+    Agent --> |Streaming AI-generated answer text| API
+```
+
+## Document Processing Flow
+
 Each time a PDF document is uploaded to the application, the following steps are
 performed:
 
@@ -34,6 +73,8 @@ performed:
 9. The status of the database document record is updated to "completed". If any error
    happens during the previous steps, the status is updated to "failed".
 10. The uploaded PDF document is deleted.
+
+## Question Answering Flow
 
 Each time a question is asked to the application, the following steps are performed:
 
