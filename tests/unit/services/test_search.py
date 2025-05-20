@@ -63,6 +63,7 @@ class TestGetMostSimilarChunks:
 
         # Check function calls
         mock_get_embedding.assert_called_once_with(query, "query")
+        mock_open_session.assert_called_once()
         assert mock_session.exec.call_count == 2
         mock_doc_chunks.all.assert_called_once()
 
@@ -105,6 +106,7 @@ class TestGetMostSimilarChunks:
 
         # Check function calls
         mock_get_embedding.assert_called_once_with(query, "query")
+        mock_open_session.assert_called_once()
         mock_session.exec.assert_called_once()
         mock_doc_chunks.all.assert_not_called()
 
@@ -168,4 +170,5 @@ class TestGetMostSimilarChunks:
 
         # Check function calls
         mock_get_embedding.assert_called_once_with(query, "query")
+        mock_open_session.assert_called_once()
         mock_session.exec.assert_called_once()

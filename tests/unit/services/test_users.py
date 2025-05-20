@@ -41,7 +41,7 @@ class TestGetAllUsers:
         # Check result
         assert result == test_users
 
-        # Check that the session was used correctly
+        # Check function calls
         mock_open_session.assert_called_once()
         mock_session.exec.assert_called_once()
         mock_session.exec.return_value.all.assert_called_once()
@@ -74,7 +74,7 @@ class TestGetUser:
         # Check result
         assert result == user
 
-        # Check that the session was used correctly
+        # Check function calls
         mock_open_session.assert_called_once()
         mock_session.exec.assert_called_once()
         mock_session.exec.return_value.first.assert_called_once()
@@ -107,7 +107,7 @@ class TestGetUser:
         # Check result
         assert result == user
 
-        # Check that the session was used correctly
+        # Check function calls
         mock_open_session.assert_called_once()
         mock_session.exec.assert_called_once()
         mock_session.exec.return_value.first.assert_called_once()
@@ -136,7 +136,7 @@ class TestGetUser:
         # Check result
         assert result == user
 
-        # Check that the session was used correctly
+        # Check function calls
         mock_open_session.assert_called_once()
         mock_session.exec.assert_called_once()
         mock_session.exec.return_value.first.assert_called_once()
@@ -169,7 +169,7 @@ class TestGetUser:
         # Check result
         assert result == user
 
-        # Check that the session was used correctly
+        # Check function calls
         mock_open_session.assert_called_once()
         mock_session.exec.assert_called_once()
         mock_session.exec.return_value.first.assert_called_once()
@@ -207,7 +207,7 @@ class TestGetUser:
         # Check result
         assert result is None
 
-        # Check that the session was used correctly
+        # Check function calls
         mock_open_session.assert_called_once()
         mock_session.exec.assert_called_once()
         mock_session.exec.return_value.first.assert_called_once()
@@ -237,7 +237,8 @@ class TestSaveUser:
         # Call the function being tested
         save_user(user)
 
-        # Check that the session was used correctly
+        # Check function calls
+        mock_open_session.assert_called_once()
         mock_session.add.assert_called_once_with(user)
         mock_session.commit.assert_called_once()
         mock_session.refresh.assert_called_once_with(user)
@@ -266,7 +267,8 @@ class TestSaveUser:
         # Call the function being tested
         save_user(user)
 
-        # Check that the session was used correctly
+        # Check function calls
+        mock_open_session.assert_called_once()
         mock_session.add.assert_called_once_with(user)
         mock_session.commit.assert_called_once()
         mock_session.refresh.assert_called_once_with(user)
@@ -296,7 +298,8 @@ class TestDeleteUser:
         # Call the function being tested
         delete_user(user.id)
 
-        # Check that the session was used correctly
+        # Check function calls
+        mock_open_session.assert_called_once()
         mock_session.get.assert_called_once_with(User, user.id)
         mock_session.delete.assert_called_once_with(user)
         mock_session.commit.assert_called_once()
@@ -327,7 +330,8 @@ class TestDeleteUser:
         # Check the error message
         assert str(exc.value) == USER_NF.format(user_id)
 
-        # Check that the session was used correctly
+        # Check function calls
+        mock_open_session.assert_called_once()
         mock_session.get.assert_called_once_with(User, user_id)
         mock_session.delete.assert_not_called()
         mock_session.commit.assert_not_called()
