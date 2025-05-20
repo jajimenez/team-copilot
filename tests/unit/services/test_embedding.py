@@ -15,7 +15,8 @@ class TestGetEmbedding:
         """Test gettting a document embedding.
 
         Args:
-            mock_client (Mock): Mock `team_copilot.services.embedding.Client` class.
+            mock_client (Mock): Mock object for the
+                "team_copilot.services.embedding.Client" class.
         """
         # Test embedding
         emb = [0.1, 0.2, 0.3]
@@ -44,7 +45,8 @@ class TestGetEmbedding:
         """Test gettting a query embedding.
 
         Args:
-            mock_client (Mock): Mock `team_copilot.services.embedding.Client` class.
+            mock_client (Mock): Mock object for the
+                "team_copilot.services.embedding.Client" class.
         """
         # Test embedding
         emb = [0.1, 0.2, 0.3]
@@ -80,7 +82,8 @@ class TestGetEmbedding:
         """Test getting an embedding when no embedding is returned.
 
         Args:
-            mock_client (Mock): Mock `team_copilot.services.embedding.Client` class.
+            mock_client (Mock): Mock object for the
+                "team_copilot.services.embedding.Client" class.
         """
         # Mock the value returned by the "Client.embed" method
         mock_result = MagicMock()

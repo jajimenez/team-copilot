@@ -23,10 +23,11 @@ class TestGetMostSimilarChunks:
         mock_get_embedding: MagicMock,
     ):
         """Test getting the most similar chunks.
-        
+
         Args:
-            mock_open_session (MagicMock): Mock "mock_open_session" function.
-            mock_get_embedding (MagicMock): Mock "get_embedding" function.
+            mock_open_session (MagicMock): Mock object for the "open_session" function.
+            mock_get_embedding (MagicMock): Mock object for the "get_embedding"
+                function.
         """
         # Mock embedding function returned value
         mock_get_embedding.return_value = [0.1, 0.2, 0.3]
@@ -45,6 +46,7 @@ class TestGetMostSimilarChunks:
         mock_session = MagicMock()
         mock_session.exec.side_effect = [mock_ids, mock_doc_chunks]
 
+        # Simulate the returned value of the "open_session" function
         mock_open_session.return_value.__enter__.return_value = mock_session
 
         # Call the function being tested
@@ -62,6 +64,7 @@ class TestGetMostSimilarChunks:
         # Check function calls
         mock_get_embedding.assert_called_once_with(query, "query")
         assert mock_session.exec.call_count == 2
+        mock_doc_chunks.all.assert_called_once()
 
     @patch("team_copilot.services.search.get_embedding")
     @patch("team_copilot.services.search.open_session")
@@ -73,8 +76,9 @@ class TestGetMostSimilarChunks:
         """Test with no similar chunks found.
 
         Args:
-            mock_open_session (MagicMock): Mock "mock_open_session" function.
-            mock_get_embedding (MagicMock): Mock "get_embedding" function.
+            mock_open_session (MagicMock): Mock object for the "open_session" function.
+            mock_get_embedding (MagicMock): Mock object for the "get_embedding"
+                function.
         """
         # Mock embedding function returned value
         mock_get_embedding.return_value = [0.1, 0.2, 0.3]
@@ -89,6 +93,7 @@ class TestGetMostSimilarChunks:
         mock_session = MagicMock()
         mock_session.exec.side_effect = [mock_ids, mock_doc_chunks]
 
+        # Simulate the returned value of the "open_session" function
         mock_open_session.return_value.__enter__.return_value = mock_session
 
         # Call the function being tested
@@ -101,13 +106,15 @@ class TestGetMostSimilarChunks:
         # Check function calls
         mock_get_embedding.assert_called_once_with(query, "query")
         mock_session.exec.assert_called_once()
+        mock_doc_chunks.all.assert_not_called()
 
     @patch("team_copilot.services.search.get_embedding")
     def test_no_embedding_found(self, mock_get_embedding: MagicMock):
         """Test when no embedding is found for the query.
 
         Args:
-            mock_get_embedding (MagicMock): Mock "get_embedding" function.
+            mock_get_embedding (MagicMock): Mock object for the "get_embedding"
+                function.
         """
         # Mock embedding function returned value
         mock_get_embedding.return_value = None
@@ -135,8 +142,9 @@ class TestGetMostSimilarChunks:
         """Test when there is a database error.
 
         Args:
-            mock_open_session (MagicMock): Mock "mock_open_session" function.
-            mock_get_embedding (MagicMock): Mock "get_embedding" function.
+            mock_open_session (MagicMock): Mock object for the "open_session" function.
+            mock_get_embedding (MagicMock): Mock object for the "get_embedding"
+                function.
         """
         # Mock embedding function returned value
         mock_get_embedding.return_value = [0.1, 0.2, 0.3]
@@ -145,6 +153,7 @@ class TestGetMostSimilarChunks:
         mock_session = MagicMock()
         mock_session.exec.side_effect = Exception("Database connection error")
 
+        # Simulate the returned value of the "open_session" function
         mock_open_session.return_value.__enter__.return_value = mock_session
 
         # Call the function being tested and check that an exception is raised
@@ -159,3 +168,4 @@ class TestGetMostSimilarChunks:
 
         # Check function calls
         mock_get_embedding.assert_called_once_with(query, "query")
+        mock_session.exec.assert_called_once()

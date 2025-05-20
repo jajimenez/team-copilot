@@ -121,7 +121,7 @@ def mock_pdf_doc_1() -> MagicMock:
     page is shorter than the chunk size (1000 characters by default).
 
     Returns:
-        MagicMock: Mock PDF document.
+        MagicMock: Mock object for the object for the object for the object for the object for the object for the PDF document.
     """
     mock_doc = MagicMock()
 

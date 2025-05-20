@@ -15,20 +15,32 @@ from tests.unit.conftest import (
 class TestGetText:
     """Tests for the `team_copilot.services.extraction.get_text` function."""
 
-    def test_get_text(self, test_pdf_doc_path: str, mock_pdf_doc_1: MagicMock):
+    @patch("fitz.open")
+    @patch("team_copilot.services.extraction.Image.frombytes")
+    @patch("pytesseract.image_to_string", return_value=DOC_1_PAG_2_IMG_TXT)
+    def test_get_text(
+        self,
+        mock_image_to_string: MagicMock,
+        mock_frombytes: MagicMock,
+        mock_open: MagicMock,
+        test_pdf_doc_path: str,
+        mock_pdf_doc_1: MagicMock,
+    ):
         """Test getting the text from a PDF with a text page and an image page.
 
         Args:
+            mock_image_to_string (MagicMock): Mock object for the
+                "pytesseract.image_to_string" function.
+            mock_frombytes (MagicMock): Mock object for the "Image.frombytes" function.
+            mock_open (MagicMock): Mock object for the "fitz.open" function.
             test_pdf_doc_path (str): Test PDF document path.
             mock_pdf_doc_1 (MagicMock): Mock PDF document.
         """
-        with (
-            patch("fitz.open", return_value=mock_pdf_doc_1),
-            patch("team_copilot.services.extraction.Image.frombytes"),
-            patch("pytesseract.image_to_string", return_value=DOC_1_PAG_2_IMG_TXT)
-        ):
-            # Call the function being tested
-            chunks = get_text(test_pdf_doc_path)
+        # Simulate the returned value of the "fitz.open" function
+        mock_open.return_value = mock_pdf_doc_1
+
+        # Call the function being tested
+        chunks = get_text(test_pdf_doc_path)
 
         # Check result
         assert len(chunks) == 2
@@ -36,11 +48,18 @@ class TestGetText:
         assert DOC_1_PAG_1_TXT in chunks[0]
         assert DOC_1_PAG_2_IMG_TXT in chunks[1]
 
-    def test_chunks(self, test_pdf_doc_path: str, mock_pdf_doc_2: MagicMock):
+    @patch("fitz.open")
+    def test_chunks(
+        self,
+        mock_open: MagicMock,
+        test_pdf_doc_path: str,
+        mock_pdf_doc_2: MagicMock,
+    ):
         """Test the chunks when getting the text from a PDF with one page where the text
         is larger than the chunk size.
 
         Args:
+            mock_open (MagicMock): Mock object for the "fitz.open" function.
             test_pdf_doc_path (str): Test PDF document path.
             mock_pdf_doc_2 (MagicMock): Mock PDF document.
         """
@@ -52,52 +71,68 @@ class TestGetText:
         chunk_size = 800
         overlap = 200
 
-        with patch("fitz.open", return_value=mock_pdf_doc_2):
-            # Call the function being tested
-            chunks = get_text(test_pdf_doc_path, chunk_size, overlap)
+        # Simulate the returned value of the "fitz.open" function
+        mock_open.return_value = mock_pdf_doc_2
 
-            # Check result
+        # Call the function being tested
+        chunks = get_text(test_pdf_doc_path, chunk_size, overlap)
 
-            # Check the number of chunks
-            assert len(chunks) == 3
+        # Check result
 
-            # Check the size of each chunk
-            for i in range(3):
-                assert len(chunks[i]) == chunk_size
+        # Check the number of chunks
+        assert len(chunks) == 3
 
-    def test_no_chunking(self, test_pdf_doc_path: str, mock_pdf_doc_3: MagicMock):
+        # Check the size of each chunk
+        for i in range(3):
+            assert len(chunks[i]) == chunk_size
+
+    @patch("fitz.open")
+    def test_no_chunking(
+        self,
+        mock_open: MagicMock,
+        test_pdf_doc_path: str,
+        mock_pdf_doc_3: MagicMock,
+    ):
         """Test that there is no chunking (i.e. there is only one chunk) when getting
         the text from a PDF with one page where the text is shorter than the chunk size.
 
         Args:
+            mock_open (MagicMock): Mock object for the "fitz.open" function.
             test_pdf_doc_path (str): Test PDF document path.
             mock_pdf_doc_3 (MagicMock): Mock PDF document.
         """    
-        with patch("fitz.open", return_value=mock_pdf_doc_3):
-            # Call the function being tested
-            chunks = get_text(test_pdf_doc_path, chunk_size=1000)
+        # Simulate the returned value of the "fitz.open" function
+        mock_open.return_value = mock_pdf_doc_3
+
+        # Call the function being tested
+        chunks = get_text(test_pdf_doc_path, chunk_size=1000)
 
         # Check result
         assert len(chunks) == 1
         assert chunks[0] == DOC_3_PAG_1_TXT
 
+    @patch("fitz.open")
     def test_min_viable_chunk_size(
         self,
+        mock_open: MagicMock,
         test_pdf_doc_path: str,
         mock_pdf_doc_4: MagicMock,
     ):
         """Test that chunks smaller than the minimum viable chunk size are discarded.
 
         Args:
+            mock_open (MagicMock): Mock object for the "fitz.open" function.
             test_pdf_doc_path (str): Test PDF document path.
             mock_pdf_doc_4 (MagicMock): Mock PDF document.
         """
         chunk_size = 1000
         overlap = 5
 
-        with patch("fitz.open", return_value=mock_pdf_doc_4):
-            # Call the function being tested
-            chunks = get_text(test_pdf_doc_path, chunk_size=chunk_size, overlap=overlap)
+        # Simulate the returned value of the "fitz.open" function
+        mock_open.return_value = mock_pdf_doc_4
+
+        # Call the function being tested
+        chunks = get_text(test_pdf_doc_path, chunk_size=chunk_size, overlap=overlap)
 
         # Check result
         assert len(chunks) == 1
