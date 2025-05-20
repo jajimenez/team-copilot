@@ -1,7 +1,6 @@
 """Team Copilot Tests - Unit Tests - Services - Users."""
 
 from uuid import uuid4
-from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -29,7 +28,7 @@ class TestGetAllUsers:
             mock_open_session (MagicMock): Mock object for the "open_session" function.
             test_users (list[User]): Test users.
         """
-        # Create a mock database session and configure it to return our test users
+        # Create a mock database session and configure it to return the test users
         mock_session = MagicMock()
         mock_session.exec.return_value.all.return_value = test_users
 
@@ -62,7 +61,7 @@ class TestGetUser:
         # Get a test user
         user = test_users[0]
 
-        # Create mock session
+        # Create mock session and configure it to return our test user
         mock_session = MagicMock()
         mock_session.exec.return_value.first.return_value = user
 
@@ -218,19 +217,16 @@ class TestSaveUser:
     """Tests for the `team_copilot.services.users.save_user` function."""
 
     @patch("team_copilot.services.users.open_session")
-    def test_save_new_user(self, mock_open_session: MagicMock):
+    def test_save_new_user(self, mock_open_session: MagicMock, test_users: list[User]):
         """Test saving a new user to the database.
 
         Args:
             mock_open_session (MagicMock): Mock object for the "open_session" function.
+            test_users (list[User]): Test users.
         """
-        # Create a test new user (without ID)
-        user = User(
-            username="user",
-            password="password",
-            email="user@example.com",
-            name="User",
-        )
+        # Get a test user and remove its ID
+        user = test_users[0]
+        user.id = None
 
         # Create mock session
         mock_session = MagicMock()
@@ -247,25 +243,19 @@ class TestSaveUser:
         mock_session.refresh.assert_called_once_with(user)
 
     @patch("team_copilot.services.users.open_session")
-    def test_save_existing_user(self, mock_open_session: MagicMock):
+    def test_save_existing_user(
+        self,
+        mock_open_session: MagicMock,
+        test_users: list[User],
+    ):
         """Test saving an existing user to the database.
 
         Args:
             mock_open_session (MagicMock): Mock object for the "open_session" function.
+            test_users (list[User]): Test users.
         """
-        # Create a test existing user (with ID)
-        user_id = uuid4()
-        now = datetime.now(timezone.utc)
-
-        user = User(
-            id=user_id,
-            username="user",
-            password="password",
-            email="user@example.com",
-            name="User",
-            created_at=now,
-            updated_at=now,
-        )
+        # Get a test user (with an ID)
+        user = test_users[0]
 
         # Create mock session
         mock_session = MagicMock()
