@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from team_copilot.core.config import settings
 from team_copilot.db.setup import setup
-from team_copilot.routers import health, auth, users, documents, chat
+from team_copilot.routers import health, auth, users, documents, chat, ui
 from team_copilot.models.data import Error
 from team_copilot.models.response import Response, ErrorResponse
 
@@ -23,7 +23,6 @@ BASE_DIR = dirname(abspath(__file__))
 
 # Absolute path to the "static" directory
 STATIC_DIR = join(BASE_DIR, "static")
-
 
 # Descriptions and messages
 AUTHENTICATION_ERR = "Authentication error."
@@ -70,6 +69,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(documents.router)
 app.include_router(chat.router)
+app.include_router(ui.router)
 
 # Static files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
