@@ -93,3 +93,13 @@ Each time a question is asked to the application, the following steps are perfor
    found as a context, to the remote Anthropic LLM model.
 5. The agent returns the response of the LLM model in streaming, which is returned by
    the application as well.
+
+## OpenAPI Documentation Screenshots
+
+<img src="media/doc_ui_1.png" alt="Documentation UI - Header" width="500">
+<img src="media/doc_ui_2.png" alt="Documentation UI - Health endpoints" width="500">
+<img src="media/doc_ui_3.png" alt="Documentation UI - Authentication endpoints" width="500">
+<img src="media/doc_ui_4.png" alt="Documentation UI - Users endpoints" width="500">
+<img src="media/doc_ui_5.png" alt="Documentation UI - Documents endpoints" width="500">
+<img src="media/doc_ui_6.png" alt="Documentation UI - Chat endpoints" width="500">
+<img src="media/doc_ui_7.png" alt="Documentation UI - Default endpoints" width="500">
