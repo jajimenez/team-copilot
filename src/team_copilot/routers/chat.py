@@ -72,7 +72,9 @@ router = APIRouter(
     },
     response_class=StreamingResponse,
 )
-async def query_agent(query: Annotated[AgentQueryRequest, Body(description=AG_QUERY_DAT)]) -> StreamingResponse:
+async def query_agent(
+    query: Annotated[AgentQueryRequest, Body(description=AG_QUERY_DAT)],
+) -> StreamingResponse:
     """Query the agent and get a streaming response.
 
     The response is a stream of events with the Server-Sent Events (SSE) format. Each

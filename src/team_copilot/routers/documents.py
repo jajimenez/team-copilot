@@ -407,8 +407,7 @@ async def update_document(
     bg_tasks: BackgroundTasks,
     id: Annotated[UUID, Path(description=DOC_ID)],
     name: Annotated[
-        str | None,
-        Form(description=DOC_NAME, min_length=1, max_length=100)
+        str | None, Form(description=DOC_NAME, min_length=1, max_length=100)
     ] = None,
     file: Annotated[UploadFile | None, File(description=DOC_FILE)] = None,
 ) -> DocumentResponse:

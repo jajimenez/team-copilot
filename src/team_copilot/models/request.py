@@ -20,6 +20,7 @@ class Undefined:
     This class is used to differentiate between a field that was not provided and a
     field that was provided with a value of None.
     """
+
     pass
 
 

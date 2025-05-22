@@ -144,9 +144,8 @@ class User(SQLModel, table=True):
 
         # Check if "password" and "password_hash" are provided in the keyword arguments
         # and raise an exception if none is provided or both are provided.
-        if (
-            ("password" in data and "password_hash" in data) or
-            ("password" not in data and "password_hash" not in data)
+        if ("password" in data and "password_hash" in data) or (
+            "password" not in data and "password_hash" not in data
         ):
             raise ValueError(PASS_ARG_ERROR)
 
