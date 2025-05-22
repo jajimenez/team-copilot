@@ -23,33 +23,35 @@ extension.
 flowchart TD
     User([User]) <--> API[FastAPI API]
     
-    API --> DocUpload[Document Upload]
-    API --> ChatQuestion[Chat Question]
+    API --> |PDF file & data| DocUpload[1\. Document Upload]
+    API --> |Question text| ChatQuestion[2\. Chat Question]
 
-    DocUpload --> |PDF file| TextExt[Direct Text Extraction with PyMuPDF]
-    DocUpload --> |PDF file| ImgTextExt[OCR Text Extraction with PyTesseract]
+    DocUpload --> |PDF file| TextExt[1\.1\. Text Extraction with PyMuPDF]
+    DocUpload --> |PDF file| ImgExt[1\.2\. Images Extraction with PyMuPDF]
 
-    TextExt --> |Text| TextConcat[Text Concatenation]
-    ImgTextExt --> |Text| TextConcat
+    ImgExt --> |Images| OcrTextExt[1\.3\. OCR Text Extraction with PyTesseract]
 
-    TextConcat --> |Text| TextSplit[Text Split into Chunks]
+    TextExt --> |Text| TextConcat[1\.4\. Text Concatenation]
+    OcrTextExt --> |Text| TextConcat
 
-    TextSplit --> |Text chunks| TextEmb[Voyage AI API]
-    TextEmb --> |Document information| Db[(PostgreSQL with PgVector)]
+    TextConcat --> |Text| TextSplit[1\.5\. Text Split into Chunks]
+
+    TextSplit --> |Text chunks| TextEmb[1\.6\. / 2\.2\. Voyage AI API]
+    TextEmb --> |Document information| Db[(1\.7\. PostgreSQL with PgVector)]
     TextEmb --> |Chunk texts| Db
     TextEmb --> |Chunk embeddings | Db
     
-    ChatQuestion --> |Question text| Agent[LangGraph Agent]
+    ChatQuestion --> |Question text| Agent[2\.1\. / 2\.3\. / 2\.5\. / 2\.7\. LangGraph Agent]
     Agent --> |Question text| TextEmb
     TextEmb --> |Question embedding| Agent
     
 
-    Agent --> |Question embedding|VecSearch[Search for Most Similar Chunks]
+    Agent --> |Question embedding|VecSearch[2\.4\. Search for Most Similar Chunks]
     VecSearch --> |Question embedding| Db
     Db --> |Most similar chunk texts| VecSearch
     VecSearch --> |Most similar chunk texts| Agent
 
-    Agent --> |Question text with most similar chunk texts as context| Llm[Anthropic API]
+    Agent --> |Question text with most similar chunk texts as context| Llm[2\.6\. Anthropic API]
     Llm --> |Streaming AI-generated answer text| Agent
     Agent --> |Streaming AI-generated answer text| API
 ```
