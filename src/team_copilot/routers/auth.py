@@ -52,7 +52,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
         },
     },
 )
-def login(
+async def login(
     login_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> TokenResponse:

@@ -46,7 +46,7 @@ router = APIRouter(prefix="/health", tags=["health"])
         }
     },
 )
-def get_app_status() -> AppStatusResponse:
+async def get_app_status() -> AppStatusResponse:
     """Get the status of the application.
 
     Returns:
@@ -74,7 +74,7 @@ def get_app_status() -> AppStatusResponse:
         },
     },
 )
-def get_db_status(
+async def get_db_status(
     response: Response,
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> DbStatusResponse:
