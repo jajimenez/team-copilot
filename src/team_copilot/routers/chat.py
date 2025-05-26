@@ -89,15 +89,23 @@ async def query_agent(
     Returns:
         StreamingResponse: Response chunk from the agent.
     """
-
     async def get_response_gen(agent: Agent, text: str):
         """Get a generator to yield agent response chunks."""
-        # Query the agent and yield each response chunk
-        for i, res in enumerate(agent.query(text)):
-            yield AgentResponseChunk(index=i, last=False, text=res).to_sse()
+        try:
+            # Query the agent and yield each response chunk
+            for i, res in enumerate(agent.query(text)):
+                yield AgentResponseChunk(index=i, last=False, text=res).to_sse()
 
-        # Yield the last chunk to indicate completion
-        yield AgentResponseChunk(index=-1, last=True, text="").to_sse()
+            # Yield the last chunk to indicate completion
+            yield AgentResponseChunk(index=-1, last=True, text="").to_sse()
+        except Exception as e:
+            # Yield the error as an event in SEE format
+            yield AgentResponseChunk(
+                index=-1,
+                last=True,
+                text="",
+                error=str(e),
+            ).to_sse()
 
     # Create an agent instance
     agent = Agent()

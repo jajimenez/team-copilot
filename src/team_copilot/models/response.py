@@ -302,6 +302,7 @@ class AgentResponseChunk(SQLModel, table=False):
     index: int
     last: bool = False
     text: str
+    error: str | None = None
 
     def to_sse(self) -> str:
         """Convert the instance to an event string with the Server-Sent Events (SSE)

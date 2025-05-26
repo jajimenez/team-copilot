@@ -103,11 +103,19 @@ class Agent:
 
         inp = {"messages": [HumanMessage(content=text)]}
 
-        for token, _ in self.graph.stream(inp, stream_mode="messages"):
-            if (
-                token.type == "AIMessageChunk"
-                and hasattr(token, "content")
-                and token.content
-                and (token_txt := token.content[0].get("text"))
-            ):
-                yield token_txt
+        try:
+            for token, _ in self.graph.stream(inp, stream_mode="messages"):
+                if (
+                    token.type == "AIMessageChunk"
+                    and hasattr(token, "content")
+                    and token.content
+                    and (token_txt := token.content[0].get("text"))
+                ):
+                    yield token_txt
+        except Exception as e:
+            if hasattr(e, "message"):
+                # Anthropic's LLMs raise exceptions with a "message" attribute
+                message = getattr(e, "message")
+                raise Exception(f"Agent error: {message}")
+            else:
+                raise Exception(f"Agent error: {e}")
