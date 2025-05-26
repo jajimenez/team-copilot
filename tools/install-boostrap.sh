@@ -21,36 +21,59 @@ if [ ! -d "$1" ]; then
 fi
 
 # Paths
-TMP_FILE="bootstrap-dist.zip"
-OUT_DIR="$1"/bootstrap
+BS_TMP_FILE="bootstrap-dist.zip"
+BS_IC_TMP_FILE="bootstrap-icons-dist.zip"
+BS_OUT_DIR="$1"/bootstrap
+BS_IC_OUT_DIR="$1"/bootstrap-icons
 
-# Check if the output directory exists and quit if it does
-if [ -d "$OUT_DIR" ]; then
-    echo "\"${OUT_DIR}\" already exists. Please remove it before running this script."
+# Check if any of the output directories exist and quit if it does
+if [ -d "$BS_OUT_DIR" ]; then
+    echo "\"${BS_OUT_DIR}\" already exists. Please remove it before running this script."
     exit 1
 fi
 
-# Check if the temporary file exists and remove it if it does
-if [ -f "$TMP_FILE" ]; then
-    rm "$TMP_FILE"
+if [ -d "$BS_IC_OUT_DIR" ]; then
+    echo "\"${BS_IC_OUT_DIR}\" already exists. Please remove it before running this script."
+    exit 1
 fi
 
-# Create the output directory
-mkdir -p "$OUT_DIR"
+# Check if the temporary files exist and remove them if they do
+if [ -f "$BS_TMP_FILE" ]; then
+    rm "$BS_TMP_FILE"
+fi
 
-# Get the latest version number
-BOOTSTRAP_VERSION=$(curl -s https://api.github.com/repos/twbs/bootstrap/releases/latest | grep -Po '"tag_name": "v\K[^"]*')
+if [ -f "$BS_IC_TMP_FILE" ]; then
+    rm "$BS_IC_TMP_FILE"
+fi
 
-# Download the compiled distribution ZIP file
-echo "Downloading Bootstrap version ${BOOTSTRAP_VERSION} to ${OUT_DIR}..."
+# Create the output directories
+mkdir -p "$BS_OUT_DIR"
+mkdir -p "$BS_IC_OUT_DIR"
+
+# Get the latest Bootstrap version number
+BS_VERSION=$(curl -s https://api.github.com/repos/twbs/bootstrap/releases/latest | grep -Po '"tag_name": "v\K[^"]*')
+
+# Download the Bootstrap distribution ZIP file
+echo "Downloading Bootstrap version ${BS_VERSION} to ${BS_OUT_DIR}..."
 echo
 
-curl -L "https://github.com/twbs/bootstrap/releases/download/v${BOOTSTRAP_VERSION}/bootstrap-${BOOTSTRAP_VERSION}-dist.zip" -o "$TMP_FILE"
+curl -L "https://github.com/twbs/bootstrap/releases/download/v${BS_VERSION}/bootstrap-${BS_VERSION}-dist.zip" -o "$BS_TMP_FILE"
 
-# Extract the files to the output directory
-unzip "$TMP_FILE" -d "$OUT_DIR"
+# Get the latest Bootstrap Icons version number
+BS_IC_VERSION=$(curl -s https://api.github.com/repos/twbs/icons/releases/latest | grep -Po '"tag_name": "v\K[^"]*')
+
+# Download the Bootstrap Icons distribution ZIP file
+echo "Downloading Bootstrap Icons version ${BS_IC_VERSION} to ${BS_IC_OUT_DIR}..."
+echo
+
+curl -L "https://github.com/twbs/icons/releases/download/v${BS_IC_VERSION}/bootstrap-icons-${BS_IC_VERSION}.zip" -o "$BS_IC_TMP_FILE"
+
+# Extract the files to the output directories
+unzip "$BS_TMP_FILE" -d "$BS_OUT_DIR"
+unzip "$BS_IC_TMP_FILE" -d "$BS_IC_OUT_DIR"
 
 # Clean up
-rm "$TMP_FILE"
+rm "$BS_TMP_FILE"
+rm "$BS_IC_TMP_FILE"
 echo
 echo "Done."
