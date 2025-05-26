@@ -9,7 +9,42 @@
         <link rel="stylesheet" href="{{ url_for('static', path='ui/css/home.css') }}">
     </head>
     <body>
-        <h1>Team Copilot</h1>
+        <div class="container-fluid h-100">
+            <div class="row justify-content-center h-100">
+                <div class="col-md-8 col-lg-6">
+                    <div class="chat-container">
+                        <div class="bg-primary text-white p-3 rounded-top">
+                            <h5 class="mb-0">Team Copilot</h5>
+                        </div>
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message bot-message">
+                                <div class="message-content">
+                                    Hello! How can I help you?
+                                </div>
+                                <div class="message-timestamp">
+                                    Just now
+                                </div>
+                            </div>
+                            <div class="message user-message">
+                                <div class="message-content">
+                                    How can I enroll in a laboratory group?
+                                </div>
+                                <div class="message-timestamp text-end">
+                                    2 minutes ago
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-input-container">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="message-input" placeholder="Type your message here" aria-label="Message input">
+                                <button class="btn btn-primary" type="button" id="send-button">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <script src="{{ url_for('static', path='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
         <script src="{{ url_for('static', path='ui/js/home.js') }}"></script>
     </body>
