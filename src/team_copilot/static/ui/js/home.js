@@ -1,3 +1,16 @@
+let accessToken = null;
+
+function updateChatState() {
+    // DOM elements
+    const chatMain = document.getElementById("chat-main");
+
+    if (accessToken) {
+        chatMain.classList.remove("disabled");
+    } else {
+        chatMain.classList.add("disabled");
+    }
+}
+
 function sendMessage() {
     // DOM elements
     const messageInput = document.getElementById("message-input");
@@ -22,6 +35,9 @@ document.addEventListener("DOMContentLoaded", function () {
     // DOM elements
     const messageInput = document.getElementById("message-input");
     const sendButton = document.getElementById("send-button");
+
+    // Set the chat initial state based on the access token
+    updateChatState();
 
     // Set the initial Send Button state
     sendButton.disabled = !messageInput.value.trim();
