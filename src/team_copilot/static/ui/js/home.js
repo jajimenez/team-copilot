@@ -1,7 +1,10 @@
 const loginUrl = "/auth/login";
+const chatUrl = "/chat";
+
 let accessToken = null;
 let accessTokenUsername = null;
 let loginError = null;
+let lastBotMessageIndex = 0;
 
 function updateMain() {
     // DOM elements
@@ -31,19 +34,186 @@ function updateChatMain() {
     sendButton.disabled = !messageInput.value.trim();
 }
 
+function addUserMessage(message) {
+    // DOM elements
+    const chatMessages = document.getElementById("chat-messages");
+
+    // Get current date and time
+    const now = new Date();
+    const formattedNow = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Create a new message element given the HTML text
+    const messageElement = document.createElement("div");
+
+    messageElement.innerHTML = `
+        <div class="message user-message">
+            <div class="message-content">
+                <i class="bi bi-person me-2"></i>
+                <span>${message}</span>
+            </div>
+            <div class="message-timestamp text-end">
+                ${formattedNow}
+            </div>
+        </div>
+    `;
+
+    // Append the new message element to the chat messages container
+    chatMessages.appendChild(messageElement);
+}
+
+function addBotMessage() {
+    // DOM elements
+    const chatMessages = document.getElementById("chat-messages");
+
+    // Update the last bot message index
+    lastBotMessageIndex++;
+
+    // Create a new message element given the HTML text
+    const messageElement = document.createElement("div");
+
+    messageElement.innerHTML = `
+        <div class="message bot-message" id="bot-message-${lastBotMessageIndex}">
+            <div class="message-content">
+                <i class="bi bi-robot me-2"></i>
+                <span id="bot-message-message-${lastBotMessageIndex}">...</span>
+            </div>
+            <div class="message-timestamp" id="bot-message-timestamp-${lastBotMessageIndex}">
+                Thinking...
+            </div>
+        </div>
+    `;
+
+    // Append the new message element to the chat messages container
+    chatMessages.appendChild(messageElement);
+}
+
+function appendBotMessage(text, last) {
+    // DOM elements
+    const botMessageMessageElement = document.getElementById(`bot-message-message-${lastBotMessageIndex}`);
+
+    // Remove the last "..." characters at the end of the message
+    if (botMessageMessageElement.innerText.endsWith("...")) {
+        botMessageMessageElement.innerText = botMessageMessageElement.innerText.slice(0, -3);
+    }
+
+    // Append the text to the last bot message element
+    botMessageMessageElement.innerText += text;
+
+    // If this is the last message, add "..." back at the end
+    if (!last) {
+        botMessageMessageElement.innerText += " ...";
+    }
+}
+
+function markBotMessageAsError(error = null) {
+    // DOM elements
+    const botMessageElement = document.getElementById(`bot-message-${lastBotMessageIndex}`);
+    const botMessageMessageElement = document.getElementById(`bot-message-message-${lastBotMessageIndex}`);
+
+    botMessageElement.classList.remove("bot-message");
+    botMessageElement.classList.add("bot-error-message");
+
+    if (error) botMessageMessageElement.innerText = error;
+}
+
+function updateBotMessageTimestamp() {
+    // DOM elements
+    const botMessageTimestampElement = document.getElementById(`bot-message-timestamp-${lastBotMessageIndex}`);
+
+    // Get current date and time
+    const now = new Date();
+    const formattedNow = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Update the timestamp of the last bot message
+    botMessageTimestampElement.innerText = formattedNow;
+}
+
 function sendMessage() {
     // DOM elements
     const messageInput = document.getElementById("message-input");
-    const sendButton = document.getElementById("send-button");
 
-    // Get the trimmed value of the Message Input
+    // Get the trimmed value of the Message Input field
     const message = messageInput.value.trim();
 
-    if (message) {
-        // TO-DO: Implement the logic to send the message to the API
-        console.log("Message sent:", message);
+    // Add a user message to the chat messages container
+    addUserMessage(message);
 
-        // Clear the input field after sending
+    // Add a bot message placeholder to the chat messages container
+    addBotMessage();
+
+    if (message) {
+        // Send the message to the API
+        fetch(chatUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({ text: message })
+        })
+        .then(async response => {
+            if (!response.body) throw new Error("No response body.");
+
+            // Read streaming response
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+
+            let buffer = "";
+            let streamingEnd = false;
+
+            while (!streamingEnd) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+
+                // Process complete SSE events (separated by double newlines)
+                let eventEnd;
+
+                while ((eventEnd = buffer.indexOf("\n\n")) !== -1) {
+                    const rawEvent = buffer.slice(0, eventEnd).trim();
+                    buffer = buffer.slice(eventEnd + 2);
+
+                    // Only process lines starting with "data: "
+                    if (rawEvent.startsWith("data: ")) {
+                        const eventDataJsonStr = rawEvent.slice(6);
+
+                        try {
+                            const eventData = JSON.parse(eventDataJsonStr);
+
+                            // Append the text to the last bot message element
+                            appendBotMessage(eventData.text, eventData.last);
+
+                            // Check if this is the last event
+                            if (eventData.last) {
+                                streamingEnd = true;
+
+                                // If the last event indicates an error, mark the bot message as an error
+                                if (eventData.error) markBotMessageAsError(eventData.error);
+
+                                break;
+                            }
+                        } catch (e) {
+                            markBotMessageAsError(e.message)
+                        }
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            const errorMsg = error?.message || "Network error";
+            markBotMessageAsError(errorMsg);
+        })
+        .finally(() => {
+            // Enable the input field again
+            messageInput.disabled = false;
+
+            // Update the timestamp of the bot message
+            updateBotMessageTimestamp();
+        });
+
+        // Disable and clear the input field after sending
+        messageInput.disabled = true;
         messageInput.value = "";
 
         // Update the UI
@@ -124,6 +294,26 @@ function login(username, password) {
     });
 }
 
+function logout() {
+    // DOM elements
+    const chatMessages = document.getElementById("chat-messages");
+    const messageInput = document.getElementById("message-input");
+
+    // Clear the access token and username
+    accessToken = null;
+    accessTokenUsername = null;
+
+    // Clear the chat messages
+    chatMessages.innerHTML = "";
+
+    // Clear the message input field
+    messageInput.value = "";
+
+    // Update the UI
+    updateMain();
+    updateChatMain();
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     // DOM elements
     const loginButton = document.getElementById("login-button");
@@ -148,20 +338,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Add a click event listener to the Logout button to log out
     logoutButton.addEventListener("click", function () {
-        // Clear the access token and username
-        accessToken = null;
-        accessTokenUsername = null;
-
-        // Update the UI
-        updateMain();
-        updateChatMain();
+        logout();
     });
 
     // Add an input event listener to enable/disable the Send button based on the value
     // of the Message Input field.
     messageInput.addEventListener("input", function () {
-        //sendButton.disabled = !messageInput.value.trim();
-        updateMain();
+        updateChatMain();
     });
 
     // Add a keypress event listener to the Message Input to send the message when
