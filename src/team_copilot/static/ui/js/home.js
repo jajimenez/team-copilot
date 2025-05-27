@@ -96,12 +96,15 @@ function appendBotMessage(text, last) {
         botMessageMessageElement.innerText = botMessageMessageElement.innerText.slice(0, -3);
     }
 
+    // Replace trailing spaces with non-breaking spaces to preserve them
+    const nbsText = text.replace(/ +$/, match => '\u00A0'.repeat(match.length));
+
     // Append the text to the last bot message element
-    botMessageMessageElement.innerText += text;
+    botMessageMessageElement.innerText += nbsText;
 
     // If this is the last message, add "..." back at the end
     if (!last) {
-        botMessageMessageElement.innerText += " ...";
+        botMessageMessageElement.innerText += "...";
     }
 }
 
