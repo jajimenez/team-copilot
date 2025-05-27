@@ -38,8 +38,6 @@ chunk_ex: str = AgentResponseChunk(index=0, last=False, text="Text chunk").to_ss
 
 # Router
 router = APIRouter(
-    prefix="/chat",
-    tags=["chat"],
     dependencies=[Depends(get_enabled_user)],
     responses={
         status.HTTP_401_UNAUTHORIZED: {

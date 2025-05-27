@@ -65,8 +65,6 @@ USERS_RET_2 = "{} users retrieved."
 
 # Router
 router = APIRouter(
-    prefix="/users",
-    tags=["users"],
     responses={
         status.HTTP_401_UNAUTHORIZED: {
             "description": NOT_AUTHENTICATED,

@@ -1,5 +1,5 @@
-const loginUrl = "/auth/login";
-const chatUrl = "/chat";
+const loginUrl = "/api/auth/login";
+const chatUrl = "/api/chat";
 
 let accessToken = null;
 let accessTokenUsername = null;

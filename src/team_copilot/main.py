@@ -55,6 +55,9 @@ app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     lifespan=lifespan,
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
     responses={
         status.HTTP_500_INTERNAL_SERVER_ERROR: {
             "description": INT_SER_ERR_1,
@@ -64,15 +67,15 @@ app = FastAPI(
 )
 
 # Routers
-app.include_router(health.router)
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(documents.router)
-app.include_router(chat.router)
-app.include_router(ui.router)
+app.include_router(health.router, prefix="/api/health", tags=["health"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(users.router, prefix="/api/users", tags=["users"])
+app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(ui.router, prefix="/ui", tags=["ui"], include_in_schema=False)
 
 # Static files
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+app.mount("/ui/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 def openapi() -> dict:
@@ -233,7 +236,7 @@ async def handle_error(request: Request, exc: Exception) -> JSONResponse:
 
 
 @app.get(
-    "/",
+    "/api",
     operation_id="get_welcome_message",
     summary=GET_WEL_MSG_SUM,
     description=GET_WEL_MSG_DESC,

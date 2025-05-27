@@ -113,8 +113,6 @@ DOC_MIME_TYPE = "application/pdf"
 
 # Router
 router = APIRouter(
-    prefix="/documents",
-    tags=["documents"],
     dependencies=[Depends(get_staff_user)],
     responses={
         status.HTTP_400_BAD_REQUEST: {

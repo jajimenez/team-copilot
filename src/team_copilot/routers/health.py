@@ -30,7 +30,7 @@ DB_UNA_EX = DbStatusResponse.create(message=DB_UNA_2, status=DbStatus.UNAVAILABL
 DB_UNA_EX = DB_UNA_EX.model_dump()
 
 # Router
-router = APIRouter(prefix="/health", tags=["health"])
+router = APIRouter()
 
 
 @router.get(

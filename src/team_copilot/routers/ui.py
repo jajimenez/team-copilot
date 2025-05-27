@@ -21,7 +21,7 @@ HOME_SUM = "Home page of the user interface"
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 # Router
-router = APIRouter(prefix="/ui", tags=["ui"])
+router = APIRouter()
 
 
 @router.get(

@@ -28,7 +28,7 @@ LOGIN_SUM = "Login"
 SCHEMA_NAMES = {"Body_login": "LoginRequest"}
 
 # Router
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter()
 
 
 @router.post(
