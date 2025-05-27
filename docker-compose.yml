@@ -1,0 +1,33 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:${TEAM_COPILOT_APP_PORT:-8000}"
+    depends_on:
+      - db
+    env_file:
+      - .env-app
+    restart: unless-stopped
+
+  db:
+    build:
+      dockerfile: Dockerfile-db
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
+
+  db-ui:
+    image: adminer:4.17.1
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
