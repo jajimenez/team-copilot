@@ -226,10 +226,7 @@ function sendMessage() {
 
 function updateLoginModal() {
     // DOM elements
-    const loginModalUsername = document.getElementById("login-modal-username");
-    const loginModalPassword = document.getElementById("login-modal-password");
     const loginModalError = document.getElementById("login-modal-error");
-    const loginModalLoginButton = document.getElementById("login-modal-login-button");
 
     if (loginError) {
         loginModalError.textContent = loginError;
@@ -238,11 +235,6 @@ function updateLoginModal() {
         loginModalError.textContent = "";
         loginModalError.hidden = true;
     }
-
-    loginModalLoginButton.disabled = !(
-        loginModalUsername.value.trim() &&
-        loginModalPassword.value.trim()
-    );
 }
 
 function login(username, password) {
@@ -317,6 +309,22 @@ function logout() {
     updateChatMain();
 }
 
+function onLogin() {
+    // DOM elements
+    const loginModalUsername = document.getElementById("login-modal-username");
+    const loginModalPassword = document.getElementById("login-modal-password");
+
+    const username = loginModalUsername.value.trim();
+    const password = loginModalPassword.value;
+
+    if (username && password) {
+        login(username, password);
+    } else {
+        loginError = "Username and password cannot be empty.";
+        updateLoginModal();
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     // DOM elements
     const loginButton = document.getElementById("login-button");
@@ -364,6 +372,26 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // Add a keypress event listener to the Username and Password fields of the Login
+    // form to log in when pressing the Enter key.
+    loginModalUsername.addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+            // Prevent the default behavior (like form submission)
+            event.preventDefault();
+
+            onLogin();
+        }
+    });
+
+    loginModalPassword.addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+            // Prevent the default behavior (like form submission)
+            event.preventDefault();
+
+            onLogin();
+        }
+    });
+
     // Add a click event listener to the Send Button to send the message
     sendButton.addEventListener("click", function () { sendMessage(); });
 
@@ -385,19 +413,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Add a click event listener to the Log In button of the Login form to log in
     loginModalLoginButton.addEventListener("click", function () {
-        // DOM elements
-        const loginModalUsername = document.getElementById("login-modal-username");
-        const loginModalPassword = document.getElementById("login-modal-password");
-
-        const username = loginModalUsername.value.trim();
-        const password = loginModalPassword.value;
-
-        if (username && password) {
-            loginError = null;
-            login(username, password);
-        } else {
-            loginError = "Username and password cannot be empty.";
-            updateLoginModal();
-        }
+        onLogin();
     });
 });
