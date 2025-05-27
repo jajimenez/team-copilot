@@ -4,11 +4,11 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile-app
     ports:
-      - "8000:8000"
+      - "8000:${TEAM_COPILOT_APP_PORT:-8000}"
     depends_on:
       - db
     env_file:
-      - .env_app
+      - ../.env_app
     volumes:
       - ..:/home/vscode/team-copilot
     stdin_open: true
@@ -16,11 +16,12 @@ services:
 
   db:
     build:
+      context: ..
       dockerfile: Dockerfile-db
     ports:
       - "5432:5432"
     env_file:
-      - .env_db
+      - ../.env_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
