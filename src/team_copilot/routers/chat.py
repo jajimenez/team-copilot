@@ -87,6 +87,7 @@ async def query_agent(
     Returns:
         StreamingResponse: Response chunk from the agent.
     """
+
     async def get_response_gen(agent: Agent, text: str):
         """Get a generator to yield agent response chunks."""
         try:
