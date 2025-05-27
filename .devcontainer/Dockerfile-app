@@ -12,12 +12,14 @@ ENV TEAM_COPILOT_APP_TEMP_DIR=/tmp/team-copilot
 #   4. Update the APT package list.
 #   5. Install the APT packages for building the Psycopg2 Python package and install
 #      Tesseract.
-#   6. Update the PIP Python package.
-#   7. Install the Poetry Python package.
 RUN mkdir -p /home/vscode/team-copilot && \
     mkdir -p $TEAM_COPILOT_APP_TEMP_DIR && \
     chown vscode:vscode $TEAM_COPILOT_APP_TEMP_DIR && \
     apt-get update && \
-    apt-get install -y python3-dev libpq-dev tesseract-ocr-all && \
-    pip install --root-user-action ignore --upgrade pip && \
-    pip install --root-user-action ignore poetry
+    apt-get install -y python3-dev libpq-dev tesseract-ocr-all
+
+# Switch to the "vscode" user
+USER vscode
+
+# Install Poetry using its official installer
+RUN curl -sSL https://install.python-poetry.org | python3 -
