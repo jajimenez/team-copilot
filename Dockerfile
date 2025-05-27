@@ -1,5 +1,5 @@
 # Stage 1 (build stage): Environment used to install build tools and compile dependencies.
-FROM python:3.12-slim as builder
+FROM python:3.12-slim AS builder
 
 # - Install build dependencies:
 #     - curl: To download the Poetry installer.
