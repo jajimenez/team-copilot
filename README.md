@@ -1,5 +1,7 @@
 # Team Copilot
 
+<img src="media/ui.png" alt="User interface" width="500">
+
 Team Copilot is a chatbot application that aims to help the members of a team do their
 work by managing a set of PDF documents and replying to questions about the documents.
 The application is written in Python and has a FastAPI based API with endpoints for
@@ -94,12 +96,12 @@ Each time a question is asked to the application, the following steps are perfor
 5. The agent returns the response of the LLM model in streaming, which is returned by
    the application as well.
 
-## OpenAPI Documentation Screenshots
+## Documentation User Interface Screenshots
 
-<img src="media/doc_ui_1.png" alt="Documentation UI - Header" width="500">
-<img src="media/doc_ui_2.png" alt="Documentation UI - Health endpoints" width="500">
-<img src="media/doc_ui_3.png" alt="Documentation UI - Authentication endpoints" width="500">
-<img src="media/doc_ui_4.png" alt="Documentation UI - Users endpoints" width="500">
-<img src="media/doc_ui_5.png" alt="Documentation UI - Documents endpoints" width="500">
-<img src="media/doc_ui_6.png" alt="Documentation UI - Chat endpoints" width="500">
-<img src="media/doc_ui_7.png" alt="Documentation UI - Default endpoints" width="500">
+<img src="media/doc_ui_1.png" alt="Documentation user interface - Header" width="500">
+<img src="media/doc_ui_2.png" alt="Documentation user interface - Health endpoints" width="500">
+<img src="media/doc_ui_3.png" alt="Documentation Uuser interfaceI - Authentication endpoints" width="500">
+<img src="media/doc_ui_4.png" alt="Documentation user interface - Users endpoints" width="500">
+<img src="media/doc_ui_5.png" alt="Documentation user interface - Documents endpoints" width="500">
+<img src="media/doc_ui_6.png" alt="Documentation user interface - Chat endpoints" width="500">
+<img src="media/doc_ui_7.png" alt="Documentation user interface - Default endpoints" width="500">
