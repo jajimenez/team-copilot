@@ -113,9 +113,15 @@ class Agent:
                 ):
                     yield token_txt
         except Exception as e:
-            if hasattr(e, "message"):
-                # Anthropic's LLMs raise exceptions with a "message" attribute
-                message = getattr(e, "message")
-                raise Exception(f"Agent error: {message}")
-            else:
-                raise Exception(f"Agent error: {e}")
+            if hasattr(e, "error"):
+                # Anthropic's LLMs raise exceptions with a "error" attribute and a
+                # "message" attribute containing the error message.
+                error = getattr(e, "error")
+
+                if hasattr(error, "message"):
+                    message = getattr(error, "message")
+
+                    if message:
+                        raise Exception(f"Agent error: {message}")
+
+            raise Exception(f"Agent error: {e}")
