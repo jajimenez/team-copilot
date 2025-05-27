@@ -59,6 +59,9 @@ function addUserMessage(message) {
 
     // Append the new message element to the chat messages container
     chatMessages.appendChild(messageElement);
+
+    // Scroll to the bottom of the chat messages container
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function addBotMessage() {
@@ -85,6 +88,9 @@ function addBotMessage() {
 
     // Append the new message element to the chat messages container
     chatMessages.appendChild(messageElement);
+
+    // Scroll to the bottom of the chat messages container
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function appendBotMessage(text, last) {
