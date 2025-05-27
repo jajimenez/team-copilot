@@ -1,0 +1,23 @@
+# Base image
+FROM postgres:17.4
+
+ENV PGVECTOR_DIR=/pgvector
+
+# Update the APT package list.
+# Install APT packages for building the Pgvector extension.
+# Clone the Pgvector repository.
+RUN apt-get update && \
+    apt-get install -y build-essential git postgresql-server-dev-17 && \
+    git clone https://github.com/pgvector/pgvector.git $PGVECTOR_DIR
+
+# Build and install the Pgvector extension.
+RUN cd $PGVECTOR_DIR && \
+    make && \
+    make install
+
+# Clean up the APT cache.
+RUN apt-get remove -y build-essential git postgresql-server-dev-17 && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf $PGVECTOR_DIR

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Team Copilot</title>
+        <link rel="stylesheet" href="{{ url_for('static', path='bootstrap/css/bootstrap.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', path='bootstrap-icons/bootstrap-icons.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', path='ui/css/home.css') }}">
+    </head>
+    <body>
+        <div class="container-fluid h-100">
+            <div class="row justify-content-center h-100">
+                <div class="col-md-8 col-lg-6">
+                    <div class="chat-container">
+                        <div class="bg-primary text-white p-3 rounded-top d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-robot me-1"></i>
+                                Team Copilot
+                            </h5>
+                            <div>
+                                <span class="me-3" id="status-text"></span>
+                                <button type="button" class="btn btn-outline-light btn-sm me-2" id="login-button" data-bs-toggle="modal" data-bs-target="#login-modal">Log in</button>
+                                <button type="button" class="btn btn-outline-light btn-sm" id="logout-button">Log out</button>
+                            </div>
+                        </div>
+                        <div class="chat-main" id="chat-main">
+                            <div class="chat-messages" id="chat-messages">
+                            </div>
+                            <div class="chat-input-container">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="message-input" placeholder="Type your message here" aria-label="Message input">
+                                    <button class="btn btn-primary" type="button" id="send-button">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="login-modal" tabindex="-1" aria-labelledby="login-modal-title" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="login-modal-title">Log in</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="login-form">
+                            <div class="mb-3">
+                                <input type="text" class="form-control rounded-top" id="login-modal-username" placeholder="Username" aria-label="Username" required style="border-bottom: none; border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
+                                <input type="password" class="form-control rounded-bottom" id="login-modal-password" placeholder="Password" aria-label="Password" required style="border-top-left-radius: 0; border-top-right-radius: 0;">
+                            </div>
+                        </form>
+                        <div class="alert alert-danger" id="login-modal-error" role="alert">Login error</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="login-modal-login-button">Log in</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="{{ url_for('static', path='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+        <script src="{{ url_for('static', path='ui/js/home.js') }}"></script>
+    </body>
+</html>
